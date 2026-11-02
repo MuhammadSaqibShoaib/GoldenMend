@@ -31,6 +31,9 @@ namespace GoldenMend.Presentation
 
         public event Action<GameStatus> StatusShown;
 
+        /// <summary>Raised after every accepted tap.</summary>
+        public event Action<int> ShardTapped;
+
         [Tooltip("1 = design speed. Raise it to fast-forward animations, for example in tests.")]
         public float AnimationSpeed = 1f;
 
@@ -85,6 +88,7 @@ namespace GoldenMend.Presentation
             if (boardRoot != null) Release(boardRoot.gameObject);
             if (socketSprites != null && socketSprites.Length > 0) Release(socketSprites[0].texture);
             seams.Clear();
+            slotFrames = null;
 
             Level = level;
             Engine = new PuzzleEngine(level.Def);
@@ -103,6 +107,65 @@ namespace GoldenMend.Presentation
             BuildVessel();
             BuildBench();
             BuildPile();
+        }
+
+        /// <summary>Clears the board, for menus.</summary>
+        public void Unload()
+        {
+            EnsureInitialized();
+            queue.Clear();
+            StopHint();
+            StopAllCoroutines();
+            if (boardRoot != null) Release(boardRoot.gameObject);
+            if (socketSprites != null && socketSprites.Length > 0) Release(socketSprites[0].texture);
+            socketSprites = null;
+            slotFrames = null;
+            seams.Clear();
+            Level = null;
+            Engine = null;
+            ShownStatus = GameStatus.Playing;
+        }
+
+        /// <summary>The continue offer: two more workbench slots, and the stuck shard parks. False if not failed.</summary>
+        public bool ContinueRun(int extraSlots = 2)
+        {
+            if (Engine == null) return false;
+            var events = Engine.Continue(extraSlots);
+            if (events.Count == 0) return false;
+
+            ShownStatus = GameStatus.Playing;
+            lastInputTime = Time.time;
+            BenchPeak = Mathf.Max(BenchPeak, Engine.State.BenchCount);
+            Play(events);
+            return true;
+        }
+
+        /// <summary>Rebuilds the slot frames for the new count and slides the parked shards to their new spots.</summary>
+        void ExpandBench(int count)
+        {
+            int before = slotFrames.Length;
+            BuildBench();
+            float size = layout.BenchShardSizeFor(count);
+            var bench = Engine.State.Bench;
+            for (int slot = 0; slot < before && slot < bench.Length; slot++)
+            {
+                int shard = bench[slot];
+                if (shard < 0) continue;
+                StartCoroutine(shardViews[shard].FlyTo(layout.Slot(slot, count), size, Seconds(0.25f), 20, 0f));
+            }
+            foreach (var frame in slotFrames) StartCoroutine(PopFrame(frame.transform));
+        }
+
+        IEnumerator PopFrame(Transform frame)
+        {
+            Vector3 target = frame.localScale;
+            float duration = Seconds(0.3f);
+            for (float t = 0f; t < 1f; t += Time.deltaTime / duration)
+            {
+                frame.localScale = target * (0.6f + 0.4f * Ease.OutCubic(t));
+                yield return null;
+            }
+            frame.localScale = target;
         }
 
         void BuildTable()
@@ -138,12 +201,18 @@ namespace GoldenMend.Presentation
         void BuildBench()
         {
             var state = Engine.State;
-            slotFrames = new SpriteRenderer[Level.Def.BenchSize];
+            if (slotFrames != null)
+            {
+                foreach (var frame in slotFrames) Release(frame.gameObject);
+            }
+            int count = state.Bench.Length;
+            float size = layout.SlotSizeFor(count);
+            slotFrames = new SpriteRenderer[count];
             for (int i = 0; i < slotFrames.Length; i++)
             {
                 var color = state.SlotLocked[i] ? LockedSlotColor : SlotColor;
-                slotFrames[i] = MakeSprite($"Slot {i}", boardRoot, SpriteFactory.Rounded, layout.Slot(i),
-                    new Vector2(BoardLayout.SlotSize, BoardLayout.SlotSize), color, 10);
+                slotFrames[i] = MakeSprite($"Slot {i}", boardRoot, SpriteFactory.Rounded, layout.Slot(i, count),
+                    new Vector2(size, size), color, 10);
             }
         }
 
@@ -256,6 +325,7 @@ namespace GoldenMend.Presentation
             TapCount++;
             BenchPeak = Mathf.Max(BenchPeak, Engine.State.BenchCount);
             Play(events);
+            ShardTapped?.Invoke(shard);
             return true;
         }
 
@@ -282,6 +352,9 @@ namespace GoldenMend.Presentation
                         break;
                     case GameEventType.BenchSlotUnlocked:
                         queue.Enqueue(() => { StartCoroutine(Tint(slotFrames[e.Slot], SlotColor, 0.3f)); });
+                        break;
+                    case GameEventType.BenchExpanded:
+                        queue.Enqueue(() => ExpandBench(e.Slot));
                         break;
                     case GameEventType.LevelWon:
                         queue.Enqueue(WinRoutine);
@@ -319,7 +392,9 @@ namespace GoldenMend.Presentation
         IEnumerator ParkRoutine(int shard, int slot)
         {
             openFrames[shard].enabled = false;
-            yield return shardViews[shard].FlyTo(layout.Slot(slot), BoardLayout.BenchShardSize, Seconds(0.3f), 20, 0.5f);
+            int count = slotFrames.Length;
+            shardViews[shard].Renderer.color = Color.white;
+            yield return shardViews[shard].FlyTo(layout.Slot(slot, count), layout.BenchShardSizeFor(count), Seconds(0.3f), 20, 0.5f);
             feedback.Park();
         }
 
@@ -352,6 +427,7 @@ namespace GoldenMend.Presentation
         IEnumerator WinRoutine()
         {
             ShownStatus = GameStatus.Won;
+            feedback.Buzz();
             yield return new WaitForSeconds(Seconds(0.2f));
 
             // Beauty shot: a slow turn and swell while every seam flashes.
@@ -384,8 +460,9 @@ namespace GoldenMend.Presentation
             var view = shardViews[shard];
             openFrames[shard].enabled = false;
             var stuck = new Vector3(0f, BoardLayout.BenchY + 1.9f, 0f);
-            yield return view.FlyTo(stuck, BoardLayout.BenchShardSize, Seconds(0.3f), 25, 0.4f);
+            yield return view.FlyTo(stuck, layout.BenchShardSizeFor(slotFrames.Length), Seconds(0.3f), 25, 0.4f);
             feedback.Fail();
+            feedback.Buzz();
             StartCoroutine(view.TintTo(FailTint, Seconds(0.2f)));
             foreach (var frame in slotFrames) StartCoroutine(Tint(frame, new Color(1f, 0.3f, 0.25f, 0.25f), 0.2f));
             yield return view.Shake(0.15f, Seconds(0.4f));

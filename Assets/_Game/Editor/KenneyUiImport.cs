@@ -4,15 +4,15 @@ using UnityEngine;
 namespace GoldenMend.EditorTools
 {
     /// <summary>
-    /// Import settings for the Kenney UI Pack: every PNG becomes an uncompressed UI sprite, and buttons,
+    /// Import settings for the Kenney UI Pack and Game Icons: every PNG becomes an uncompressed UI sprite, and buttons,
     /// inputs and checkboxes get 9-slice borders so they stretch cleanly.
     /// </summary>
     public sealed class KenneyUiImport : AssetPostprocessor
     {
-        const string Folder = "Assets/ThirdParty/Kenney/UIPack/";
+        const string Folder = "Assets/ThirdParty/Kenney/";
 
         // Bump when the settings below change so Unity reimports the pack.
-        public override uint GetVersion() => 1;
+        public override uint GetVersion() => 2;
 
         void OnPreprocessTexture()
         {

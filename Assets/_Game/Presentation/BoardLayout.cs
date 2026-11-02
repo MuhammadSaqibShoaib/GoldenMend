@@ -45,11 +45,12 @@ namespace GoldenMend.Presentation
             return new Vector3(x, y, 0f);
         }
 
-        public Vector3 Slot(int slot)
-        {
-            int count = level.Def.BenchSize;
-            return new Vector3((slot - (count - 1) / 2f) * BenchSpacing, BenchY, 0f);
-        }
+        /// <summary>Slots shrink to fit when the continue offer adds more than the usual five.</summary>
+        public float SlotSpacing(int count) => Mathf.Min(BenchSpacing, 10.4f / count);
+        public float SlotSizeFor(int count) => SlotSpacing(count) * (SlotSize / BenchSpacing);
+        public float BenchShardSizeFor(int count) => SlotSpacing(count) * (BenchShardSize / BenchSpacing);
+
+        public Vector3 Slot(int slot, int count) => new Vector3((slot - (count - 1) / 2f) * SlotSpacing(count), BenchY, 0f);
 
         public Vector3 PileCell(int cell)
         {

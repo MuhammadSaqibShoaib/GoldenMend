@@ -1,22 +1,16 @@
-using GoldenMend.Data;
+using GoldenMend.Flow;
 using GoldenMend.Presentation;
 using UnityEngine;
 
 namespace GoldenMend.Bootstrap
 {
     /// <summary>
-    /// Composition root for the game scene: creates the board and HUD and wires them together.
-    /// Services (ads, analytics, save) will be created here too once they exist.
+    /// Entry point of the game scene: composes the services, board and screens, then opens the main menu.
+    /// Ads, analytics and remote config will be created here too once they exist.
     /// </summary>
     public sealed class GameBootstrap : MonoBehaviour
     {
-        const string LevelKey = "goldenmend.level";
-
         [SerializeField] UiTheme theme;
-
-        BoardPresenter board;
-        GameHud hud;
-        int levelIndex;
 
         void Awake()
         {
@@ -24,32 +18,14 @@ namespace GoldenMend.Bootstrap
             if (FindAnyObjectByType<AudioListener>() == null && Camera.main != null)
                 Camera.main.gameObject.AddComponent<AudioListener>();
 
-            var boardObject = new GameObject("Board Presenter");
-            boardObject.AddComponent<AnimationQueue>();
-            boardObject.AddComponent<FeedbackService>();
-            board = boardObject.AddComponent<BoardPresenter>();
+            if (theme == null)
+            {
+                Debug.LogError("GameBootstrap has no UiTheme. Run Golden Mend > Rebuild Game Scene.", this);
+                return;
+            }
 
-            hud = gameObject.AddComponent<GameHud>();
-            if (theme == null) Debug.LogError("GameBootstrap has no UiTheme. Run Golden Mend > Rebuild Game Scene.", this);
-            hud.Init(theme, board, () => levelIndex, Restart, Next, Previous);
-
-            levelIndex = Mathf.Clamp(PlayerPrefs.GetInt(LevelKey, 0), 0, LevelCatalog.Count - 1);
+            var flow = GameComposition.Compose(theme, Camera.main, new JsonFileSaveStore(), transform);
+            flow.ShowHome();
         }
-
-        void Start() => LoadLevel(levelIndex);
-
-        void LoadLevel(int index)
-        {
-            levelIndex = (index % LevelCatalog.Count + LevelCatalog.Count) % LevelCatalog.Count;
-            PlayerPrefs.SetInt(LevelKey, levelIndex);
-            hud.HidePanel();
-            board.Load(LevelCatalog.Build(levelIndex));
-        }
-
-        void Restart() => LoadLevel(levelIndex);
-
-        void Next() => LoadLevel(levelIndex + 1);
-
-        void Previous() => LoadLevel(levelIndex - 1);
     }
 }

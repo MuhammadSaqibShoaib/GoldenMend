@@ -1,7 +1,7 @@
 {
     "name": "GoldenMend.Tests.PlayMode",
     "rootNamespace": "GoldenMend.Tests",
-    "references": ["UnityEngine.TestRunner", "UnityEditor.TestRunner", "GoldenMend.Core", "GoldenMend.Data", "GoldenMend.Presentation"],
+    "references": ["UnityEngine.TestRunner", "UnityEditor.TestRunner", "GoldenMend.Core", "GoldenMend.Data", "GoldenMend.Presentation", "GoldenMend.Meta", "GoldenMend.Flow"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

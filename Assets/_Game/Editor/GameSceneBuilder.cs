@@ -61,11 +61,11 @@ namespace GoldenMend.EditorTools
             Debug.Log($"Golden Mend: game scene saved to {ScenePath}");
         }
 
-        /// <summary>Creates or refreshes the UI theme from the Kenney UI Pack and Zen Maru Gothic.</summary>
+        /// <summary>Creates or refreshes the UI theme from the Kenney UI Pack, Kenney Game Icons and Zen Maru Gothic.</summary>
         [MenuItem("Golden Mend/Rebuild UI Theme")]
         public static UiTheme BuildTheme()
         {
-            AssetDatabase.ImportAsset(Kenney.TrimEnd('/'), ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
+            AssetDatabase.ImportAsset("Assets/ThirdParty/Kenney", ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
 
             var theme = AssetDatabase.LoadAssetAtPath<UiTheme>(ThemePath);
             if (theme == null)
@@ -85,11 +85,26 @@ namespace GoldenMend.EditorTools
             theme.Badge = Load<Sprite>(Kenney + "Sprites/Grey/button_rectangle_flat.png");
             theme.Divider = Load<Sprite>(Kenney + "Sprites/Extra/divider.png");
 
-            theme.IconRestart = Load<Sprite>(Kenney + "Sprites/Extra/icon_repeat_light.png");
-            theme.IconHint = Load<Sprite>(Kenney + "Sprites/Grey/star.png");
-            theme.IconPrevious = Load<Sprite>(Kenney + "Sprites/Grey/arrow_basic_w.png");
-            theme.IconNext = Load<Sprite>(Kenney + "Sprites/Grey/arrow_basic_e.png");
             theme.Star = Load<Sprite>(Kenney + "Sprites/Grey/star.png");
+            theme.Circle = Load<Sprite>(Kenney + "Sprites/Grey/button_round_flat.png");
+
+            const string Icons = "Assets/ThirdParty/Kenney/GameIcons/Icons/";
+            theme.IconPause = Load<Sprite>(Icons + "pause.png");
+            theme.IconSettings = Load<Sprite>(Icons + "gear.png");
+            theme.IconHome = Load<Sprite>(Icons + "home.png");
+            theme.IconMuseum = Load<Sprite>(Icons + "menuGrid.png");
+            theme.IconLock = Load<Sprite>(Icons + "locked.png");
+            theme.IconClose = Load<Sprite>(Icons + "cross.png");
+            theme.IconWarning = Load<Sprite>(Icons + "exclamation.png");
+            theme.IconSoundOn = Load<Sprite>(Icons + "audioOn.png");
+            theme.IconSoundOff = Load<Sprite>(Icons + "audioOff.png");
+            theme.IconPlay = Load<Sprite>(Icons + "arrowRight.png");
+            theme.IconTrophy = Load<Sprite>(Icons + "trophy.png");
+            theme.IconHaptics = Load<Sprite>(Icons + "phone.png");
+            theme.IconRestart = Load<Sprite>(Icons + "return.png");
+            theme.IconHint = Load<Sprite>(Icons + "question.png");
+            theme.IconPrevious = Load<Sprite>(Icons + "arrowLeft.png");
+            theme.IconNext = Load<Sprite>(Icons + "arrowRight.png");
 
             theme.Click = Load<AudioClip>(Kenney + "Sounds/click-a.ogg");
 

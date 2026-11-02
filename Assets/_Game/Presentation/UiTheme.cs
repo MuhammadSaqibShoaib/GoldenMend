@@ -3,8 +3,8 @@ using UnityEngine;
 namespace GoldenMend.Presentation
 {
     /// <summary>
-    /// Everything the HUD and popups are drawn with: fonts, sprites, sounds and the palette.
-    /// Built from the Kenney UI Pack and Zen Maru Gothic by Golden Mend > Rebuild Game Scene.
+    /// Everything the screens are drawn with: fonts, sprites, icons, sounds and the palette.
+    /// Built from the Kenney UI Pack, Kenney Game Icons and Zen Maru Gothic by Golden Mend > Rebuild UI Theme.
     /// </summary>
     [CreateAssetMenu(menuName = "Golden Mend/UI Theme", fileName = "UiTheme")]
     public sealed class UiTheme : ScriptableObject
@@ -20,6 +20,7 @@ namespace GoldenMend.Presentation
         public Sprite IconButton;
         public Sprite Badge;
         public Sprite Divider;
+        public Sprite Circle;
 
         [Header("Icons")]
         public Sprite IconRestart;
@@ -27,6 +28,18 @@ namespace GoldenMend.Presentation
         public Sprite IconPrevious;
         public Sprite IconNext;
         public Sprite Star;
+        public Sprite IconPause;
+        public Sprite IconSettings;
+        public Sprite IconHome;
+        public Sprite IconMuseum;
+        public Sprite IconLock;
+        public Sprite IconClose;
+        public Sprite IconWarning;
+        public Sprite IconSoundOn;
+        public Sprite IconSoundOff;
+        public Sprite IconPlay;
+        public Sprite IconTrophy;
+        public Sprite IconHaptics;
 
         [Header("Sounds")]
         public AudioClip Click;

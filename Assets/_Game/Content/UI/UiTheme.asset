@@ -20,11 +20,24 @@ MonoBehaviour:
   IconButton: {fileID: 21300000, guid: 287a8266c2b7dea49a9ecb4c12d840da, type: 3}
   Badge: {fileID: 21300000, guid: 891a9d9321bf2bc42a178a43f1e118e3, type: 3}
   Divider: {fileID: 21300000, guid: 541ec19f2f71d9c4bac072ad7227384d, type: 3}
-  IconRestart: {fileID: 21300000, guid: 2e82a4c0c3b7d0e4f9e4e1eeb07e9f63, type: 3}
-  IconHint: {fileID: 21300000, guid: dce8116d65ed6b04a82e86d6ee20d217, type: 3}
-  IconPrevious: {fileID: 21300000, guid: 8e8e4d1e5249978489297d39186d22cb, type: 3}
-  IconNext: {fileID: 21300000, guid: e21d99d4ea357d74c80ee1b63bcbc690, type: 3}
+  Circle: {fileID: 21300000, guid: 6ee8710cfdf2dcd4b967dbcbf0b4fafd, type: 3}
+  IconRestart: {fileID: 21300000, guid: c8f9ae09e25d6784c974696641475d2a, type: 3}
+  IconHint: {fileID: 21300000, guid: e14750fb8194f5b42820ce2e99c5e71f, type: 3}
+  IconPrevious: {fileID: 21300000, guid: baf95116941e3c04f8542f45c5210fc7, type: 3}
+  IconNext: {fileID: 21300000, guid: 0580df42748afbf4b9e0676a79ab7b40, type: 3}
   Star: {fileID: 21300000, guid: dce8116d65ed6b04a82e86d6ee20d217, type: 3}
+  IconPause: {fileID: 21300000, guid: ba1ab10d8ca546646a0135927c6b6d16, type: 3}
+  IconSettings: {fileID: 21300000, guid: acc54bac7a497ba48977c1cb31816e44, type: 3}
+  IconHome: {fileID: 21300000, guid: 060e0596e067d49498cc3157d6c5d97a, type: 3}
+  IconMuseum: {fileID: 21300000, guid: 40110276ef7899e4ca95f2b8215f7689, type: 3}
+  IconLock: {fileID: 21300000, guid: 68a68efe6acfa9841837b282fb445505, type: 3}
+  IconClose: {fileID: 21300000, guid: 35973ac43ffd7da498fba6ef76099c36, type: 3}
+  IconWarning: {fileID: 21300000, guid: 7fb3446f33e6f3c4998ee38514d39eb1, type: 3}
+  IconSoundOn: {fileID: 21300000, guid: 763bf5a35a0fbad40aad1f92058158dc, type: 3}
+  IconSoundOff: {fileID: 21300000, guid: d5e8cf0ce0882c04aad2b4dcb5f4854c, type: 3}
+  IconPlay: {fileID: 21300000, guid: 0580df42748afbf4b9e0676a79ab7b40, type: 3}
+  IconTrophy: {fileID: 21300000, guid: 96e2fa1b720105548ae8e53df5ed1a18, type: 3}
+  IconHaptics: {fileID: 21300000, guid: 76eda873b3d5de34098c7e97ee2629f6, type: 3}
   Click: {fileID: 8300000, guid: 169a1d844f711124083eb99e68b39ce3, type: 3}
   Cream: {r: 0.96, g: 0.92, b: 0.84, a: 1}
   Paper: {r: 1, g: 0.98, b: 0.93, a: 1}

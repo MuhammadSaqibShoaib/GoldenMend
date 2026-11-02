@@ -1,7 +1,7 @@
 {
     "name": "GoldenMend.Editor",
     "rootNamespace": "GoldenMend.EditorTools",
-    "references": ["GoldenMend.Core", "GoldenMend.Data", "GoldenMend.Presentation", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Universal.2D.Runtime", "Unity.RenderPipelines.Core.Runtime"],
+    "references": ["GoldenMend.Core", "GoldenMend.Data", "GoldenMend.Presentation", "GoldenMend.Meta", "GoldenMend.Flow", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Universal.2D.Runtime", "Unity.RenderPipelines.Core.Runtime"],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -131,6 +131,27 @@ namespace GoldenMend.Core
             return events;
         }
 
+        /// <summary>
+        /// The continue offer after a bench-full fail: adds <paramref name="extraSlots"/> workbench slots and parks
+        /// the shard that had nowhere to go. An empty result means there was nothing to continue.
+        /// </summary>
+        public IReadOnlyList<GameEvent> Continue(int extraSlots)
+        {
+            if (State.Status != GameStatus.Failed || State.PendingShard < 0 || extraSlots <= 0) return Rejected;
+
+            var events = new List<GameEvent>();
+            State.ExpandBench(extraSlots);
+            events.Add(GameEvent.BenchExpanded(State.Bench.Length));
+
+            int shard = State.PendingShard;
+            int slot = FirstFreeSlot();
+            State.Bench[slot] = shard;
+            State.PendingShard = -1;
+            State.Status = GameStatus.Playing;
+            events.Add(GameEvent.Parked(shard, slot));
+            return events;
+        }
+
         void Lock(int shard, int fromSlot, List<GameEvent> events)
         {
             int socket = Level.Shards[shard].Socket;

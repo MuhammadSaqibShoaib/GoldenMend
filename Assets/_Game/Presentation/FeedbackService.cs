@@ -15,6 +15,8 @@ namespace GoldenMend.Presentation
 
         public bool Muted { get; set; }
 
+        public bool HapticsOn { get; set; } = true;
+
         void Awake()
         {
             source = gameObject.AddComponent<AudioSource>();
@@ -30,6 +32,14 @@ namespace GoldenMend.Presentation
         public void Park() => Play(thud, 1f);
 
         public void Fail() => Play(buzz, 1f);
+
+        /// <summary>A short vibration for big moments (win, fail). Phones only.</summary>
+        public void Buzz()
+        {
+#if UNITY_ANDROID || UNITY_IOS
+            if (HapticsOn && Application.isPlaying) Handheld.Vibrate();
+#endif
+        }
 
         public void Win(int step) => Play(chime, Semitones(Pentatonic[Mathf.Min(step * 2, Pentatonic.Length - 1)]));
 

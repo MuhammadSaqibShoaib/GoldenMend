@@ -1,0 +1,14 @@
+{
+    "name": "GoldenMend.Flow",
+    "rootNamespace": "GoldenMend.Flow",
+    "references": ["GoldenMend.Core", "GoldenMend.Data", "GoldenMend.Meta", "GoldenMend.Presentation"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

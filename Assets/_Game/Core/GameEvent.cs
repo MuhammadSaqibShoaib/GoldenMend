@@ -10,6 +10,9 @@ namespace GoldenMend.Core
         ShardAutoFlown,
         SeamFormed,
         BenchSlotUnlocked,
+
+        /// <summary>The workbench grew (continue offer). <see cref="GameEvent.Slot"/> holds the new slot count.</summary>
+        BenchExpanded,
         LevelWon,
         LevelFailed,
     }
@@ -49,6 +52,7 @@ namespace GoldenMend.Core
         public static GameEvent AutoFlown(int shard, int socket, int fromSlot) => new GameEvent(GameEventType.ShardAutoFlown, shard, socket, fromSlot);
         public static GameEvent Seam(int socket, int otherSocket) => new GameEvent(GameEventType.SeamFormed, socket: socket, otherSocket: otherSocket);
         public static GameEvent SlotUnlocked(int slot) => new GameEvent(GameEventType.BenchSlotUnlocked, slot: slot);
+        public static GameEvent BenchExpanded(int slotCount) => new GameEvent(GameEventType.BenchExpanded, slot: slotCount);
         public static GameEvent Won() => new GameEvent(GameEventType.LevelWon);
         public static GameEvent Failed(int shard, FailReason reason) => new GameEvent(GameEventType.LevelFailed, shard, reason: reason);
 
@@ -81,6 +85,7 @@ namespace GoldenMend.Core
                 case GameEventType.ShardAutoFlown: return $"AutoFlown(shard {Shard}, slot {Slot} -> socket {Socket})";
                 case GameEventType.SeamFormed: return $"Seam(socket {Socket} | socket {OtherSocket})";
                 case GameEventType.BenchSlotUnlocked: return $"SlotUnlocked({Slot})";
+                case GameEventType.BenchExpanded: return $"BenchExpanded({Slot} slots)";
                 case GameEventType.LevelWon: return "Won";
                 case GameEventType.LevelFailed: return $"Failed(shard {Shard}, {Reason})";
                 default: return Type.ToString();

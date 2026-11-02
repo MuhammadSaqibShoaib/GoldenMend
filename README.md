@@ -14,13 +14,24 @@ Mobile, portrait, one-handed. Built with Unity 6 (6000.3.8f1), URP 2D and the In
 
 Every level is checked by a solver to be winnable without boosters, and its difficulty is the fewest bench slots a win needs.
 
+## Game flow
+
+- **Home:** coins, settings, the next vessel waiting to be restored, progress, Play and the Museum.
+- **Museum:** every vessel as a card. Restored pieces show with gold seams and their stars; replay any of them.
+- **Level:** pause, level plate and hint at the top; a short intro card names the vessel. Level 1 teaches with a one-line tip.
+- **Level complete:** 1–3 stars (bench peak against the solver's best), a coin reward, then the next vessel.
+- **Workbench full:** continue with two extra slots for 60 coins, try again, or go home.
+- **Pause and Settings:** resume, restart, home; sound and haptics toggles; credits.
+
+Progress, coins and settings are saved to a JSON file in the persistent data folder.
+
 ## Run it
 
 1. Open this folder in Unity Hub with Unity 6000.3.8f1.
 2. Open `Assets/_Game/Bootstrap/Game.unity`.
 3. Set the Game view to a portrait resolution (for example 1080x1920) and press Play.
 
-HUD: Restart, Hint (also pulses after 20 s idle), and level switching, built in uGUI with the Kenney UI Pack and Zen Maru Gothic. "Bench peak" compares your busiest workbench with the solver's best.
+The UI is built in uGUI from code with the Kenney UI Pack, Kenney Game Icons and Zen Maru Gothic. It scales from tall phones to tablets (width-matched on phones, height-matched on wider screens) and stays inside the device safe area.
 
 ## Architecture
 
@@ -30,11 +41,13 @@ The rules live in a plain C# core with no Unity dependencies; everything else is
 | --- | --- | --- |
 | `Assets/_Game/Core` | GoldenMend.Core | Rules engine (tap in, ordered events out), board state, pile rack, solver. `noEngineReferences: true`. |
 | `Assets/_Game/Data` | GoldenMend.Data | Level specs (vessel shape and rack shape as text), level builder that keeps only solver-approved deals, level catalog. |
-| `Assets/_Game/Presentation` | GoldenMend.Presentation | Board presenter, shard views, animation queue, generated vessel art and sound, uGUI HUD and popups driven by a `UiTheme` asset. |
-| `Assets/_Game/Bootstrap` | Assembly-CSharp | Composition root and the game scene. |
-| `Assets/_Game/Editor` | GoldenMend.Editor | **Golden Mend** menu: rebuild the game scene and UI theme, capture level and panel screenshots. Kenney sprite import settings. |
-| `Assets/ThirdParty` | — | Kenney UI Pack (CC0) and Zen Maru Gothic (OFL). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). |
-| `Assets/Tests` | EditMode, PlayMode | Rule, rack, solver and level tests; presenter smoke tests that play every level to the win screen. |
+| `Assets/_Game/Meta` | GoldenMend.Meta | Save data, progress and stars, coins, settings. Plain C#. |
+| `Assets/_Game/Presentation` | GoldenMend.Presentation | Board presenter, shard views, animation queue, generated vessel art and sound. `UI/`: widget builder, safe area, adaptive scaler, every screen and popup, driven by a `UiTheme` asset. |
+| `Assets/_Game/Flow` | GoldenMend.Flow | Game flow state machine, JSON save file, composition of the whole game. |
+| `Assets/_Game/Bootstrap` | Assembly-CSharp | Scene entry point and the game scene. |
+| `Assets/_Game/Editor` | GoldenMend.Editor | **Golden Mend** menu: rebuild the game scene and UI theme, capture every screen at phone, tall-phone and tablet sizes. Kenney sprite import settings. |
+| `Assets/ThirdParty` | — | Kenney UI Pack and Game Icons (CC0), Zen Maru Gothic (OFL). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). |
+| `Assets/Tests` | EditMode, PlayMode | Rule, rack, solver, continue, level, progress, coin and settings tests; presenter smoke tests that play every level to the win screen. |
 
 ## Tests
 
@@ -46,16 +59,16 @@ From the command line (close the editor first; PlayMode and screenshots need gra
 U="/c/Program Files/Unity/Hub/Editor/6000.3.8f1/Editor/Unity.exe"
 "$U" -batchmode -projectPath . -runTests -testPlatform EditMode -testResults Logs/editmode-results.xml
 "$U" -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults Logs/playmode-results.xml
-"$U" -batchmode -quit -projectPath . -executeMethod GoldenMend.EditorTools.LevelScreenshots.CaptureAll
+"$U" -batchmode -quit -projectPath . -executeMethod GoldenMend.EditorTools.LevelScreenshots.CaptureAll   # all screens, 3 device sizes
 ```
 
 ## Roadmap
 
 - Gold seam shader and final art, haptics, full audio
-- More screens: home, level intro, continue offer, shop, settings
-- Boosters (Magnifier, Brush, Glue Pot), frozen shards, continue for +2 bench slots
+- Shop and booster purchases
+- Boosters (Magnifier, Brush, Glue Pot), frozen shards
 - Level editor window with one-click solving; 30+ hand-tuned levels
-- Museum meta, Gold Purity win streak, lives
+- Museum wings, Gold Purity win streak, lives
 - Analytics, remote config, ads and in-app purchases
 - Android release, then iOS
 

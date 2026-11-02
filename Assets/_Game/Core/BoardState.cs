@@ -16,8 +16,8 @@ namespace GoldenMend.Core
         public bool[] InPile { get; }
 
         /// <summary>Shard id in each workbench slot, or -1 when empty.</summary>
-        public int[] Bench { get; }
-        public bool[] SlotLocked { get; }
+        public int[] Bench { get; private set; }
+        public bool[] SlotLocked { get; private set; }
 
         /// <summary>Shards locked into the vessel so far (the anchor is not counted).</summary>
         public int Placements { get; internal set; }
@@ -88,5 +88,17 @@ namespace GoldenMend.Core
         }
 
         public int SlotOf(int shard) => Array.IndexOf(Bench, shard);
+
+        /// <summary>Adds empty, unlocked slots to the right of the workbench.</summary>
+        internal void ExpandBench(int extra)
+        {
+            int size = Bench.Length + extra;
+            var bench = new int[size];
+            var locked = new bool[size];
+            for (int i = 0; i < size; i++) bench[i] = i < Bench.Length ? Bench[i] : -1;
+            Array.Copy(SlotLocked, locked, SlotLocked.Length);
+            Bench = bench;
+            SlotLocked = locked;
+        }
     }
 }
