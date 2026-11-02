@@ -9,7 +9,7 @@ namespace GoldenMend.Flow
     /// <summary>Wires the whole game together. Used by the bootstrap scene and by the screenshot tool.</summary>
     public static class GameComposition
     {
-        public static GameFlow Compose(UiTheme theme, Camera camera, ISaveStore store, Transform parent)
+        public static GameFlow Compose(UiTheme theme, SoundBank sounds, Camera camera, ISaveStore store, Transform parent)
         {
             var data = store.Load();
             var economy = new EconomyService(data, store);
@@ -20,6 +20,7 @@ namespace GoldenMend.Flow
             boardObject.transform.SetParent(parent, false);
             boardObject.AddComponent<AnimationQueue>();
             var feedback = boardObject.AddComponent<FeedbackService>();
+            feedback.Init(sounds);
             var board = boardObject.AddComponent<BoardPresenter>();
 
             var ui = UiRoot.Create(theme, camera, parent);

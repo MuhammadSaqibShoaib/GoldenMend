@@ -178,6 +178,7 @@ namespace GoldenMend.Flow
                 win.Bind(level.Spec.Name, result.Stars, result.Coins, result.FirstClear, board.BenchPeak, best, current + 1 < progress.LevelCount);
                 hud.Hide();
                 win.Show();
+                feedback.Coins();
                 State = FlowState.LevelComplete;
             }
             else if (status == GameStatus.Failed)

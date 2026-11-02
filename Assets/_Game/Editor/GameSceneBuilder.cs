@@ -47,6 +47,7 @@ namespace GoldenMend.EditorTools
             var game = new GameObject("Game").AddComponent(bootstrap);
             var bootstrapData = new SerializedObject(game);
             bootstrapData.FindProperty("theme").objectReferenceValue = BuildTheme();
+            bootstrapData.FindProperty("sounds").objectReferenceValue = BuildSoundBank();
             bootstrapData.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -111,6 +112,45 @@ namespace GoldenMend.EditorTools
             EditorUtility.SetDirty(theme);
             AssetDatabase.SaveAssets();
             return theme;
+        }
+
+        const string SoundBankPath = "Assets/_Game/Content/Audio/SoundBank.asset";
+        const string Audio = "Assets/ThirdParty/Kenney/Audio/";
+
+        /// <summary>Creates or refreshes the sound bank from Kenney's CC0 audio packs.</summary>
+        [MenuItem("Golden Mend/Rebuild Sound Bank")]
+        public static SoundBank BuildSoundBank()
+        {
+            AssetDatabase.ImportAsset(Audio.TrimEnd('/'), ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
+
+            var bank = AssetDatabase.LoadAssetAtPath<SoundBank>(SoundBankPath);
+            if (bank == null)
+            {
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(SoundBankPath));
+                bank = ScriptableObject.CreateInstance<SoundBank>();
+                AssetDatabase.CreateAsset(bank, SoundBankPath);
+            }
+
+            bank.Pick = Clips("Casino/chips-handle-1", "Casino/chips-handle-2", "Casino/chips-handle-3");
+            bank.Park = Clips("Casino/chip-lay-1", "Casino/chip-lay-2", "Casino/chip-lay-3");
+            bank.Lock = Clips("Interface/glass_001", "Interface/glass_002", "Interface/glass_003");
+            bank.Uncover = Clips("Interface/pluck_001", "Interface/pluck_002");
+            bank.Reject = Load<AudioClip>(Audio + "Interface/tick_002.ogg");
+            bank.Expand = Load<AudioClip>(Audio + "Interface/maximize_006.ogg");
+            bank.Coins = Clips("Casino/chips-stack-1", "Casino/chips-stack-2");
+            bank.WinJingle = Load<AudioClip>(Audio + "Jingles/jingles_STEEL02.ogg");
+            bank.FailJingle = Load<AudioClip>(Audio + "Jingles/jingles_STEEL14.ogg");
+
+            EditorUtility.SetDirty(bank);
+            AssetDatabase.SaveAssets();
+            return bank;
+        }
+
+        static AudioClip[] Clips(params string[] names)
+        {
+            var clips = new AudioClip[names.Length];
+            for (int i = 0; i < names.Length; i++) clips[i] = Load<AudioClip>(Audio + names[i] + ".ogg");
+            return clips;
         }
 
         static T Load<T>(string path) where T : UnityEngine.Object

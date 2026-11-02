@@ -11,6 +11,7 @@ namespace GoldenMend.Bootstrap
     public sealed class GameBootstrap : MonoBehaviour
     {
         [SerializeField] UiTheme theme;
+        [SerializeField] SoundBank sounds;
 
         void Awake()
         {
@@ -24,7 +25,7 @@ namespace GoldenMend.Bootstrap
                 return;
             }
 
-            var flow = GameComposition.Compose(theme, Camera.main, new JsonFileSaveStore(), transform);
+            var flow = GameComposition.Compose(theme, sounds, Camera.main, new JsonFileSaveStore(), transform);
             flow.ShowHome();
         }
     }

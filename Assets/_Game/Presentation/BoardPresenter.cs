@@ -145,6 +145,7 @@ namespace GoldenMend.Presentation
         {
             int before = slotFrames.Length;
             BuildBench();
+            feedback.Expand();
             float size = layout.BenchShardSizeFor(count);
             var bench = Engine.State.Bench;
             for (int slot = 0; slot < before && slot < bench.Length; slot++)
@@ -316,7 +317,11 @@ namespace GoldenMend.Presentation
             var events = Engine.Tap(shard);
             if (events.Count == 0)
             {
-                if (Engine.State.InPile[shard]) StartCoroutine(shardViews[shard].Shake(0.08f, 0.25f));
+                if (Engine.State.InPile[shard])
+                {
+                    StartCoroutine(shardViews[shard].Shake(0.08f, 0.25f));
+                    feedback.Reject();
+                }
                 return false;
             }
 
@@ -325,6 +330,7 @@ namespace GoldenMend.Presentation
             TapCount++;
             BenchPeak = Mathf.Max(BenchPeak, Engine.State.BenchCount);
             Play(events);
+            feedback.Pick();
             ShardTapped?.Invoke(shard);
             return true;
         }
@@ -370,6 +376,7 @@ namespace GoldenMend.Presentation
         {
             var view = shardViews[shard];
             lockIcons[shard].SetActive(false);
+            feedback.Uncover();
             openFrames[shard].enabled = true;
             StartCoroutine(view.TintTo(Color.white, Seconds(0.15f)));
             StartCoroutine(view.Punch(0.08f, Seconds(0.2f)));
@@ -427,12 +434,11 @@ namespace GoldenMend.Presentation
         IEnumerator WinRoutine()
         {
             ShownStatus = GameStatus.Won;
-            feedback.Buzz();
+            feedback.Win();
             yield return new WaitForSeconds(Seconds(0.2f));
 
             // Beauty shot: a slow turn and swell while every seam flashes.
             float duration = Seconds(1.4f);
-            int notes = 0;
             for (float t = 0f; t < 1f; t += Time.deltaTime / duration)
             {
                 float swell = Mathf.Sin(t * Mathf.PI);
@@ -441,11 +447,6 @@ namespace GoldenMend.Presentation
                 var glow = Color.Lerp(Gold, PaleGold, swell);
                 foreach (var seam in seams) seam.color = glow;
 
-                if (notes < 5 && t > notes * 0.1f)
-                {
-                    feedback.Win(notes);
-                    notes++;
-                }
                 yield return null;
             }
             vesselRoot.localScale = Vector3.one;
@@ -462,7 +463,6 @@ namespace GoldenMend.Presentation
             var stuck = new Vector3(0f, BoardLayout.BenchY + 1.9f, 0f);
             yield return view.FlyTo(stuck, layout.BenchShardSizeFor(slotFrames.Length), Seconds(0.3f), 25, 0.4f);
             feedback.Fail();
-            feedback.Buzz();
             StartCoroutine(view.TintTo(FailTint, Seconds(0.2f)));
             foreach (var frame in slotFrames) StartCoroutine(Tint(frame, new Color(1f, 0.3f, 0.25f, 0.25f), 0.2f));
             yield return view.Shake(0.15f, Seconds(0.4f));

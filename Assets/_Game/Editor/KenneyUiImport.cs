@@ -12,7 +12,20 @@ namespace GoldenMend.EditorTools
         const string Folder = "Assets/ThirdParty/Kenney/";
 
         // Bump when the settings below change so Unity reimports the pack.
-        public override uint GetVersion() => 2;
+        public override uint GetVersion() => 3;
+
+        // Short effects decompress on load for zero-latency playback; everything is mono to halve memory.
+        void OnPreprocessAudio()
+        {
+            if (!assetPath.StartsWith(Folder)) return;
+            var importer = (AudioImporter)assetImporter;
+            importer.forceToMono = true;
+            var settings = importer.defaultSampleSettings;
+            settings.loadType = assetPath.Contains("/Jingles/") ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
+            settings.compressionFormat = AudioCompressionFormat.Vorbis;
+            settings.quality = 0.6f;
+            importer.defaultSampleSettings = settings;
+        }
 
         void OnPreprocessTexture()
         {

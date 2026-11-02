@@ -2,38 +2,106 @@ using UnityEngine;
 
 namespace GoldenMend.Presentation
 {
-    /// <summary>Procedural sounds: a chime that climbs a pentatonic scale through a chain.</summary>
+    /// <summary>
+    /// Sound and haptics for every board moment. Plays the <see cref="SoundBank"/> when one is set, otherwise
+    /// generated tones (tests and tools). Lock chimes climb a pentatonic scale through a chain.
+    /// </summary>
     public sealed class FeedbackService : MonoBehaviour
     {
         static readonly int[] Pentatonic = { 0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24 };
         const int SampleRate = 44100;
+        const int Voices = 6;
 
-        AudioSource source;
-        AudioClip chime;
-        AudioClip thud;
-        AudioClip buzz;
+        AudioSource[] voices;
+        int nextVoice;
+        SoundBank bank;
+        float lastUncover;
+
+        AudioClip toneChime;
+        AudioClip toneThud;
+        AudioClip toneBuzz;
 
         public bool Muted { get; set; }
 
-        public bool HapticsOn { get; set; } = true;
+        public bool HapticsOn
+        {
+            get => Haptics.Enabled;
+            set => Haptics.Enabled = value;
+        }
+
+        public void Init(SoundBank sounds) => bank = sounds;
 
         void Awake()
         {
-            source = gameObject.AddComponent<AudioSource>();
-            source.playOnAwake = false;
-            chime = Tone("chime", 880f, 0.7f, 5.5f, 0.35f);
-            thud = Tone("thud", 196f, 0.18f, 18f, 0.4f);
-            buzz = Tone("buzz", 110f, 0.45f, 4f, 0.35f, square: true);
+            voices = new AudioSource[Voices];
+            for (int i = 0; i < Voices; i++)
+            {
+                voices[i] = gameObject.AddComponent<AudioSource>();
+                voices[i].playOnAwake = false;
+            }
+            toneChime = Tone("chime", 880f, 0.7f, 5.5f, 0.35f);
+            toneThud = Tone("thud", 196f, 0.18f, 18f, 0.4f);
+            toneBuzz = Tone("buzz", 110f, 0.45f, 4f, 0.35f, square: true);
         }
 
-        /// <summary>The n-th lock within one tap plays a higher note.</summary>
-        public void Lock(int chainIndex) => Play(chime, Semitones(Pentatonic[Mathf.Min(chainIndex, Pentatonic.Length - 1)]));
+        public void Pick()
+        {
+            Play(Any(bank != null ? bank.Pick : null), Vary(), 0.7f);
+            Haptics.Tick();
+        }
 
-        public void Park() => Play(thud, 1f);
+        public void Park()
+        {
+            Play(Any(bank != null ? bank.Park : null) ?? toneThud, Vary(), 1f);
+            Haptics.Tick();
+        }
 
-        public void Fail() => Play(buzz, 1f);
+        /// <summary>The n-th lock within one tap plays a higher note and a firmer click.</summary>
+        public void Lock(int chainIndex)
+        {
+            float pitch = Semitones(Pentatonic[Mathf.Min(chainIndex, Pentatonic.Length - 1)]);
+            Play(Any(bank != null ? bank.Lock : null) ?? toneChime, pitch, 1f);
+            if (chainIndex == 0) Haptics.Click();
+            else Haptics.HeavyClick();
+        }
 
-        /// <summary>A short vibration for big moments (win, fail). Phones only.</summary>
+        public void Uncover()
+        {
+            // Several shards can open on one tap; one pluck is enough.
+            if (Time.unscaledTime - lastUncover < 0.08f) return;
+            lastUncover = Time.unscaledTime;
+            Play(Any(bank != null ? bank.Uncover : null), Vary(), 0.5f);
+        }
+
+        public void Reject()
+        {
+            Play(bank != null ? bank.Reject : null, 1f, 0.6f);
+            Haptics.Tick();
+        }
+
+        public void Expand()
+        {
+            Play(bank != null ? bank.Expand : null, 1f, 1f);
+            Haptics.DoubleClick();
+        }
+
+        public void Coins() => Play(Any(bank != null ? bank.Coins : null), 1f, 0.9f);
+
+        public void Win()
+        {
+            if (bank != null && bank.WinJingle != null) PlayJingle(bank.WinJingle);
+            else Play(toneChime, Semitones(12), 1f);
+            Haptics.Success();
+        }
+
+        public void Fail()
+        {
+            if (bank != null && bank.FailJingle != null) PlayJingle(bank.FailJingle);
+            else Play(toneBuzz, 1f, 1f);
+            Haptics.Failure();
+        }
+
+        /// <summary>Long system vibration, used only if the fine-grained haptics are unavailable.</summary>
         public void Buzz()
         {
 #if UNITY_ANDROID || UNITY_IOS
@@ -41,14 +109,33 @@ namespace GoldenMend.Presentation
 #endif
         }
 
-        public void Win(int step) => Play(chime, Semitones(Pentatonic[Mathf.Min(step * 2, Pentatonic.Length - 1)]));
-
-        void Play(AudioClip clip, float pitch)
+        void Play(AudioClip clip, float pitch, float volume)
         {
-            if (Muted || clip == null) return;
-            source.pitch = pitch;
-            source.PlayOneShot(clip);
+            if (Muted || clip == null || voices == null) return;
+            var voice = voices[nextVoice];
+            nextVoice = (nextVoice + 1) % voices.Length;
+            voice.pitch = pitch;
+            voice.volume = volume * (bank != null ? bank.EffectsVolume : 1f);
+            voice.clip = clip;
+            voice.Play();
         }
+
+        void PlayJingle(AudioClip clip)
+        {
+            if (Muted || voices == null) return;
+            var voice = voices[nextVoice];
+            nextVoice = (nextVoice + 1) % voices.Length;
+            voice.pitch = 1f;
+            voice.volume = bank.JingleVolume;
+            voice.clip = clip;
+            voice.Play();
+        }
+
+        static AudioClip Any(AudioClip[] clips) =>
+            clips == null || clips.Length == 0 ? null : clips[Random.Range(0, clips.Length)];
+
+        /// <summary>A small random pitch shift so repeated sounds don't feel mechanical.</summary>
+        static float Vary() => Random.Range(0.94f, 1.06f);
 
         static float Semitones(int n) => Mathf.Pow(2f, n / 12f);
 
