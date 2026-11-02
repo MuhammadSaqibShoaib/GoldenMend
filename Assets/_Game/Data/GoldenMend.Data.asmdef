@@ -1,0 +1,14 @@
+{
+    "name": "GoldenMend.Data",
+    "rootNamespace": "GoldenMend.Data",
+    "references": ["GoldenMend.Core"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

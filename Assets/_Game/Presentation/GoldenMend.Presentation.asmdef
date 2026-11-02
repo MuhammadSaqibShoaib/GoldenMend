@@ -1,0 +1,14 @@
+{
+    "name": "GoldenMend.Presentation",
+    "rootNamespace": "GoldenMend.Presentation",
+    "references": ["GoldenMend.Core", "GoldenMend.Data", "Unity.InputSystem"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
