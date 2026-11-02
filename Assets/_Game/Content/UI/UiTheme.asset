@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29558f999348ce34dadd8cb3e3fc0929, type: 3}
+  m_Name: UiTheme
+  m_EditorClassIdentifier: GoldenMend.Presentation::GoldenMend.Presentation.UiTheme
+  BodyFont: {fileID: 12800000, guid: 4aaa32f864fb5dc44a3e6aa319925028, type: 3}
+  TitleFont: {fileID: 12800000, guid: 96e688f410139ce43808629b9d51197d, type: 3}
+  DisplayFont: {fileID: 12800000, guid: f648da0470dc5974895fa45459bed6f5, type: 3}
+  Panel: {fileID: 21300000, guid: 81bc0ddc39c9ddb4899802dc1023e078, type: 3}
+  Button: {fileID: 21300000, guid: 5026f02812fa4bb4db3f84e68de0dac3, type: 3}
+  IconButton: {fileID: 21300000, guid: 287a8266c2b7dea49a9ecb4c12d840da, type: 3}
+  Badge: {fileID: 21300000, guid: 891a9d9321bf2bc42a178a43f1e118e3, type: 3}
+  Divider: {fileID: 21300000, guid: 541ec19f2f71d9c4bac072ad7227384d, type: 3}
+  IconRestart: {fileID: 21300000, guid: 2e82a4c0c3b7d0e4f9e4e1eeb07e9f63, type: 3}
+  IconHint: {fileID: 21300000, guid: dce8116d65ed6b04a82e86d6ee20d217, type: 3}
+  IconPrevious: {fileID: 21300000, guid: 8e8e4d1e5249978489297d39186d22cb, type: 3}
+  IconNext: {fileID: 21300000, guid: e21d99d4ea357d74c80ee1b63bcbc690, type: 3}
+  Star: {fileID: 21300000, guid: dce8116d65ed6b04a82e86d6ee20d217, type: 3}
+  Click: {fileID: 8300000, guid: 169a1d844f711124083eb99e68b39ce3, type: 3}
+  Cream: {r: 0.96, g: 0.92, b: 0.84, a: 1}
+  Paper: {r: 1, g: 0.98, b: 0.93, a: 1}
+  Indigo: {r: 0.22, g: 0.27, b: 0.45, a: 1}
+  Gold: {r: 0.97, g: 0.77, b: 0.33, a: 1}
+  Ink: {r: 0.16, g: 0.13, b: 0.12, a: 1}
+  Clay: {r: 0.8, g: 0.38, b: 0.3, a: 1}
+  Scrim: {r: 0.05, g: 0.04, b: 0.04, a: 0.62}

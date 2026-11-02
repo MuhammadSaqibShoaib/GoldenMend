@@ -1,4 +1,5 @@
 using System.IO;
+using GoldenMend.Core;
 using GoldenMend.Data;
 using GoldenMend.Presentation;
 using UnityEditor;
@@ -9,7 +10,7 @@ using UnityEngine.Rendering.Universal;
 namespace GoldenMend.EditorTools
 {
     /// <summary>
-    /// Renders the opening board of every level to PNG (Logs/Screens) without entering play mode.
+    /// Renders the opening board of every level, plus the win and fail panels, to PNG (Logs/Screens) without entering play mode.
     /// Batch mode: -executeMethod GoldenMend.EditorTools.LevelScreenshots.CaptureAll (needs graphics, not -nographics).
     /// </summary>
     public static class LevelScreenshots
@@ -45,9 +46,14 @@ namespace GoldenMend.EditorTools
             camera.targetTexture = target;
             var readback = new Texture2D(Width, Height, TextureFormat.RGB24, false);
 
-            for (int i = 0; i < LevelCatalog.Count; i++)
+            int current = 0;
+            var hud = new GameObject("HUD").AddComponent<GameHud>();
+            hud.Init(GameSceneBuilder.BuildTheme(), board, () => current, () => { }, () => { }, () => { });
+
+            void Capture(string name)
             {
-                board.Load(LevelCatalog.Build(i));
+                hud.Refresh();
+                Canvas.ForceUpdateCanvases();
                 camera.Render();
 
                 RenderTexture.active = target;
@@ -55,12 +61,22 @@ namespace GoldenMend.EditorTools
                 readback.Apply();
                 RenderTexture.active = null;
 
-                string file = Path.Combine(folder, $"level{i + 1}.png");
+                string file = Path.Combine(folder, name + ".png");
                 File.WriteAllBytes(file, readback.EncodeToPNG());
                 Debug.Log($"Golden Mend: captured {file}");
-
-                foreach (Transform child in boardObject.transform) Object.DestroyImmediate(child.gameObject);
             }
+
+            for (int i = 0; i < LevelCatalog.Count; i++)
+            {
+                current = i;
+                board.Load(LevelCatalog.Build(i));
+                Capture($"level{i + 1}");
+            }
+
+            hud.ShowPanel(GameStatus.Won);
+            Capture("panel-win");
+            hud.ShowPanel(GameStatus.Failed);
+            Capture("panel-fail");
 
             camera.targetTexture = null;
             Object.DestroyImmediate(target);

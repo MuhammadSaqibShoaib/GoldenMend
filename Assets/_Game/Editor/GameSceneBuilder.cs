@@ -1,6 +1,7 @@
 using System;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using GoldenMend.Presentation;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
@@ -16,6 +17,9 @@ namespace GoldenMend.EditorTools
     {
         public const string ScenePath = "Assets/_Game/Bootstrap/Game.unity";
         const string BootstrapType = "GoldenMend.Bootstrap.GameBootstrap, Assembly-CSharp";
+        const string ThemePath = "Assets/_Game/Content/UI/UiTheme.asset";
+        const string Kenney = "Assets/ThirdParty/Kenney/UIPack/";
+        const string Fonts = "Assets/ThirdParty/Fonts/ZenMaruGothic/";
 
         [MenuItem("Golden Mend/Rebuild Game Scene")]
         public static void Build()
@@ -40,7 +44,10 @@ namespace GoldenMend.EditorTools
             serialized.FindProperty("m_LightType").intValue = (int)Light2D.LightType.Global;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            new GameObject("Game").AddComponent(bootstrap);
+            var game = new GameObject("Game").AddComponent(bootstrap);
+            var bootstrapData = new SerializedObject(game);
+            bootstrapData.FindProperty("theme").objectReferenceValue = BuildTheme();
+            bootstrapData.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
@@ -52,6 +59,50 @@ namespace GoldenMend.EditorTools
 
             AssetDatabase.SaveAssets();
             Debug.Log($"Golden Mend: game scene saved to {ScenePath}");
+        }
+
+        /// <summary>Creates or refreshes the UI theme from the Kenney UI Pack and Zen Maru Gothic.</summary>
+        [MenuItem("Golden Mend/Rebuild UI Theme")]
+        public static UiTheme BuildTheme()
+        {
+            AssetDatabase.ImportAsset(Kenney.TrimEnd('/'), ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
+
+            var theme = AssetDatabase.LoadAssetAtPath<UiTheme>(ThemePath);
+            if (theme == null)
+            {
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(ThemePath));
+                theme = ScriptableObject.CreateInstance<UiTheme>();
+                AssetDatabase.CreateAsset(theme, ThemePath);
+            }
+
+            theme.BodyFont = Load<Font>(Fonts + "ZenMaruGothic-Regular.ttf");
+            theme.TitleFont = Load<Font>(Fonts + "ZenMaruGothic-Bold.ttf");
+            theme.DisplayFont = Load<Font>(Fonts + "ZenMaruGothic-Black.ttf");
+
+            theme.Panel = Load<Sprite>(Kenney + "Sprites/Grey/button_square_flat.png");
+            theme.Button = Load<Sprite>(Kenney + "Sprites/Grey/button_rectangle_depth_flat.png");
+            theme.IconButton = Load<Sprite>(Kenney + "Sprites/Grey/button_square_depth_flat.png");
+            theme.Badge = Load<Sprite>(Kenney + "Sprites/Grey/button_rectangle_flat.png");
+            theme.Divider = Load<Sprite>(Kenney + "Sprites/Extra/divider.png");
+
+            theme.IconRestart = Load<Sprite>(Kenney + "Sprites/Extra/icon_repeat_light.png");
+            theme.IconHint = Load<Sprite>(Kenney + "Sprites/Grey/star.png");
+            theme.IconPrevious = Load<Sprite>(Kenney + "Sprites/Grey/arrow_basic_w.png");
+            theme.IconNext = Load<Sprite>(Kenney + "Sprites/Grey/arrow_basic_e.png");
+            theme.Star = Load<Sprite>(Kenney + "Sprites/Grey/star.png");
+
+            theme.Click = Load<AudioClip>(Kenney + "Sounds/click-a.ogg");
+
+            EditorUtility.SetDirty(theme);
+            AssetDatabase.SaveAssets();
+            return theme;
+        }
+
+        static T Load<T>(string path) where T : UnityEngine.Object
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (asset == null) throw new InvalidOperationException($"Golden Mend: missing UI asset {path}");
+            return asset;
         }
     }
 }

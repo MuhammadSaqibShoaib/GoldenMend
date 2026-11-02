@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using GoldenMend.Core;
 using GoldenMend.Data;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace GoldenMend.Presentation
@@ -207,7 +208,7 @@ namespace GoldenMend.Presentation
             FitCamera();
             if (Engine == null) return;
 
-            if (AcceptPointerInput && Pointer.current != null && Pointer.current.press.wasPressedThisFrame)
+            if (AcceptPointerInput && Pointer.current != null && Pointer.current.press.wasPressedThisFrame && !PointerOverUi())
             {
                 Vector3 world = cam.ScreenToWorldPoint(Pointer.current.position.ReadValue());
                 int shard = ShardAt(world);
@@ -217,6 +218,9 @@ namespace GoldenMend.Presentation
             if (ShownStatus == GameStatus.Playing && !hintShown && Time.time - lastInputTime > HintDelay)
                 ShowHint();
         }
+
+        // Taps on HUD buttons and popups must not reach the rack behind them.
+        static bool PointerOverUi() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 
         void FitCamera()
         {

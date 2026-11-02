@@ -9,9 +9,9 @@ namespace GoldenMend.Presentation
     /// </summary>
     public sealed class BoardLayout
     {
-        public const float VesselCenterY = 3.9f;
+        public const float VesselCenterY = 3.1f;
         public const float VesselMaxWidth = 9.6f;
-        public const float VesselMaxHeight = 7.6f;
+        public const float VesselMaxHeight = 6.6f;
         public const float BenchY = -1.6f;
         public const float BenchSpacing = 2.0f;
         public const float SlotSize = 1.75f;

@@ -12,6 +12,8 @@ namespace GoldenMend.Bootstrap
     {
         const string LevelKey = "goldenmend.level";
 
+        [SerializeField] UiTheme theme;
+
         BoardPresenter board;
         GameHud hud;
         int levelIndex;
@@ -28,7 +30,8 @@ namespace GoldenMend.Bootstrap
             board = boardObject.AddComponent<BoardPresenter>();
 
             hud = gameObject.AddComponent<GameHud>();
-            hud.Init(board, () => levelIndex, Restart, Next, Previous);
+            if (theme == null) Debug.LogError("GameBootstrap has no UiTheme. Run Golden Mend > Rebuild Game Scene.", this);
+            hud.Init(theme, board, () => levelIndex, Restart, Next, Previous);
 
             levelIndex = Mathf.Clamp(PlayerPrefs.GetInt(LevelKey, 0), 0, LevelCatalog.Count - 1);
         }

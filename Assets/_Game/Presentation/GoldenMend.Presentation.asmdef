@@ -1,7 +1,7 @@
 {
     "name": "GoldenMend.Presentation",
     "rootNamespace": "GoldenMend.Presentation",
-    "references": ["GoldenMend.Core", "GoldenMend.Data", "Unity.InputSystem"],
+    "references": ["GoldenMend.Core", "GoldenMend.Data", "Unity.InputSystem", "UnityEngine.UI"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -20,7 +20,7 @@ Every level is checked by a solver to be winnable without boosters, and its diff
 2. Open `Assets/_Game/Bootstrap/Game.unity`.
 3. Set the Game view to a portrait resolution (for example 1080x1920) and press Play.
 
-HUD: Restart, Hint (also pulses after 20 s idle), and level switching. "Bench peak" compares your busiest workbench with the solver's best.
+HUD: Restart, Hint (also pulses after 20 s idle), and level switching, built in uGUI with the Kenney UI Pack and Zen Maru Gothic. "Bench peak" compares your busiest workbench with the solver's best.
 
 ## Architecture
 
@@ -30,9 +30,10 @@ The rules live in a plain C# core with no Unity dependencies; everything else is
 | --- | --- | --- |
 | `Assets/_Game/Core` | GoldenMend.Core | Rules engine (tap in, ordered events out), board state, pile rack, solver. `noEngineReferences: true`. |
 | `Assets/_Game/Data` | GoldenMend.Data | Level specs (vessel shape and rack shape as text), level builder that keeps only solver-approved deals, level catalog. |
-| `Assets/_Game/Presentation` | GoldenMend.Presentation | Board presenter, shard views, animation queue, generated vessel art and sound, HUD. |
+| `Assets/_Game/Presentation` | GoldenMend.Presentation | Board presenter, shard views, animation queue, generated vessel art and sound, uGUI HUD and popups driven by a `UiTheme` asset. |
 | `Assets/_Game/Bootstrap` | Assembly-CSharp | Composition root and the game scene. |
-| `Assets/_Game/Editor` | GoldenMend.Editor | **Golden Mend** menu: rebuild the game scene, capture level screenshots. |
+| `Assets/_Game/Editor` | GoldenMend.Editor | **Golden Mend** menu: rebuild the game scene and UI theme, capture level and panel screenshots. Kenney sprite import settings. |
+| `Assets/ThirdParty` | — | Kenney UI Pack (CC0) and Zen Maru Gothic (OFL). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). |
 | `Assets/Tests` | EditMode, PlayMode | Rule, rack, solver and level tests; presenter smoke tests that play every level to the win screen. |
 
 ## Tests
@@ -51,7 +52,7 @@ U="/c/Program Files/Unity/Hub/Editor/6000.3.8f1/Editor/Unity.exe"
 ## Roadmap
 
 - Gold seam shader and final art, haptics, full audio
-- UI Toolkit screens: home, level intro, win, continue offer, shop
+- More screens: home, level intro, continue offer, shop, settings
 - Boosters (Magnifier, Brush, Glue Pot), frozen shards, continue for +2 bench slots
 - Level editor window with one-click solving; 30+ hand-tuned levels
 - Museum meta, Gold Purity win streak, lives
