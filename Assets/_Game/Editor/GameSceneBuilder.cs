@@ -52,10 +52,10 @@ namespace GoldenMend.EditorTools
             EditorSceneManager.SaveScene(scene, ScenePath);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
 
-            PlayerSettings.productName = "Golden Mend";
-            PlayerSettings.companyName = "Portfolio Games";
+
+
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
-            PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Android, "com.portfoliogames.goldenmend");
+            AndroidBuild.ApplyPlayerSettings();
 
             AssetDatabase.SaveAssets();
             Debug.Log($"Golden Mend: game scene saved to {ScenePath}");
