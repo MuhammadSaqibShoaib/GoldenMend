@@ -9,8 +9,9 @@ namespace GoldenMend.Flow
     /// <summary>Wires the whole game together. Used by the bootstrap scene and by the screenshot tool.</summary>
     public static class GameComposition
     {
-        public static GameFlow Compose(UiTheme theme, SoundBank sounds, Camera camera, ISaveStore store, Transform parent)
+        public static GameFlow Compose(UiTheme theme, SoundBank sounds, ArtCatalog art, Camera camera, ISaveStore store, Transform parent)
         {
+            VesselArt.Catalog = art;
             var data = store.Load();
             var economy = new EconomyService(data, store);
             var progress = new ProgressService(data, LevelCatalog.Count, economy, store);

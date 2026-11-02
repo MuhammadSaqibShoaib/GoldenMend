@@ -1,15 +1,50 @@
+using System.Collections.Generic;
 using GoldenMend.Data;
 using UnityEngine;
 
 namespace GoldenMend.Presentation
 {
     /// <summary>
-    /// Paints one glazed picture across the whole vessel and cuts it into one sprite per socket.
-    /// The picture is what tells players where a shard belongs: its piece matches the faint ghost in its socket.
+    /// Gives a vessel its picture and cuts it into one sprite per socket. The picture is what tells players where a
+    /// shard belongs: its piece matches the faint ghost in its socket. With an <see cref="ArtCatalog"/> the picture is
+    /// the level's public-domain painting; without one (Classic build) a glaze is generated.
     /// </summary>
     public static class VesselArt
     {
         public const int CellPixels = 64;
+
+        static readonly HashSet<Texture> Generated = new HashSet<Texture>();
+
+        /// <summary>The paintings in use, or null for generated glazes.</summary>
+        public static ArtCatalog Catalog { get; set; }
+
+        public static Artwork ArtworkFor(LevelSpec spec)
+        {
+            var work = Catalog != null ? Catalog.Find(spec.Artwork) : null;
+            return work != null && work.Image != null ? work : null;
+        }
+
+        /// <summary>What the player calls this level: the painting's title, or the vessel's name in Classic.</summary>
+        public static string DisplayName(LevelSpec spec) => ArtworkFor(spec)?.Title ?? spec.Name;
+
+        /// <summary>"Artist, date" for a painting level, otherwise null.</summary>
+        public static string Byline(LevelSpec spec) => ArtworkFor(spec)?.Byline;
+
+        /// <summary>Frees sprites from <see cref="BuildSocketSprites"/>; generated textures go too, shared paintings stay.</summary>
+        public static void Release(Sprite[] sprites)
+        {
+            if (sprites == null || sprites.Length == 0) return;
+            var texture = sprites[0] != null ? sprites[0].texture : null;
+            foreach (var sprite in sprites) Destroy(sprite);
+            if (texture != null && Generated.Remove(texture)) Destroy(texture);
+        }
+
+        static void Destroy(Object obj)
+        {
+            if (obj == null) return;
+            if (Application.isPlaying) Object.Destroy(obj);
+            else Object.DestroyImmediate(obj);
+        }
 
         struct Palette
         {
@@ -29,6 +64,37 @@ namespace GoldenMend.Presentation
         static Color C(float r, float g, float b) => new Color(r, g, b, 1f);
 
         public static Sprite[] BuildSocketSprites(BuiltLevel level)
+        {
+            var artwork = ArtworkFor(level.Spec);
+            return artwork != null ? CutPainting(level, artwork.Image) : PaintGlaze(level);
+        }
+
+        /// <summary>Crops the painting's centre to the vessel's grid shape and cuts one square per socket.</summary>
+        static Sprite[] CutPainting(BuiltLevel level, Texture2D painting)
+        {
+            float aspect = level.Columns / (float)level.Rows;
+            float cropWidth = painting.width, cropHeight = painting.width / aspect;
+            if (cropHeight > painting.height)
+            {
+                cropHeight = painting.height;
+                cropWidth = cropHeight * aspect;
+            }
+            float x0 = (painting.width - cropWidth) * 0.5f;
+            float y0 = (painting.height - cropHeight) * 0.5f;
+            float cell = Mathf.Floor(cropWidth / level.Columns);
+
+            var sprites = new Sprite[level.Def.SocketCount];
+            for (int s = 0; s < sprites.Length; s++)
+            {
+                int col = level.SocketColumn[s];
+                int texRow = level.Rows - 1 - level.SocketRow[s];
+                var rect = new Rect(Mathf.Floor(x0 + col * cell), Mathf.Floor(y0 + texRow * cell), cell, cell);
+                sprites[s] = Sprite.Create(painting, rect, new Vector2(0.5f, 0.5f), cell, 0, SpriteMeshType.FullRect);
+            }
+            return sprites;
+        }
+
+        static Sprite[] PaintGlaze(BuiltLevel level)
         {
             int width = level.Columns * CellPixels;
             int height = level.Rows * CellPixels;
@@ -51,6 +117,7 @@ namespace GoldenMend.Presentation
             }
             tex.SetPixels32(pixels);
             tex.Apply();
+            Generated.Add(tex);
 
             var sprites = new Sprite[level.Def.SocketCount];
             for (int s = 0; s < sprites.Length; s++)

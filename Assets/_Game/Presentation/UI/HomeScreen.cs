@@ -65,7 +65,7 @@ namespace GoldenMend.Presentation.UI
             string gold = ColorUtility.ToHtmlStringRGB(T.Gold);
             nextCaption.text = allComplete
                 ? "Every vessel restored. Replay any piece from the museum."
-                : $"Next to restore  ·  <color=#{gold}>{next.Spec.Name}</color>";
+                : $"Next to restore  ·  <color=#{gold}>{VesselArt.DisplayName(next.Spec)}</color>";
             playLevel.text = allComplete ? $"Replay level {nextIndex + 1}" : $"Level {nextIndex + 1}";
         }
 

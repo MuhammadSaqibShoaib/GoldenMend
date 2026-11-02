@@ -86,7 +86,7 @@ namespace GoldenMend.Presentation
             queue.Clear();
             StopHint();
             if (boardRoot != null) Release(boardRoot.gameObject);
-            if (socketSprites != null && socketSprites.Length > 0) Release(socketSprites[0].texture);
+            VesselArt.Release(socketSprites);
             seams.Clear();
             slotFrames = null;
 
@@ -117,7 +117,7 @@ namespace GoldenMend.Presentation
             StopHint();
             StopAllCoroutines();
             if (boardRoot != null) Release(boardRoot.gameObject);
-            if (socketSprites != null && socketSprites.Length > 0) Release(socketSprites[0].texture);
+            VesselArt.Release(socketSprites);
             socketSprites = null;
             slotFrames = null;
             seams.Clear();

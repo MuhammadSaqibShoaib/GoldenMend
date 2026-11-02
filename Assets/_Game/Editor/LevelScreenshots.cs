@@ -61,7 +61,7 @@ namespace GoldenMend.EditorTools
             store.Save(save);
 
             var root = new GameObject("Game").transform;
-            var flow = GameComposition.Compose(GameSceneBuilder.BuildTheme(), GameSceneBuilder.BuildSoundBank(), camera, store, root);
+            var flow = GameComposition.Compose(GameSceneBuilder.BuildTheme(), GameSceneBuilder.BuildSoundBank(), GameSceneBuilder.BuildArtCatalog(), camera, store, root);
             var scaler = Object.FindAnyObjectByType<AdaptiveCanvasScaler>();
 
             void Capture(string screen)

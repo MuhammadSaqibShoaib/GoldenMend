@@ -129,12 +129,15 @@ namespace GoldenMend.Flow
             }
             else
             {
-                banner.Show(level.Spec.Name, BannerDetail(index, level.Spec));
+                banner.Show(VesselArt.DisplayName(level.Spec), BannerDetail(index, level.Spec));
             }
         }
 
-        static string BannerDetail(int index, LevelSpec spec) =>
-            spec.Hard ? $"Level {index + 1}  ·  hard  ·  plan your workbench" : $"Level {index + 1}";
+        static string BannerDetail(int index, LevelSpec spec)
+        {
+            string lead = VesselArt.Byline(spec) ?? $"Level {index + 1}";
+            return spec.Hard ? $"{lead}  ·  hard level" : lead;
+        }
 
         void Pause()
         {
@@ -175,7 +178,7 @@ namespace GoldenMend.Flow
                 var level = Levels[current];
                 int best = level.Solution.MinBenchPeak;
                 var result = progress.Complete(current, board.BenchPeak, best, level.Spec.Hard);
-                win.Bind(level.Spec.Name, result.Stars, result.Coins, result.FirstClear, board.BenchPeak, best, current + 1 < progress.LevelCount);
+                win.Bind(VesselArt.DisplayName(level.Spec), VesselArt.Byline(level.Spec), result.Stars, result.Coins, result.FirstClear, board.BenchPeak, best, current + 1 < progress.LevelCount);
                 hud.Hide();
                 win.Show();
                 feedback.Coins();
@@ -241,7 +244,7 @@ namespace GoldenMend.Flow
         public void PreviewWin(int stars, int coins)
         {
             var level = Levels[current];
-            win.Bind(level.Spec.Name, stars, coins, true, level.Solution.MinBenchPeak, level.Solution.MinBenchPeak, true);
+            win.Bind(VesselArt.DisplayName(level.Spec), VesselArt.Byline(level.Spec), stars, coins, true, level.Solution.MinBenchPeak, level.Solution.MinBenchPeak, true);
             banner.Hide();
             hud.Hide(true);
             win.Show();
@@ -257,7 +260,7 @@ namespace GoldenMend.Flow
         public void PreviewBanner()
         {
             var level = Levels[current];
-            banner.Show(level.Spec.Name, BannerDetail(current, level.Spec));
+            banner.Show(VesselArt.DisplayName(level.Spec), BannerDetail(current, level.Spec));
         }
     }
 }

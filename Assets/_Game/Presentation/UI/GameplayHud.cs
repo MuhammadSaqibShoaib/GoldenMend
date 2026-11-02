@@ -39,7 +39,7 @@ namespace GoldenMend.Presentation.UI
         {
             string clay = ColorUtility.ToHtmlStringRGB(T.Clay);
             caption.text = spec.Hard ? $"LEVEL {levelIndex + 1}   <color=#{clay}>HARD</color>" : $"LEVEL {levelIndex + 1}";
-            title.text = spec.Name;
+            title.text = VesselArt.DisplayName(spec);
         }
 
         /// <summary>Shows a teaching line under the level plate until <see cref="HideTip"/>.</summary>

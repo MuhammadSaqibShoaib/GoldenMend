@@ -17,6 +17,8 @@ namespace GoldenMend.EditorTools
         public const string Studio = "Tensei Games";
         public const string Product = "Golden Mend";
         public const string PackageId = "com.tenseigames.goldenmend";
+        public const string ClassicPackageId = "com.tenseigames.goldenmend.classic";
+        const string ClassicOutputPath = "Builds/Android/GoldenMend-Classic.apk";
         public const string IconPath = "Assets/_Game/Content/Icon/AppIcon.png";
         const string OutputPath = "Builds/Android/GoldenMend.apk";
 
@@ -56,24 +58,52 @@ namespace GoldenMend.EditorTools
             AssetDatabase.SaveAssets();
         }
 
+        /// <summary>
+        /// The Classic build: generated glazes instead of paintings, installed as a separate app
+        /// ("Golden Mend Classic") so both can sit on one phone. Restores the main settings and scene afterwards.
+        /// </summary>
+        [MenuItem("Golden Mend/Build Android APK (Classic glaze)")]
+        public static void BuildClassicApk()
+        {
+            try
+            {
+                GameSceneBuilder.Build(withPaintings: false);
+                ApplyPlayerSettings();
+                PlayerSettings.productName = Product + " Classic";
+                PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, ClassicPackageId);
+                Build(ClassicOutputPath);
+            }
+            finally
+            {
+                GameSceneBuilder.Build(withPaintings: true);
+                ApplyPlayerSettings();
+            }
+        }
+
         [MenuItem("Golden Mend/Build Android APK")]
         public static void BuildApk()
         {
+            GameSceneBuilder.Build(withPaintings: true);
             ApplyPlayerSettings();
+            Build(OutputPath);
+        }
+
+        static void Build(string outputPath)
+        {
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
             EditorUserBuildSettings.buildAppBundle = false;
-            Directory.CreateDirectory(Path.GetDirectoryName(OutputPath));
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
 
             var options = new BuildPlayerOptions
             {
                 scenes = new[] { GameSceneBuilder.ScenePath },
-                locationPathName = OutputPath,
+                locationPathName = outputPath,
                 target = BuildTarget.Android,
                 options = BuildOptions.None,
             };
             var report = BuildPipeline.BuildPlayer(options);
             var summary = report.summary;
-            Debug.Log($"Golden Mend: Android build {summary.result}, {summary.totalSize / (1024f * 1024f):F1} MB, {summary.totalErrors} errors, at {OutputPath}");
+            Debug.Log($"Golden Mend: Android build {summary.result}, {summary.totalErrors} errors, at {outputPath}");
             if (Application.isBatchMode && summary.result != BuildResult.Succeeded) EditorApplication.Exit(1);
         }
     }

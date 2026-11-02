@@ -58,9 +58,9 @@ namespace GoldenMend.Presentation.UI
             haptics = Row("Haptics", T.IconHaptics, -336f, on => HapticsChanged?.Invoke(on));
 
             B.Image("Divider", card, T.Divider, UiBuilder.WithAlpha(T.Gold, 0.7f), Anchor.Top, new Vector2(0f, -476f), new Vector2(560f, 6f)).preserveAspect = false;
-            B.Text("Credits", card, "Art: Kenney (kenney.nl), CC0\nFont: Zen Maru Gothic, SIL Open Font License",
-                T.BodyFont, 28, UiBuilder.WithAlpha(T.Ink, 0.6f), TextAnchor.UpperCenter, Anchor.Top, new Vector2(0f, -508f), new Vector2(700f, 100f));
-            B.Text("Version", card, $"Golden Mend  {Application.version}", T.BodyFont, 26, UiBuilder.WithAlpha(T.Ink, 0.4f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -622f), new Vector2(700f, 40f));
+            B.Text("Credits", card, "Paintings: public domain, Art Institute of Chicago and The Met (CC0)\nUI art and sounds: Kenney (kenney.nl), CC0\nFont: Zen Maru Gothic, SIL Open Font License",
+                T.BodyFont, 25, UiBuilder.WithAlpha(T.Ink, 0.6f), TextAnchor.UpperCenter, Anchor.Top, new Vector2(0f, -500f), new Vector2(720f, 110f));
+            B.Text("Version", card, $"Golden Mend  {Application.version}", T.BodyFont, 24, UiBuilder.WithAlpha(T.Ink, 0.4f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -620f), new Vector2(700f, 36f));
 
             B.Button("Done", card, "Done", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 52f), new Vector2(520f, 136f), () => Done?.Invoke());
         }
@@ -135,12 +135,13 @@ namespace GoldenMend.Presentation.UI
             B.Button("Home", sheet, "Home", ButtonStyle.Ghost, Anchor.Bottom, new Vector2(0f, 92f), new Vector2(360f, 100f), () => Home?.Invoke(), T.IconHome);
         }
 
-        public void Bind(string vesselName, int starCount, int coins, bool firstClear, int benchPeak, int bestPeak, bool hasNext)
+        public void Bind(string vesselName, string byline, int starCount, int coins, bool firstClear, int benchPeak, int bestPeak, bool hasNext)
         {
             for (int i = stars.childCount - 1; i >= 0; i--) Release(stars.GetChild(i).gameObject);
             B.Stars(stars, starCount, Anchor.Center, Vector2.zero, 118f, raised: true);
 
-            subtitle.text = firstClear ? $"{vesselName} joins your museum." : $"{vesselName}, restored once more.";
+            string piece = byline != null ? $"{vesselName} by {byline.Split(',')[0]}" : vesselName;
+            subtitle.text = firstClear ? $"{piece} joins your museum." : $"{piece}, restored once more.";
             reward.text = $"+{coins}";
             stats.text = $"Busiest workbench  {benchPeak}   ·   best possible  {bestPeak}";
             nextLabel.text = hasNext ? "Next vessel" : "To the museum";

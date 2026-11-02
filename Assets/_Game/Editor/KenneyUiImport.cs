@@ -12,7 +12,7 @@ namespace GoldenMend.EditorTools
         const string Folder = "Assets/ThirdParty/Kenney/";
 
         // Bump when the settings below change so Unity reimports the pack.
-        public override uint GetVersion() => 3;
+        public override uint GetVersion() => 4;
 
         // Short effects decompress on load for zero-latency playback; everything is mono to halve memory.
         void OnPreprocessAudio()
@@ -29,6 +29,20 @@ namespace GoldenMend.EditorTools
 
         void OnPreprocessTexture()
         {
+            if (assetPath.StartsWith("Assets/_Game/Content/Art/"))
+            {
+                // Paintings: sampled at many sizes, so keep mipmaps; 1024 is plenty for a phone vessel.
+                var art = (TextureImporter)assetImporter;
+                art.textureType = TextureImporterType.Default;
+                art.mipmapEnabled = true;
+                art.wrapMode = TextureWrapMode.Clamp;
+                art.filterMode = FilterMode.Trilinear;
+                art.maxTextureSize = 1024;
+                art.textureCompression = TextureImporterCompression.CompressedHQ;
+                art.npotScale = TextureImporterNPOTScale.None;
+                return;
+            }
+
             if (!assetPath.StartsWith(Folder)) return;
 
             var importer = (TextureImporter)assetImporter;

@@ -1,0 +1,64 @@
+{
+  "Works": [
+    {
+      "Key": "great-wave",
+      "Title": "The Great Wave",
+      "FullTitle": "Under the Wave off Kanagawa (The Great Wave)",
+      "Artist": "Katsushika Hokusai",
+      "Date": "1830/33",
+      "Museum": "Art Institute of Chicago",
+      "Url": "https://www.artic.edu/artworks/24645",
+      "License": "CC0 (public domain)"
+    },
+    {
+      "Key": "morning-mist",
+      "Title": "Morning Mist",
+      "FullTitle": "Mishima: Morning Mist",
+      "Artist": "Utagawa Hiroshige",
+      "Date": "c. 1833/34",
+      "Museum": "Art Institute of Chicago",
+      "Url": "https://www.artic.edu/artworks/10926",
+      "License": "CC0 (public domain)"
+    },
+    {
+      "Key": "bedroom",
+      "Title": "The Bedroom",
+      "FullTitle": "The Bedroom",
+      "Artist": "Vincent van Gogh",
+      "Date": "1889",
+      "Museum": "Art Institute of Chicago",
+      "Url": "https://www.artic.edu/artworks/28560",
+      "License": "CC0 (public domain)"
+    },
+    {
+      "Key": "self-portrait",
+      "Title": "Self-Portrait",
+      "FullTitle": "Self-Portrait",
+      "Artist": "Vincent van Gogh",
+      "Date": "1887",
+      "Museum": "Art Institute of Chicago",
+      "Url": "https://www.artic.edu/artworks/80607",
+      "License": "CC0 (public domain)"
+    },
+    {
+      "Key": "water-lilies",
+      "Title": "Water Lilies",
+      "FullTitle": "Water Lilies",
+      "Artist": "Claude Monet",
+      "Date": "1906",
+      "Museum": "Art Institute of Chicago",
+      "Url": "https://www.artic.edu/artworks/16568",
+      "License": "CC0 (public domain)"
+    },
+    {
+      "Key": "irises",
+      "Title": "Irises",
+      "FullTitle": "Irises",
+      "Artist": "Vincent van Gogh",
+      "Date": "1890",
+      "Museum": "The Metropolitan Museum of Art",
+      "Url": "https://www.metmuseum.org/art/collection/search/436528",
+      "License": "CC0 (public domain)"
+    }
+  ]
+}

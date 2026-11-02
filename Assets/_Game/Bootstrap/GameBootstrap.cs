@@ -13,6 +13,9 @@ namespace GoldenMend.Bootstrap
         [SerializeField] UiTheme theme;
         [SerializeField] SoundBank sounds;
 
+        [Tooltip("Public-domain paintings for the vessels. Leave empty for the generated glazes (Classic build).")]
+        [SerializeField] ArtCatalog art;
+
         void Awake()
         {
             Application.targetFrameRate = 60;
@@ -25,7 +28,7 @@ namespace GoldenMend.Bootstrap
                 return;
             }
 
-            var flow = GameComposition.Compose(theme, sounds, Camera.main, new JsonFileSaveStore(), transform);
+            var flow = GameComposition.Compose(theme, sounds, art, Camera.main, new JsonFileSaveStore(), transform);
             flow.ShowHome();
         }
     }

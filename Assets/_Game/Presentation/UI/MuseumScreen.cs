@@ -81,8 +81,9 @@ namespace GoldenMend.Presentation.UI
             VesselPreview.Build(B, niche.transform, level, look, Anchor.Center, Vector2.zero, new Vector2(330f, 250f));
             if (!isUnlocked) B.Image("Lock", niche.transform, T.IconLock, UiBuilder.WithAlpha(T.Cream, 0.85f), Anchor.Center, Vector2.zero, new Vector2(92f, 92f));
 
-            B.Text("Number", card, $"No. {index + 1}", T.TitleFont, 26, UiBuilder.WithAlpha(T.Ink, 0.45f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -336f), new Vector2(400f, 34f));
-            B.Text("Name", card, isUnlocked ? level.Spec.Name : "???", T.TitleFont, 40, T.Ink, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -368f), new Vector2(420f, 54f));
+            string byline = isUnlocked ? VesselArt.Byline(level.Spec) : null;
+            B.Text("Number", card, byline ?? $"No. {index + 1}", T.TitleFont, 26, UiBuilder.WithAlpha(T.Ink, 0.5f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -336f), new Vector2(400f, 34f));
+            B.Text("Name", card, isUnlocked ? VesselArt.DisplayName(level.Spec) : "???", T.TitleFont, 40, T.Ink, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -368f), new Vector2(420f, 54f));
 
             if (isCompleted)
             {

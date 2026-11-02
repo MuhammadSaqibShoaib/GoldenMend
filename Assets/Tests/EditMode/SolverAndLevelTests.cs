@@ -112,6 +112,18 @@ namespace GoldenMend.Tests
         }
 
         [Test]
+        public void EveryLevel_HasItsOwnPainting()
+        {
+            var keys = new System.Collections.Generic.HashSet<string>();
+            for (int i = 0; i < LevelCatalog.Count; i++)
+            {
+                var key = LevelCatalog.Spec(i).Artwork;
+                Assert.That(key, Is.Not.Null.And.Not.Empty, LevelCatalog.Spec(i).Name);
+                Assert.That(keys.Add(key), Is.True, $"{key} is used twice");
+            }
+        }
+
+        [Test]
         public void CatalogLevels_AreDeterministic()
         {
             var a = LevelCatalog.Build(3);

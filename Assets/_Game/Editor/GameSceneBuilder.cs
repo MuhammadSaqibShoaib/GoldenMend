@@ -22,7 +22,10 @@ namespace GoldenMend.EditorTools
         const string Fonts = "Assets/ThirdParty/Fonts/ZenMaruGothic/";
 
         [MenuItem("Golden Mend/Rebuild Game Scene")]
-        public static void Build()
+        public static void Build() => Build(withPaintings: true);
+
+        /// <summary>Builds the scene with the painting art, or with the generated glazes for the Classic build.</summary>
+        public static void Build(bool withPaintings)
         {
             var bootstrap = Type.GetType(BootstrapType);
             if (bootstrap == null) throw new InvalidOperationException($"Could not find {BootstrapType}. Has the project compiled?");
@@ -48,6 +51,7 @@ namespace GoldenMend.EditorTools
             var bootstrapData = new SerializedObject(game);
             bootstrapData.FindProperty("theme").objectReferenceValue = BuildTheme();
             bootstrapData.FindProperty("sounds").objectReferenceValue = BuildSoundBank();
+            bootstrapData.FindProperty("art").objectReferenceValue = withPaintings ? BuildArtCatalog() : null;
             bootstrapData.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -112,6 +116,38 @@ namespace GoldenMend.EditorTools
             EditorUtility.SetDirty(theme);
             AssetDatabase.SaveAssets();
             return theme;
+        }
+
+        const string ArtCatalogPath = "Assets/_Game/Content/Art/ArtCatalog.asset";
+        const string ArtFolder = "Assets/_Game/Content/Art/";
+
+        [System.Serializable]
+        sealed class ArtList
+        {
+            public System.Collections.Generic.List<Artwork> Works;
+        }
+
+        /// <summary>Creates or refreshes the painting catalog from Content/Art/artworks.json and the images beside it.</summary>
+        [MenuItem("Golden Mend/Rebuild Art Catalog")]
+        public static ArtCatalog BuildArtCatalog()
+        {
+            AssetDatabase.ImportAsset(ArtFolder.TrimEnd('/'), ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
+            var json = AssetDatabase.LoadAssetAtPath<TextAsset>(ArtFolder + "artworks.json");
+            if (json == null) throw new InvalidOperationException("Golden Mend: missing Content/Art/artworks.json");
+            var list = JsonUtility.FromJson<ArtList>(json.text);
+
+            var catalog = AssetDatabase.LoadAssetAtPath<ArtCatalog>(ArtCatalogPath);
+            if (catalog == null)
+            {
+                catalog = ScriptableObject.CreateInstance<ArtCatalog>();
+                AssetDatabase.CreateAsset(catalog, ArtCatalogPath);
+            }
+            catalog.Works = list.Works;
+            foreach (var work in catalog.Works) work.Image = Load<Texture2D>(ArtFolder + work.Key + ".jpg");
+
+            EditorUtility.SetDirty(catalog);
+            AssetDatabase.SaveAssets();
+            return catalog;
         }
 
         const string SoundBankPath = "Assets/_Game/Content/Audio/SoundBank.asset";

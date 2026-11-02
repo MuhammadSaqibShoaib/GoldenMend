@@ -24,7 +24,10 @@ namespace GoldenMend.Data
         public int MaxBenchPeak = 5;
         public bool Hard;
 
-        /// <summary>Glaze palette index for the generated vessel art.</summary>
+        /// <summary>Key of the public-domain painting this vessel is glazed with (Content/Art/artworks.json).</summary>
+        public string Artwork;
+
+        /// <summary>Glaze palette index for the generated vessel art (Classic build).</summary>
         public int Palette;
     }
 }

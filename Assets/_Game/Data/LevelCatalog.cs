@@ -12,7 +12,7 @@ namespace GoldenMend.Data
         {
             new LevelSpec
             {
-                Name = "Tea Bowl", Seed = 11, MinBenchPeak = 0, MaxBenchPeak = 0, Palette = 0,
+                Name = "Tea Bowl", Artwork = "great-wave", Seed = 11, MinBenchPeak = 0, MaxBenchPeak = 0, Palette = 0,
                 PileShape = new[]
                 {
                     "ooooo",
@@ -26,7 +26,7 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Rice Bowl", Seed = 23, MinBenchPeak = 0, MaxBenchPeak = 1, Palette = 1,
+                Name = "Rice Bowl", Artwork = "morning-mist", Seed = 23, MinBenchPeak = 0, MaxBenchPeak = 1, Palette = 1,
                 PileShape = new[]
                 {
                     "oooooo",
@@ -42,7 +42,7 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Sake Cup", Seed = 37, MinBenchPeak = 1, MaxBenchPeak = 2, Palette = 2,
+                Name = "Sake Cup", Artwork = "bedroom", Seed = 37, MinBenchPeak = 1, MaxBenchPeak = 2, Palette = 2,
                 PileShape = new[]
                 {
                     "oooo",
@@ -58,7 +58,7 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Ikebana Vase", Seed = 41, MinBenchPeak = 2, MaxBenchPeak = 3, Palette = 3,
+                Name = "Ikebana Vase", Artwork = "self-portrait", Seed = 41, MinBenchPeak = 2, MaxBenchPeak = 3, Palette = 3,
                 PileShape = new[]
                 {
                     "ooooo",
@@ -76,7 +76,7 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Tea Caddy", Seed = 53, CrackedCount = 2, MinBenchPeak = 1, MaxBenchPeak = 3, Palette = 4,
+                Name = "Tea Caddy", Artwork = "water-lilies", Seed = 53, CrackedCount = 2, MinBenchPeak = 1, MaxBenchPeak = 3, Palette = 4,
                 PileShape = new[]
                 {
                     "ooooo",
@@ -93,7 +93,7 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Amphora", Seed = 67, LockedBenchSlots = 1, CrackedCount = 1,
+                Name = "Amphora", Artwork = "irises", Seed = 67, LockedBenchSlots = 1, CrackedCount = 1,
                 MinBenchPeak = 3, MaxBenchPeak = 4, Hard = true, Palette = 5,
                 PileShape = new[]
                 {

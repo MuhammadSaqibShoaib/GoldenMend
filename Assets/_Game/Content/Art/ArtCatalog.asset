@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 757ab2b134e057847a84092f5b4ccb68, type: 3}
+  m_Name: ArtCatalog
+  m_EditorClassIdentifier: GoldenMend.Presentation::GoldenMend.Presentation.ArtCatalog
+  Works:
+  - Key: great-wave
+    Title: The Great Wave
+    FullTitle: Under the Wave off Kanagawa (The Great Wave)
+    Artist: Katsushika Hokusai
+    Date: 1830/33
+    Museum: Art Institute of Chicago
+    Url: https://www.artic.edu/artworks/24645
+    License: CC0 (public domain)
+    Image: {fileID: 2800000, guid: 22db8a28621a4d5449d0c3a4514a30c9, type: 3}
+  - Key: morning-mist
+    Title: Morning Mist
+    FullTitle: 'Mishima: Morning Mist'
+    Artist: Utagawa Hiroshige
+    Date: c. 1833/34
+    Museum: Art Institute of Chicago
+    Url: https://www.artic.edu/artworks/10926
+    License: CC0 (public domain)
+    Image: {fileID: 2800000, guid: 7692cf3510ea74f4bba1909b7846e881, type: 3}
+  - Key: bedroom
+    Title: The Bedroom
+    FullTitle: The Bedroom
+    Artist: Vincent van Gogh
+    Date: 1889
+    Museum: Art Institute of Chicago
+    Url: https://www.artic.edu/artworks/28560
+    License: CC0 (public domain)
+    Image: {fileID: 2800000, guid: a01ac2ae1a841524698f3972d45bb66b, type: 3}
+  - Key: self-portrait
+    Title: Self-Portrait
+    FullTitle: Self-Portrait
+    Artist: Vincent van Gogh
+    Date: 1887
+    Museum: Art Institute of Chicago
+    Url: https://www.artic.edu/artworks/80607
+    License: CC0 (public domain)
+    Image: {fileID: 2800000, guid: c31673883b2f57a47b86459131081764, type: 3}
+  - Key: water-lilies
+    Title: Water Lilies
+    FullTitle: Water Lilies
+    Artist: Claude Monet
+    Date: 1906
+    Museum: Art Institute of Chicago
+    Url: https://www.artic.edu/artworks/16568
+    License: CC0 (public domain)
+    Image: {fileID: 2800000, guid: 85749025befde9546a3d88fa46364a59, type: 3}
+  - Key: irises
+    Title: Irises
+    FullTitle: Irises
+    Artist: Vincent van Gogh
+    Date: 1890
+    Museum: The Metropolitan Museum of Art
+    Url: https://www.metmuseum.org/art/collection/search/436528
+    License: CC0 (public domain)
+    Image: {fileID: 2800000, guid: 011623ebd5c00c8468f0a1a0ac3e3cb5, type: 3}
