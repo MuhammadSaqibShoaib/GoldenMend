@@ -64,7 +64,6 @@ namespace GoldenMend.Presentation
         SpriteRenderer[] openFrames;
         GameObject[] lockIcons;
         Sprite[] socketSprites;
-        readonly List<SpriteRenderer> seams = new List<SpriteRenderer>();
 
         // The gold border around the restored part of the vessel, one segment per open cell edge.
         readonly Dictionary<long, SpriteRenderer> border = new Dictionary<long, SpriteRenderer>();
@@ -101,7 +100,6 @@ namespace GoldenMend.Presentation
             StopHint();
             if (boardRoot != null) Release(boardRoot.gameObject);
             VesselArt.Release(socketSprites);
-            seams.Clear();
             border.Clear();
             socketAtCell.Clear();
             slotFrames = null;
@@ -140,7 +138,6 @@ namespace GoldenMend.Presentation
             socketSprites = null;
             slotFrames = null;
             slotLocks = null;
-            seams.Clear();
             border.Clear();
             socketAtCell.Clear();
             Level = null;
@@ -230,7 +227,7 @@ namespace GoldenMend.Presentation
 
         /// <summary>
         /// Grows the gold border around the restored group: the new shard's open edges gain a border segment, and
-        /// edges it now shares with placed neighbours lose theirs (they become seams).
+        /// edges it now shares with placed neighbours lose theirs, so the group reads as one merged piece.
         /// </summary>
         void MarkPlaced(int socket, bool animate)
         {
@@ -511,9 +508,6 @@ namespace GoldenMend.Presentation
                     case GameEventType.ShardParked:
                         queue.Enqueue(() => ParkRoutine(e.Shard, e.Slot));
                         break;
-                    case GameEventType.SeamFormed:
-                        queue.Enqueue(() => { StartCoroutine(GrowSeam(e.Socket, e.OtherSocket)); });
-                        break;
                     case GameEventType.BenchSlotUnlocked:
                         queue.Enqueue(() => UnlockSlot(e.Slot));
                         break;
@@ -566,39 +560,13 @@ namespace GoldenMend.Presentation
             feedback.Park();
         }
 
-        IEnumerator GrowSeam(int socket, int other)
-        {
-            Vector3 a = layout.Socket(socket);
-            Vector3 b = layout.Socket(other);
-            bool sideBySide = Mathf.Abs(a.y - b.y) < 0.01f;
-            float width = layout.CellSize * 0.06f;
-            float length = layout.CellSize;
-            Vector2 full = sideBySide ? new Vector2(width, length) : new Vector2(length, width);
-
-            var seam = MakeSprite("Seam", vesselRoot, SpriteFactory.Square, (a + b) * 0.5f, Vector2.zero, PaleGold, 6);
-            seams.Add(seam);
-
-            float duration = Seconds(0.25f);
-            for (float t = 0f; t < 1f; t += Time.deltaTime / duration)
-            {
-                float e = Ease.OutCubic(t);
-                seam.transform.localScale = sideBySide
-                    ? new Vector3(full.x, full.y * e, 1f)
-                    : new Vector3(full.x * e, full.y, 1f);
-                seam.color = Color.Lerp(PaleGold, Gold, t);
-                yield return null;
-            }
-            seam.transform.localScale = new Vector3(full.x, full.y, 1f);
-            seam.color = Gold;
-        }
-
         IEnumerator WinRoutine()
         {
             ShownStatus = GameStatus.Won;
             feedback.Win();
             yield return new WaitForSeconds(Seconds(0.2f));
 
-            // Beauty shot: a slow turn and swell while every seam flashes.
+            // Beauty shot: a slow turn and swell while the gold border flashes.
             float duration = Seconds(1.4f);
             for (float t = 0f; t < 1f; t += Time.deltaTime / duration)
             {
@@ -606,14 +574,12 @@ namespace GoldenMend.Presentation
                 vesselRoot.localScale = Vector3.one * (1f + 0.07f * swell);
                 vesselRoot.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(t * Mathf.PI * 2f) * 4f * (1f - t));
                 var glow = Color.Lerp(Gold, PaleGold, swell);
-                foreach (var seam in seams) seam.color = glow;
                 foreach (var segment in border.Values) segment.color = glow;
 
                 yield return null;
             }
             vesselRoot.localScale = Vector3.one;
             vesselRoot.localRotation = Quaternion.identity;
-            foreach (var seam in seams) seam.color = Gold;
             foreach (var segment in border.Values) segment.color = Gold;
 
             StatusShown?.Invoke(GameStatus.Won);

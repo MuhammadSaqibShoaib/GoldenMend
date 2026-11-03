@@ -165,15 +165,6 @@ namespace GoldenMend.Presentation
 
                     color = motif(u, v, color, palette, seed);
 
-                    int cellX = Mathf.Min(x / CellPixels, level.Columns - 1);
-                    int cellY = Mathf.Min(y / CellPixels, level.Rows - 1);
-                    float jitter = (Hash(cellX + seed, cellY) - 0.5f) * 0.08f;
-                    color = new Color(color.r + jitter, color.g + jitter, color.b + jitter, 1f);
-
-                    int ex = x % CellPixels, ey = y % CellPixels;
-                    int edge = Mathf.Min(Mathf.Min(ex, CellPixels - 1 - ex), Mathf.Min(ey, CellPixels - 1 - ey));
-                    if (edge < 4) color *= 0.84f + edge * 0.04f;
-
                     color.a = 1f;
                     pixels[y * width + x] = color;
                 }
