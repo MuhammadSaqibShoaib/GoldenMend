@@ -116,6 +116,7 @@ namespace GoldenMend.Presentation.UI
         readonly Text subtitle;
         readonly Text reward;
         readonly Text stats;
+        readonly Text record;
         readonly Text nextLabel;
 
         public WinSheet(UiRoot ui) : base(ui, "Level Complete", popup: true)
@@ -128,14 +129,17 @@ namespace GoldenMend.Presentation.UI
             B.Text("Title", sheet, "Restored!", T.DisplayFont, 96, T.Indigo, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -84f), new Vector2(900f, 120f));
             subtitle = B.Text("Subtitle", sheet, "", T.BodyFont, 36, UiBuilder.WithAlpha(T.Ink, 0.8f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -204f), new Vector2(900f, 56f));
             reward = B.CoinPill("Reward", sheet, UiBuilder.WithAlpha(T.Gold, 0.35f), "+0", T.Ink, 50, Anchor.Top, new Vector2(0f, -288f), new Vector2(300f, 104f));
-            stats = B.Text("Stats", sheet, "", T.BodyFont, UiType.Caption, UiBuilder.WithAlpha(T.Ink, 0.55f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -414f), new Vector2(900f, 48f));
+            stats = B.Text("Stats", sheet, "", T.BodyFont, UiType.Caption, UiBuilder.WithAlpha(T.Ink, 0.55f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -392f), new Vector2(900f, 44f));
+            record = B.Text("Record", sheet, "", T.TitleFont, UiType.Caption, T.Indigo, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -436f), new Vector2(900f, 44f));
 
             var next = B.Button("Next", sheet, "Next vessel", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 212f), new Vector2(680f, 156f), () => Next?.Invoke(), T.IconPlay);
             nextLabel = next.GetComponentInChildren<Text>();
             B.Button("Home", sheet, "Home", ButtonStyle.Ghost, Anchor.Bottom, new Vector2(0f, 92f), new Vector2(360f, 100f), () => Home?.Invoke(), T.IconHome);
         }
 
-        public void Bind(string vesselName, string byline, int starCount, int coins, bool firstClear, int benchPeak, int bestPeak, bool hasNext)
+        /// <param name="recordLine">The personal-record line under the stats, for example "New personal best!"; may be empty.</param>
+        public void Bind(string vesselName, string byline, int starCount, int coins, bool firstClear, int benchPeak, int bestPeak, bool hasNext,
+            string recordLine = "")
         {
             for (int i = stars.childCount - 1; i >= 0; i--) Release(stars.GetChild(i).gameObject);
             B.Stars(stars, starCount, Anchor.Center, Vector2.zero, 118f, raised: true);
@@ -144,6 +148,7 @@ namespace GoldenMend.Presentation.UI
             subtitle.text = firstClear ? $"{piece} joins your museum." : $"{piece}, restored once more.";
             reward.text = $"+{coins}";
             stats.text = $"Busiest workbench  {benchPeak}   ·   best possible  {bestPeak}";
+            record.text = recordLine ?? "";
             nextLabel.text = hasNext ? "Next vessel" : "To the museum";
         }
 
@@ -208,6 +213,61 @@ namespace GoldenMend.Presentation.UI
             bool canAfford = coins >= cost;
             SetInteractable(continueButton, canAfford);
             shortfall.text = canAfford ? "" : $"Not enough coins (you have {coins})";
+        }
+
+        protected override void OnShow() => Ui.Pop(card);
+    }
+
+    /// <summary>
+    /// Offer for a helper the player is about to pay for (a hint once the free ones are gone, or the pull
+    /// booster): coins as the main action, a rewarded ad when one is ready, and a quiet way out.
+    /// </summary>
+    public sealed class HelpOffer : UiView
+    {
+        public Action Buy;
+        public Action WatchAd;
+        public Action Close;
+
+        readonly RectTransform card;
+        readonly Text title;
+        readonly Text body;
+        readonly Button buyButton;
+        readonly Text buyLabel;
+        readonly Text price;
+        readonly Button adButton;
+        readonly Text shortfall;
+
+        public HelpOffer(UiRoot ui) : base(ui, "Help Offer", popup: true)
+        {
+            card = B.Card("Card", Root, Anchor.Center, Vector2.zero, new Vector2(800f, 780f));
+            var badge = B.Image("Badge", card, T.Circle, T.Gold, Anchor.Top, new Vector2(0f, 76f), new Vector2(152f, 152f));
+            B.Image("Icon", badge.transform, T.IconHint, T.Ink, Anchor.Center, Vector2.zero, new Vector2(84f, 84f));
+            B.IconButton("Close", card, T.IconClose, ButtonStyle.Ghost, Anchor.TopRight, new Vector2(-20f, -20f), 100f, () => Close?.Invoke());
+
+            title = B.Text("Title", card, "", T.DisplayFont, UiType.H1, T.Indigo, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -100f), new Vector2(740f, 100f));
+            body = B.Text("Body", card, "", T.BodyFont, 36, UiBuilder.WithAlpha(T.Ink, 0.8f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -206f), new Vector2(700f, 110f));
+
+            buyButton = B.Button("Buy", card, "", ButtonStyle.Primary, Anchor.Top, new Vector2(0f, -352f), new Vector2(640f, 150f), () => Buy?.Invoke());
+            buyLabel = buyButton.GetComponentInChildren<Text>();
+            buyLabel.alignment = TextAnchor.MiddleLeft;
+            buyLabel.rectTransform.offsetMin = new Vector2(48f, buyLabel.rectTransform.offsetMin.y);
+            buyLabel.rectTransform.offsetMax = new Vector2(-220f, buyLabel.rectTransform.offsetMax.y);
+            price = B.CoinPill("Price", buyButton.transform, UiBuilder.WithAlpha(T.Ink, 0.14f), "0", T.Ink, 40, Anchor.Right, new Vector2(-28f, 5f), new Vector2(170f, 92f));
+
+            shortfall = B.Text("Shortfall", card, "", T.BodyFont, 28, T.Clay, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -512f), new Vector2(700f, 44f));
+            adButton = B.Button("Watch ad", card, "Watch an ad", ButtonStyle.Secondary, Anchor.Top, new Vector2(0f, -576f), new Vector2(640f, 128f), () => WatchAd?.Invoke(), T.IconPlay);
+        }
+
+        public void Bind(string heading, string description, string action, int cost, int coins, bool adReady)
+        {
+            title.text = heading;
+            body.text = description;
+            buyLabel.text = action;
+            price.text = cost.ToString();
+            bool canAfford = coins >= cost;
+            SetInteractable(buyButton, canAfford);
+            shortfall.text = canAfford ? "" : $"Not enough coins (you have {coins})";
+            adButton.gameObject.SetActive(adReady);
         }
 
         protected override void OnShow() => Ui.Pop(card);

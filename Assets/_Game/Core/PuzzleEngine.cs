@@ -93,7 +93,24 @@ namespace GoldenMend.Core
         public IReadOnlyList<GameEvent> Tap(int shard)
         {
             if (shard < 0 || shard >= Level.Shards.Count || !CanTap(shard)) return Rejected;
+            return Take(shard);
+        }
 
+        /// <summary>
+        /// The pull booster: lifts a shard straight out of the pile, buried or not, and locks it into the vessel.
+        /// Only a shard that fits right now can be pulled. An empty result means the pull was rejected.
+        /// </summary>
+        public IReadOnlyList<GameEvent> Pull(int shard)
+        {
+            if (!CanPull(shard)) return Rejected;
+            return Take(shard);
+        }
+
+        public bool CanPull(int shard) =>
+            shard >= 0 && shard < Level.Shards.Count && State.Status == GameStatus.Playing && State.InPile[shard] && CanLock(shard);
+
+        IReadOnlyList<GameEvent> Take(int shard)
+        {
             var events = new List<GameEvent>();
 
             var lockedBefore = LockedShards();
@@ -129,6 +146,72 @@ namespace GoldenMend.Core
                 events.Add(GameEvent.Won());
             }
             return events;
+        }
+
+        /// <summary>
+        /// How many shards still in the pile stand between this shard and being tappable: the ones stacked on it,
+        /// plus the fewest a grid path to the top edge has to clear. 0 when it can be tapped now.
+        /// </summary>
+        public int DigCost(int shard)
+        {
+            if (!State.InPile[shard]) return 0;
+            return CoverCost(shard, new bool[Level.Shards.Count]) + GridCost(shard);
+        }
+
+        int CoverCost(int shard, bool[] seen)
+        {
+            int cost = 0;
+            foreach (int above in Level.Shards[shard].CoveredBy)
+            {
+                if (!State.InPile[above] || seen[above]) continue;
+                seen[above] = true;
+                cost += 1 + CoverCost(above, seen);
+            }
+            return cost;
+        }
+
+        // Fewest occupied cells a path from the shard's cell to the top edge crosses (0-1 breadth-first search).
+        int GridCost(int shard)
+        {
+            var pile = Level.Pile;
+            if (pile == null) return 0;
+
+            var occupied = new bool[pile.CellCount];
+            for (int i = 0; i < State.InPile.Length; i++)
+            {
+                if (State.InPile[i] && i != shard) occupied[pile.ShardCell[i]] = true;
+            }
+
+            var cost = new int[pile.CellCount];
+            for (int i = 0; i < cost.Length; i++) cost[i] = int.MaxValue;
+            var deque = new LinkedList<int>();
+            int start = pile.ShardCell[shard];
+            cost[start] = 0;
+            deque.AddFirst(start);
+            int best = int.MaxValue;
+            while (deque.Count > 0)
+            {
+                int cell = deque.First.Value;
+                deque.RemoveFirst();
+                if (pile.Row(cell) == 0) best = Math.Min(best, cost[cell]);
+
+                int col = pile.Column(cell), row = pile.Row(cell);
+                if (col > 0) Step(cell, cell - 1);
+                if (col < pile.Columns - 1) Step(cell, cell + 1);
+                if (row > 0) Step(cell, cell - pile.Columns);
+                if (row < pile.Rows - 1) Step(cell, cell + pile.Columns);
+            }
+            return best == int.MaxValue ? 0 : best;
+
+            void Step(int from, int to)
+            {
+                if (pile.Walls[to]) return;
+                int weight = occupied[to] ? 1 : 0;
+                if (cost[from] + weight >= cost[to]) return;
+                cost[to] = cost[from] + weight;
+                if (weight == 0) deque.AddFirst(to);
+                else deque.AddLast(to);
+            }
         }
 
         /// <summary>

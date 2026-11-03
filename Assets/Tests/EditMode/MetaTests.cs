@@ -54,7 +54,7 @@ namespace GoldenMend.Tests
             var first = progress.Complete(0, 0, 0, hard: false);
             var replay = progress.Complete(0, 0, 0, hard: false);
 
-            Assert.That(first.Coins, Is.EqualTo(30));
+            Assert.That(first.Coins, Is.EqualTo(30 + ProgressService.CleanBonusCoins));
             Assert.That(first.FirstClear, Is.True);
             Assert.That(replay.Coins, Is.LessThan(first.Coins));
             Assert.That(economy.Coins, Is.EqualTo(start + first.Coins + replay.Coins));
@@ -65,7 +65,7 @@ namespace GoldenMend.Tests
         {
             var (progress, _, _) = Fresh();
 
-            Assert.That(progress.Complete(0, 0, 0, hard: true).Coins, Is.EqualTo(60));
+            Assert.That(progress.Complete(0, 0, 0, hard: true).Coins, Is.EqualTo(60 + ProgressService.CleanBonusCoins));
         }
 
         [Test]
@@ -76,6 +76,55 @@ namespace GoldenMend.Tests
             progress.Complete(0, 5, 0, false);
 
             Assert.That(progress.StarsFor(0), Is.EqualTo(3));
+        }
+
+        [Test]
+        public void CleanBonus_IsPaidOnlyForTheFirstWinWithoutHelp()
+        {
+            var (progress, _, _) = Fresh();
+
+            var helped = progress.Complete(0, new RunStats(0, 30f, hints: 1), 0, false);
+            var clean = progress.Complete(0, new RunStats(0, 30f), 0, false);
+            var again = progress.Complete(0, new RunStats(0, 30f), 0, false);
+
+            Assert.That(helped.CleanBonus, Is.Zero);
+            Assert.That(clean.CleanBonus, Is.EqualTo(ProgressService.CleanBonusCoins));
+            Assert.That(again.CleanBonus, Is.Zero);
+        }
+
+        [Test]
+        public void PersonalRecord_IsTheLowestPeakThenTheFastestTime()
+        {
+            var (progress, _, _) = Fresh();
+
+            var first = progress.Complete(0, new RunStats(3, 50f), 2, false);
+            var slower = progress.Complete(0, new RunStats(3, 60f), 2, false);
+            var faster = progress.Complete(0, new RunStats(3, 40f), 2, false);
+            var lowerPeak = progress.Complete(0, new RunStats(2, 90f), 2, false);
+
+            Assert.That(first.NewRecord, Is.False, "a first win sets the record without announcing one");
+            Assert.That(slower.NewRecord, Is.False);
+            Assert.That(faster.NewRecord, Is.True);
+            Assert.That(lowerPeak.NewRecord, Is.True);
+            Assert.That(progress.BestPeakFor(0), Is.EqualTo(2));
+            Assert.That(progress.BestSecondsFor(0), Is.EqualTo(90f));
+        }
+
+        [Test]
+        public void CleanRecord_IgnoresRunsThatUsedHelp()
+        {
+            var store = new MemorySaveStore();
+            var data = store.Load();
+            var progress = new ProgressService(data, 3, new EconomyService(data, store), store);
+
+            progress.Complete(0, new RunStats(1, 20f, pulls: 1, moves: "p4"), 1, false);
+            progress.Complete(0, new RunStats(2, 45f, moves: "t0 t1"), 1, false);
+
+            var record = data.Levels[0];
+            Assert.That(record.BestPeak, Is.EqualTo(1));
+            Assert.That(record.CleanPeak, Is.EqualTo(2));
+            Assert.That(record.CleanRun, Is.EqualTo("t0 t1"));
+            Assert.That(record.PullsUsed, Is.EqualTo(1));
         }
 
         [Test]
@@ -102,6 +151,21 @@ namespace GoldenMend.Tests
             Assert.That(economy.TrySpend(economy.Coins + 1), Is.False);
             Assert.That(economy.TrySpend(10), Is.True);
             Assert.That(economy.Coins, Is.EqualTo(SaveData.StartingCoins - 10));
+        }
+
+        [Test]
+        public void Hints_StartWithAFreeStockAndCanBeBought()
+        {
+            var store = new MemorySaveStore();
+            var economy = new EconomyService(store.Load(), store);
+
+            Assert.That(economy.Hints, Is.EqualTo(SaveData.StartingHints));
+            for (int i = 0; i < SaveData.StartingHints; i++) Assert.That(economy.TryUseHint(), Is.True);
+            Assert.That(economy.TryUseHint(), Is.False);
+
+            Assert.That(economy.TryBuyHint(), Is.True);
+            Assert.That(economy.Hints, Is.EqualTo(1));
+            Assert.That(economy.Coins, Is.EqualTo(SaveData.StartingCoins - EconomyService.HintCost));
         }
 
         [Test]

@@ -32,6 +32,7 @@ namespace GoldenMend.Flow
         ProgressService progress;
         EconomyService economy;
         SettingsService settings;
+        IRewardedAds ads;
 
         HomeScreen home;
         MuseumScreen museum;
@@ -41,6 +42,7 @@ namespace GoldenMend.Flow
         WinSheet win;
         FailPopup fail;
         LevelBanner banner;
+        HelpOffer offer;
 
         int current = -1;
         bool settingsFromPause;
@@ -52,8 +54,10 @@ namespace GoldenMend.Flow
         public ProgressService Progress => progress;
         public EconomyService Economy => economy;
 
-        public void Init(BoardPresenter board, UiRoot ui, FeedbackService feedback, ProgressService progress, EconomyService economy, SettingsService settings)
+        public void Init(BoardPresenter board, UiRoot ui, FeedbackService feedback, ProgressService progress, EconomyService economy, SettingsService settings,
+            IRewardedAds ads = null)
         {
+            this.ads = ads ?? new NoRewardedAds();
             this.board = board;
             this.ui = ui;
             this.feedback = feedback;
@@ -63,7 +67,9 @@ namespace GoldenMend.Flow
 
             home = new HomeScreen(ui) { Play = () => StartLevel(progress.NextLevel), OpenMuseum = ShowMuseum, OpenSettings = () => OpenSettings(false) };
             museum = new MuseumScreen(ui) { Back = ShowHome, PlayLevel = StartLevel };
-            hud = new GameplayHud(ui) { Pause = Pause, Hint = () => board.ShowHint() };
+            hud = new GameplayHud(ui) { Pause = Pause, Hint = OnHint, Pull = OfferPull };
+            hud.SetPullPrice(EconomyService.PullCost);
+            offer = new HelpOffer(ui) { Close = CloseOffer };
             pause = new PausePopup(ui) { Resume = Resume, Restart = () => StartLevel(current), Settings = () => OpenSettings(true), Home = ShowHome };
             settingsPopup = new SettingsPopup(ui)
             {
@@ -76,7 +82,13 @@ namespace GoldenMend.Flow
             banner = new LevelBanner(ui);
 
             board.StatusShown += OnStatusShown;
-            board.ShardTapped += _ => hud.HideTip();
+            board.ShardTapped += _ =>
+            {
+                hud.HideTip();
+                RefreshHelpers();
+            };
+            board.Idle += hud.NudgeHint;
+            economy.HintsChanged += hud.SetHints;
             settings.Changed += ApplySettings;
             ApplySettings();
         }
@@ -120,6 +132,7 @@ namespace GoldenMend.Flow
             var level = Levels[index];
             board.Load(level);
             hud.Bind(index, level.Spec);
+            RefreshHelpers();
             hud.Show();
             State = FlowState.Playing;
 
@@ -138,6 +151,72 @@ namespace GoldenMend.Flow
             if (spec.LockedBenchSlots > 0) return "Hard  ·  one bench slot opens after 3 repairs";
             string lead = $"Level {index + 1}  ·  {VesselArt.Byline(spec)}";
             return spec.Hard ? $"{lead}  ·  hard" : lead;
+        }
+
+        void RefreshHelpers()
+        {
+            hud.SetHints(economy.Hints);
+            hud.SetPullAvailable(board.CanPull);
+        }
+
+        // A hint comes from the stock; when it is empty the offer sells one (coins or an ad) and uses it at once.
+        void OnHint()
+        {
+            if (State != FlowState.Playing || board.HintActive) return;
+            if (economy.Hints > 0)
+            {
+                if (board.ShowHint()) economy.TryUseHint();
+                return;
+            }
+
+            offer.Bind("Need a hint?", "Shows the piece that fits right now,\neven if it is buried.", "Get a hint", EconomyService.HintCost, economy.Coins, ads.IsReady);
+            offer.Buy = () =>
+            {
+                if (!economy.TryBuyHint()) return;
+                CloseOffer();
+                if (board.ShowHint()) economy.TryUseHint();
+            };
+            offer.WatchAd = () => ads.Show(watched =>
+            {
+                CloseOffer();
+                if (!watched) return;
+                economy.GrantHints(1);
+                if (board.ShowHint()) economy.TryUseHint();
+            });
+            OpenOffer();
+        }
+
+        // The pull booster always asks first: it costs more than a hint and lifts a piece out for the player.
+        void OfferPull()
+        {
+            if (State != FlowState.Playing || !board.CanPull) return;
+            offer.Bind("Pull a piece", "Lifts a buried piece that fits\nstraight into the vessel.", "Pull it out", EconomyService.PullCost, economy.Coins, ads.IsReady);
+            offer.Buy = () =>
+            {
+                if (!economy.TrySpend(EconomyService.PullCost)) return;
+                CloseOffer();
+                if (!board.Pull()) economy.Grant(EconomyService.PullCost);
+                RefreshHelpers();
+            };
+            offer.WatchAd = () => ads.Show(watched =>
+            {
+                CloseOffer();
+                if (watched) board.Pull();
+                RefreshHelpers();
+            });
+            OpenOffer();
+        }
+
+        void OpenOffer()
+        {
+            board.AcceptPointerInput = false;
+            offer.Show();
+        }
+
+        void CloseOffer()
+        {
+            offer.Hide();
+            board.AcceptPointerInput = true;
         }
 
         void Pause()
@@ -178,8 +257,10 @@ namespace GoldenMend.Flow
             {
                 var level = Levels[current];
                 int best = level.Solution.MinBenchPeak;
-                var result = progress.Complete(current, board.BenchPeak, best, level.Spec.Hard);
-                win.Bind(VesselArt.DisplayName(level.Spec), null, result.Stars, result.Coins, result.FirstClear, board.BenchPeak, best, current + 1 < progress.LevelCount);
+                var run = new RunStats(board.BenchPeak, board.PlaySeconds, board.HintsUsed, board.PullsUsed, board.ContinuesUsed, board.Moves);
+                var result = progress.Complete(current, run, best, level.Spec.Hard);
+                win.Bind(VesselArt.DisplayName(level.Spec), null, result.Stars, result.Coins, result.FirstClear, board.BenchPeak, best,
+                    current + 1 < progress.LevelCount, RecordLine(run, result));
                 hud.Hide();
                 win.Show();
                 feedback.Coins();
@@ -191,6 +272,24 @@ namespace GoldenMend.Flow
                 fail.Show();
                 State = FlowState.WorkbenchFull;
             }
+        }
+
+        /// <summary>The win sheet's record line: this run's time against the player's best on this level.</summary>
+        static string RecordLine(RunStats run, LevelResult result)
+        {
+            string line;
+            if (result.NewRecord) line = $"New personal best!   {Clock(run.Seconds)}";
+            else if (result.FirstClear) line = $"Time  {Clock(run.Seconds)}";
+            else line = $"Time  {Clock(run.Seconds)}   ·   best  {Clock(result.BestSeconds)} (workbench {result.BestPeak})";
+            if (result.CleanBonus > 0) line += $"   ·   no-help bonus +{result.CleanBonus}";
+            return line;
+        }
+
+        static string Clock(float seconds)
+        {
+            if (seconds < 0f) return "--:--";
+            int total = Mathf.RoundToInt(seconds);
+            return $"{total / 60}:{total % 60:00}";
         }
 
         void ContinueRun()
@@ -223,6 +322,8 @@ namespace GoldenMend.Flow
             settingsPopup.Hide(true);
             win.Hide(true);
             fail.Hide(true);
+            offer.Hide(true);
+            board.AcceptPointerInput = true;
             hud.HideTip();
             banner.Hide();
         }
@@ -245,7 +346,8 @@ namespace GoldenMend.Flow
         public void PreviewWin(int stars, int coins)
         {
             var level = Levels[current];
-            win.Bind(VesselArt.DisplayName(level.Spec), null, stars, coins, true, level.Solution.MinBenchPeak, level.Solution.MinBenchPeak, true);
+            win.Bind(VesselArt.DisplayName(level.Spec), null, stars, coins, true, level.Solution.MinBenchPeak, level.Solution.MinBenchPeak, true,
+                $"New personal best!   0:42   ·   no-help bonus +{ProgressService.CleanBonusCoins}");
             banner.Hide();
             hud.Hide(true);
             win.Show();

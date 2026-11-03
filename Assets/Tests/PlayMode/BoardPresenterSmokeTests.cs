@@ -92,11 +92,30 @@ namespace GoldenMend.Tests
             board.Load(LevelCatalog.Build(2));
             int before = board.TapCount;
 
-            board.ShowHint();
+            Assert.That(board.ShowHint(), Is.True);
             yield return null;
 
+            Assert.That(board.HintActive, Is.True);
+            Assert.That(board.ShowHint(), Is.False, "a second press while the glow shows must not use another hint");
+            Assert.That(board.HintsUsed, Is.EqualTo(1));
             Assert.That(board.TapCount, Is.EqualTo(before));
             Assert.That(board.Engine.State.Status, Is.EqualTo(GameStatus.Playing));
+        }
+
+        [UnityTest]
+        public IEnumerator Pull_PlacesTheHintedShardAndClearsTheHint()
+        {
+            board.Load(LevelCatalog.Build(4));
+            board.ShowHint();
+            int placedBefore = board.Engine.State.Placements;
+
+            Assert.That(board.Pull(), Is.True);
+            float end = Time.realtimeSinceStartup + 5f;
+            while (board.IsAnimating && Time.realtimeSinceStartup < end) yield return null;
+
+            Assert.That(board.Engine.State.Placements, Is.GreaterThan(placedBefore));
+            Assert.That(board.HintActive, Is.False);
+            Assert.That(board.PullsUsed, Is.EqualTo(1));
         }
 
         IEnumerator WaitForShownStatus(float timeout)

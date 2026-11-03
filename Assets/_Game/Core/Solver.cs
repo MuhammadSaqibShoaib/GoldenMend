@@ -88,29 +88,51 @@ namespace GoldenMend.Core
         }
 
         /// <summary>
-        /// The one shard a hint points at: an open shard that locks straight into the vessel and keeps the level
-        /// winnable; if none can lock yet, the solver's next move; if the level is already lost, any open shard.
+        /// The one shard a hint points at: a shard that fits the vessel right now, even if it is still buried,
+        /// choosing the one with the fewest shards in the way. Placing a fitting shard never makes a level harder,
+        /// so no search is needed. Falls back to the solver's next move only if nothing in the pile fits.
         /// </summary>
-        public static int HintMove(PuzzleEngine from, int maxStates = DefaultMaxStates)
+        public static int HintTarget(PuzzleEngine from, int maxStates = DefaultMaxStates)
         {
             if (from.State.Status != GameStatus.Playing) return -1;
 
+            int best = -1, bestCost = int.MaxValue;
             for (int shard = 0; shard < from.Level.Shards.Count; shard++)
             {
-                if (!from.CanTap(shard) || !from.CanLock(shard)) continue;
-                var next = from.Clone();
-                next.Tap(shard);
-                if (next.State.Status == GameStatus.Won || Solve(next, maxStates).Status == SolveStatus.Solved) return shard;
+                if (!from.CanPull(shard)) continue;
+                int cost = from.DigCost(shard);
+                if (cost < bestCost)
+                {
+                    best = shard;
+                    bestCost = cost;
+                }
             }
-
-            int best = BestMove(from, maxStates);
             if (best >= 0) return best;
 
+            int move = BestMove(from, maxStates);
+            if (move >= 0) return move;
             for (int shard = 0; shard < from.Level.Shards.Count; shard++)
             {
                 if (from.CanTap(shard)) return shard;
             }
             return -1;
+        }
+
+        /// <summary>The shard the pull booster lifts out: the fitting shard buried deepest, so the pull saves the most digging.</summary>
+        public static int PullTarget(PuzzleEngine from)
+        {
+            int best = -1, bestCost = -1;
+            for (int shard = 0; shard < from.Level.Shards.Count; shard++)
+            {
+                if (!from.CanPull(shard)) continue;
+                int cost = from.DigCost(shard);
+                if (cost > bestCost)
+                {
+                    best = shard;
+                    bestCost = cost;
+                }
+            }
+            return best;
         }
 
         static int Search(PuzzleEngine engine, Context ctx)

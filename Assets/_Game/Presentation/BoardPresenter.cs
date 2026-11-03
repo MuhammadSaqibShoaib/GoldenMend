@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using GoldenMend.Core;
 using GoldenMend.Data;
 using UnityEngine;
@@ -34,11 +35,14 @@ namespace GoldenMend.Presentation
         /// <summary>Raised after every accepted tap.</summary>
         public event Action<int> ShardTapped;
 
+        /// <summary>Raised once when the player has not tapped for <see cref="IdleNudgeDelay"/> seconds.</summary>
+        public event Action Idle;
+
         [Tooltip("1 = design speed. Raise it to fast-forward animations, for example in tests.")]
         public float AnimationSpeed = 1f;
 
-        [Tooltip("Seconds without a tap before a hint pulses (GDD: 20 s).")]
-        public float HintDelay = 20f;
+        [Tooltip("Seconds without a tap before the HUD nudges the hint button. Hints are never given for free.")]
+        public float IdleNudgeDelay = 20f;
 
         public bool AcceptPointerInput = true;
 
@@ -46,6 +50,18 @@ namespace GoldenMend.Presentation
         public PuzzleEngine Engine { get; private set; }
         public int BenchPeak { get; private set; }
         public int TapCount { get; private set; }
+
+        // Help used and moves made this run, for records and replay checks.
+        public int HintsUsed { get; private set; }
+        public int PullsUsed { get; private set; }
+        public int ContinuesUsed { get; private set; }
+        public string Moves => moves.ToString();
+
+        /// <summary>Play time of the run, frozen at the winning move. Pauses stop the clock (time scale 0).</summary>
+        public float PlaySeconds => wonAt >= 0f ? wonAt - startedAt : Time.time - startedAt;
+
+        /// <summary>A hint glow is showing; it stays until its shard is placed.</summary>
+        public bool HintActive => hintShard >= 0;
 
         /// <summary>The status the player has seen so far; it lags the engine while animations play.</summary>
         public GameStatus ShownStatus { get; private set; }
@@ -76,11 +92,16 @@ namespace GoldenMend.Presentation
         int shownUnlocks;
 
         GameObject hintGlow;
-
-        float lastInputTime;
-        bool hintShown;
+        GameObject hintSocketGlow;
+        int hintShard = -1;
         ShardView hintView;
         Coroutine hintRoutine;
+
+        float lastInputTime;
+        bool idleRaised;
+        float startedAt;
+        float wonAt;
+        readonly StringBuilder moves = new StringBuilder();
 
         void Awake() => EnsureInitialized();
 
@@ -111,9 +132,15 @@ namespace GoldenMend.Presentation
             layout = new BoardLayout(level);
             BenchPeak = 0;
             TapCount = 0;
+            HintsUsed = 0;
+            PullsUsed = 0;
+            ContinuesUsed = 0;
+            moves.Clear();
             ShownStatus = GameStatus.Playing;
             lastInputTime = Time.time;
-            hintShown = false;
+            idleRaised = false;
+            startedAt = Time.time;
+            wonAt = -1f;
 
             socketSprites = VesselArt.BuildSocketSprites(level);
             boardRoot = new GameObject("Board").transform;
@@ -153,6 +180,8 @@ namespace GoldenMend.Presentation
 
             ShownStatus = GameStatus.Playing;
             lastInputTime = Time.time;
+            ContinuesUsed++;
+            AddMove("c");
             BenchPeak = Mathf.Max(BenchPeak, Engine.State.BenchCount);
             Play(events);
             return true;
@@ -383,7 +412,7 @@ namespace GoldenMend.Presentation
                 var view = ShardView.Create(boardRoot, i, socketSprites[shard.Socket], layout.PileShard(i), size, 30);
                 bool locked = Engine.IsLocked(i);
                 view.Renderer.color = Color.white;
-                openFrames[i] = MakeSprite($"Open frame {i}", boardRoot, SpriteFactory.Rounded, layout.PileShard(i),
+                openFrames[i] = MakeSprite($"Open frame {i}", boardRoot, SpriteFactory.Square, layout.PileShard(i),
                     new Vector2(size * 1.1f, size * 1.1f), OpenFrameColor, 29);
                 openFrames[i].enabled = !locked;
                 lockIcons[i] = MakeLockIcon(view);
@@ -433,8 +462,11 @@ namespace GoldenMend.Presentation
                 if (shard >= 0) TryTap(shard);
             }
 
-            if (ShownStatus == GameStatus.Playing && !hintShown && Time.time - lastInputTime > HintDelay)
-                ShowHint();
+            if (ShownStatus == GameStatus.Playing && !idleRaised && !HintActive && Time.time - lastInputTime > IdleNudgeDelay)
+            {
+                idleRaised = true;
+                Idle?.Invoke();
+            }
         }
 
         // Taps on HUD buttons and popups must not reach the rack behind them.
@@ -473,14 +505,51 @@ namespace GoldenMend.Presentation
                 return false;
             }
 
-            StopHint();
-            hintShown = false;
+            idleRaised = false;
             TapCount++;
-            BenchPeak = Mathf.Max(BenchPeak, Engine.State.BenchCount);
+            AddMove("t" + shard);
+            AfterMove();
             Play(events);
             feedback.Pick();
             ShardTapped?.Invoke(shard);
             return true;
+        }
+
+        /// <summary>
+        /// The pull booster: lifts the hinted shard, or else the deepest-buried shard that fits, straight into the
+        /// vessel. Returns false if nothing in the pile fits (the caller should not charge for it).
+        /// </summary>
+        public bool Pull()
+        {
+            if (!CanPull) return false;
+            int shard = hintShard >= 0 && Engine.CanPull(hintShard) ? hintShard : Solver.PullTarget(Engine);
+            var events = Engine.Pull(shard);
+            if (events.Count == 0) return false;
+
+            lastInputTime = Time.time;
+            idleRaised = false;
+            PullsUsed++;
+            AddMove("p" + shard);
+            AfterMove();
+            Play(events);
+            feedback.Pick();
+            ShardTapped?.Invoke(shard);
+            return true;
+        }
+
+        /// <summary>True while the pull booster has a shard to lift.</summary>
+        public bool CanPull => Engine != null && ShownStatus == GameStatus.Playing && Solver.PullTarget(Engine) >= 0;
+
+        void AfterMove()
+        {
+            BenchPeak = Mathf.Max(BenchPeak, Engine.State.BenchCount);
+            if (Engine.State.Status == GameStatus.Won && wonAt < 0f) wonAt = Time.time;
+        }
+
+        void AddMove(string move)
+        {
+            if (moves.Length > 0) moves.Append(' ');
+            moves.Append(move);
         }
 
         void Play(IReadOnlyList<GameEvent> events)
@@ -531,6 +600,8 @@ namespace GoldenMend.Presentation
         {
             var view = shardViews[shard];
             openFrames[shard].enabled = false;
+            lockIcons[shard].SetActive(false);
+            if (shard == hintShard) StopHint();
             float duration = Seconds(chainIndex == 0 ? 0.35f : 0.3f);
             yield return view.FlyTo(layout.Socket(socket), layout.CellSize, duration, 5);
 
@@ -592,29 +663,35 @@ namespace GoldenMend.Presentation
             StatusShown?.Invoke(GameStatus.Failed);
         }
 
-        /// <summary>The shard a hint points at, or -1. See <see cref="Solver.HintMove"/>.</summary>
-        public int HintShard => Engine != null && Engine.State.Status == GameStatus.Playing ? Solver.HintMove(Engine) : -1;
+        /// <summary>The shard a hint points at, or -1. See <see cref="Solver.HintTarget"/>.</summary>
+        public int HintShard => Engine != null && Engine.State.Status == GameStatus.Playing ? Solver.HintTarget(Engine) : -1;
 
         /// <summary>
-        /// Points at one shard to tap right now with a gold glow that stays until the player taps.
-        /// It prefers a shard that locks straight into the vessel and keeps the level winnable.
+        /// Points at the shard that fits the vessel right now, even if it is still buried, and lights the spot it
+        /// fills. The glow stays until that shard is placed. Returns false if no hint was shown (nothing to charge).
         /// </summary>
-        public void ShowHint()
+        public bool ShowHint()
         {
-            if (Engine == null || Engine.State.Status != GameStatus.Playing) return;
-            hintShown = true;
+            if (Engine == null || Engine.State.Status != GameStatus.Playing || HintActive) return false;
+            int shard = HintShard;
+            if (shard < 0) return false;
 
-            int move = HintShard;
-            if (move < 0) return;
+            hintShard = shard;
+            HintsUsed++;
+            hintView = shardViews[shard];
+            float size = layout.PileShardSize * 1.22f;
+            var glow = MakeSprite("Hint", boardRoot, SpriteFactory.Square, layout.PileShard(shard), new Vector2(size, size), Gold, 28);
+            hintGlow = glow.gameObject;
 
-            StopHint();
-            hintView = shardViews[move];
-            float size = layout.PileShardSize * 1.28f;
-            hintGlow = MakeSprite("Hint", boardRoot, SpriteFactory.Rounded, layout.PileShard(move), new Vector2(size, size), Gold, 28).gameObject;
-            hintRoutine = StartCoroutine(HintPulse(hintView, hintGlow.GetComponent<SpriteRenderer>(), layout.PileShardSize));
+            int socket = Level.Def.Shards[shard].Socket;
+            var spot = MakeSprite("Hint spot", vesselRoot, SpriteFactory.Square, layout.Socket(socket), new Vector2(layout.CellSize, layout.CellSize), Gold, -1);
+            hintSocketGlow = spot.gameObject;
+
+            hintRoutine = StartCoroutine(HintPulse(hintView, glow, spot, socketGhosts[socket], layout.PileShardSize));
+            return true;
         }
 
-        IEnumerator HintPulse(ShardView view, SpriteRenderer glow, float baseSize)
+        IEnumerator HintPulse(ShardView view, SpriteRenderer glow, SpriteRenderer spot, SpriteRenderer ghost, float baseSize)
         {
             const float period = 0.9f;
             for (float t = 0f; ; t += Time.deltaTime)
@@ -622,6 +699,8 @@ namespace GoldenMend.Presentation
                 float wave = Mathf.Abs(Mathf.Sin(t / period * Mathf.PI));
                 view.SetSize(baseSize * (1f + 0.07f * wave));
                 glow.color = new Color(Gold.r, Gold.g, Gold.b, 0.45f + 0.5f * wave);
+                spot.color = new Color(Gold.r, Gold.g, Gold.b, 0.5f + 0.5f * wave);
+                ghost.color = Color.Lerp(GhostTint, Color.white, 0.35f + 0.4f * wave);
                 yield return null;
             }
         }
@@ -638,10 +717,21 @@ namespace GoldenMend.Presentation
                 if (Engine != null && Engine.State.InPile[hintView.ShardId]) hintView.SetSize(layout.PileShardSize);
                 hintView = null;
             }
+            if (hintShard >= 0 && socketGhosts != null)
+            {
+                var ghost = socketGhosts[Level.Def.Shards[hintShard].Socket];
+                if (ghost != null) ghost.color = GhostTint;
+            }
+            hintShard = -1;
             if (hintGlow != null)
             {
                 Release(hintGlow);
                 hintGlow = null;
+            }
+            if (hintSocketGlow != null)
+            {
+                Release(hintSocketGlow);
+                hintSocketGlow = null;
             }
         }
 

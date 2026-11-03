@@ -56,30 +56,87 @@ namespace GoldenMend.Tests
         }
 
         [Test]
-        public void HintMove_PrefersAShardThatLocksRightNow()
+        public void HintTarget_PrefersAShardThatLocksRightNow()
         {
-            // Shards 0 (beside the anchor) and 2 (two sockets away) are both open; only 0 locks straight in.
+            // Shards 0 (beside the anchor) and 2 (two sockets away) are both open; only 0 fits.
             var engine = new PuzzleEngine(TestLevels.Line(3));
 
-            Assert.That(Solver.HintMove(engine), Is.EqualTo(0));
+            Assert.That(Solver.HintTarget(engine), Is.EqualTo(0));
         }
 
         [Test]
-        public void HintMove_FallsBackToTheSolverWhenNothingCanLockYet()
+        public void HintTarget_PointsAtTheFittingShardEvenWhenItIsBuried()
         {
+            // Shard 0 fits but sits under 1, which sits under 2.
             var engine = new PuzzleEngine(TestLevels.Line(3, benchSize: 2, coveredBy: TestLevels.Stack(0, 1, 2)));
 
-            Assert.That(Solver.HintMove(engine), Is.EqualTo(2));
+            Assert.That(engine.CanTap(0), Is.False);
+            Assert.That(Solver.HintTarget(engine), Is.EqualTo(0));
+            Assert.That(engine.DigCost(0), Is.EqualTo(2));
         }
 
         [Test]
-        public void HintMove_IsAlwaysATappableShard()
+        public void HintTarget_PicksTheFittingShardWithLeastInTheWay()
+        {
+            // Sockets 1 and 3 both touch the anchor; shard 0 is under two shards, shard 2 under one.
+            var engine = new PuzzleEngine(TestLevels.Line(4, extraEdges: new[] { new[] { 0, 4 } },
+                coveredBy: TestLevels.Stack(0, 1, 2)));
+
+            // Shard 3 (socket 4) touches the anchor and is open; shard 0 is buried twice.
+            Assert.That(Solver.HintTarget(engine), Is.EqualTo(3));
+        }
+
+        [Test]
+        public void DigCost_CountsTheFewestShardsOnTheWayOutOfAGrid()
+        {
+            // Shard 0 is at the bottom of a column; the cheapest way out is up through 1 then 2.
+            var engine = new PuzzleEngine(TestLevels.Line(3, pile: TestLevels.Grid(
+                "2",
+                "1",
+                "0")));
+
+            Assert.That(engine.DigCost(0), Is.EqualTo(2));
+            Assert.That(engine.DigCost(2), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void Pull_LiftsABuriedShardThatFits()
+        {
+            var engine = new PuzzleEngine(TestLevels.Line(3, coveredBy: TestLevels.Stack(0, 1, 2)));
+
+            var events = engine.Pull(0);
+
+            Assert.That(events, Has.Some.Matches<GameEvent>(e => e.Type == GameEventType.ShardLocked && e.Shard == 0));
+            Assert.That(engine.State.Placed[1], Is.True);
+            Assert.That(engine.State.InPile[0], Is.False);
+        }
+
+        [Test]
+        public void Pull_RejectsAShardThatDoesNotFitYet()
+        {
+            var engine = new PuzzleEngine(TestLevels.Line(3));
+
+            Assert.That(engine.Pull(2), Is.Empty);
+            Assert.That(engine.State.InPile[2], Is.True);
+        }
+
+        [Test]
+        public void PullTarget_IsTheDeepestFittingShard()
+        {
+            var engine = new PuzzleEngine(TestLevels.Line(4, extraEdges: new[] { new[] { 0, 4 } },
+                coveredBy: TestLevels.Stack(0, 1, 2)));
+
+            Assert.That(Solver.PullTarget(engine), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void HintTarget_AlwaysFitsTheVesselOnEveryLevel()
         {
             for (int i = 0; i < LevelCatalog.Count; i++)
             {
                 var engine = new PuzzleEngine(LevelCatalog.Build(i).Def);
-                int hint = Solver.HintMove(engine);
-                Assert.That(engine.CanTap(hint), Is.True, LevelCatalog.Spec(i).Name);
+                int hint = Solver.HintTarget(engine);
+                Assert.That(engine.CanPull(hint), Is.True, LevelCatalog.Spec(i).Name);
             }
         }
 

@@ -28,7 +28,7 @@ namespace GoldenMend.Flow
 
             var flow = new GameObject("Game Flow").AddComponent<GameFlow>();
             flow.transform.SetParent(parent, false);
-            flow.Init(board, ui, feedback, progress, economy, settings);
+            flow.Init(board, ui, feedback, progress, economy, settings, new NoRewardedAds());
             return flow;
         }
     }
