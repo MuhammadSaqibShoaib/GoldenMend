@@ -4,7 +4,7 @@ namespace GoldenMend.Data
 {
     /// <summary>
     /// The game's level list, in play order. Early vessels have few, large shards; later ones more and smaller.
-    /// New ideas arrive one at a time: deeper racks, walls, a distant anchor, cracked shards, then a hard level
+    /// New ideas arrive one at a time: deeper racks, walls, a distant anchor, then a hard level
     /// with a locked bench slot. Glazes alternate between traditional Japanese patterns and close-up crops of
     /// public-domain paintings.
     /// </summary>
@@ -71,7 +71,7 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Tea Caddy", Pattern = "uroko", Palette = 2, Seed = 53, CrackedCount = 2, MinBenchPeak = 1, MaxBenchPeak = 3,
+                Name = "Tea Caddy", Pattern = "uroko", Palette = 2, Seed = 53, MinBenchPeak = 1, MaxBenchPeak = 3,
                 PileShape = new[] { "ooooo", "ooooo", "#ooo#" },
                 Shape = new[]
                 {
@@ -96,7 +96,7 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Amphora", Pattern = "kanoko", Palette = 5, Seed = 67, LockedBenchSlots = 1, CrackedCount = 1,
+                Name = "Amphora", Pattern = "kanoko", Palette = 5, Seed = 67, LockedBenchSlots = 1,
                 MinBenchPeak = 3, MaxBenchPeak = 4, Hard = true,
                 PileShape = new[] { "oooooo", "o#oo#o", "oooooo", "##oo##" },
                 Shape = new[]

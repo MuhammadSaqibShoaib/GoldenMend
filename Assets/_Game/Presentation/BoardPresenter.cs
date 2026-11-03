@@ -27,7 +27,6 @@ namespace GoldenMend.Presentation
         static readonly Color SlotColor = new Color(1f, 1f, 1f, 0.12f);
         static readonly Color LockedSlotColor = new Color(0f, 0f, 0f, 0.55f);
         static readonly Color TableColor = new Color(1f, 1f, 1f, 0.045f);
-        static readonly Color CrackColor = new Color(0.08f, 0.06f, 0.05f, 0.85f);
         static readonly Color FailTint = new Color(1f, 0.55f, 0.5f, 1f);
 
         public event Action<GameStatus> StatusShown;
@@ -382,12 +381,6 @@ namespace GoldenMend.Presentation
             {
                 var shard = def.Shards[i];
                 var view = ShardView.Create(boardRoot, i, socketSprites[shard.Socket], layout.PileShard(i), size, 30);
-                if (shard.Cracked)
-                {
-                    view.AddMark(SpriteFactory.Square, CrackColor, new Vector2(0.06f, 1.2f), 35f);
-                    view.AddMark(SpriteFactory.Square, CrackColor, new Vector2(0.05f, 0.5f), -40f);
-                }
-
                 bool locked = Engine.IsLocked(i);
                 view.Renderer.color = Color.white;
                 openFrames[i] = MakeSprite($"Open frame {i}", boardRoot, SpriteFactory.Rounded, layout.PileShard(i),
@@ -546,7 +539,6 @@ namespace GoldenMend.Presentation
             MarkPlaced(socket, animate: true);
             shownPlacements++;
             UpdateSlotPips();
-            if (Level.Def.Shards[shard].Cracked) view.SetMarkColor(Gold);
             feedback.Lock(chainIndex);
             StartCoroutine(view.Punch(0.1f, Seconds(0.18f)));
         }
