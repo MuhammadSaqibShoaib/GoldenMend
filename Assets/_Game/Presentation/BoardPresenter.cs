@@ -18,11 +18,12 @@ namespace GoldenMend.Presentation
     {
         static readonly Color Gold = new Color(1f, 0.80f, 0.32f, 1f);
         static readonly Color PaleGold = new Color(1f, 0.95f, 0.75f, 1f);
-        static readonly Color GhostTint = new Color(0.85f, 0.85f, 0.85f, 0.45f);
-        static readonly Color LockedTint = new Color(0.40f, 0.38f, 0.38f, 1f);
+        static readonly Color GhostTint = new Color(0.42f, 0.42f, 0.46f, 0.4f);
         static readonly Color OpenFrameColor = new Color(1f, 0.93f, 0.72f, 0.95f);
         static readonly Color PileTileColor = new Color(1f, 1f, 1f, 0.07f);
-        static readonly Color LockIconColor = new Color(0.1f, 0.09f, 0.08f, 0.9f);
+        static readonly Color LockBadgeColor = new Color(0.1f, 0.09f, 0.08f, 0.82f);
+        static readonly Color LockGlyphColor = new Color(0.98f, 0.94f, 0.86f, 1f);
+        static readonly Color PipEmpty = new Color(1f, 1f, 1f, 0.22f);
         static readonly Color SlotColor = new Color(1f, 1f, 1f, 0.12f);
         static readonly Color LockedSlotColor = new Color(0f, 0f, 0f, 0.55f);
         static readonly Color TableColor = new Color(1f, 1f, 1f, 0.045f);
@@ -65,6 +66,19 @@ namespace GoldenMend.Presentation
         Sprite[] socketSprites;
         readonly List<SpriteRenderer> seams = new List<SpriteRenderer>();
 
+        // The gold border around the restored part of the vessel, one segment per open cell edge.
+        readonly Dictionary<long, SpriteRenderer> border = new Dictionary<long, SpriteRenderer>();
+        readonly Dictionary<long, int> socketAtCell = new Dictionary<long, int>();
+        bool[] shownPlaced;
+
+        // Locked bench slots: a padlock plus one pip per placement still needed.
+        GameObject[] slotLocks;
+        SpriteRenderer[][] slotPips;
+        int shownPlacements;
+        int shownUnlocks;
+
+        GameObject hintGlow;
+
         float lastInputTime;
         bool hintShown;
         ShardView hintView;
@@ -88,7 +102,12 @@ namespace GoldenMend.Presentation
             if (boardRoot != null) Release(boardRoot.gameObject);
             VesselArt.Release(socketSprites);
             seams.Clear();
+            border.Clear();
+            socketAtCell.Clear();
             slotFrames = null;
+            slotLocks = null;
+            shownPlacements = 0;
+            shownUnlocks = 0;
 
             Level = level;
             Engine = new PuzzleEngine(level.Def);
@@ -120,7 +139,10 @@ namespace GoldenMend.Presentation
             VesselArt.Release(socketSprites);
             socketSprites = null;
             slotFrames = null;
+            slotLocks = null;
             seams.Clear();
+            border.Clear();
+            socketAtCell.Clear();
             Level = null;
             Engine = null;
             ShownStatus = GameStatus.Playing;
@@ -194,9 +216,70 @@ namespace GoldenMend.Presentation
 
             int anchor = def.AnchorSocket;
             socketGhosts[anchor].enabled = false;
-            float frame = layout.CellSize * 1.04f;
-            MakeSprite("Anchor gold", vesselRoot, SpriteFactory.Square, layout.Socket(anchor), new Vector2(frame, frame), Gold, 4);
-            MakeSprite("Anchor", vesselRoot, socketSprites[anchor], layout.Socket(anchor), new Vector2(shardSize, shardSize), Color.white, 5);
+            MakeSprite("Anchor", vesselRoot, socketSprites[anchor], layout.Socket(anchor), new Vector2(layout.CellSize, layout.CellSize), Color.white, 5);
+
+            shownPlaced = new bool[def.SocketCount];
+            for (int s = 0; s < def.SocketCount; s++) socketAtCell[CellKey(Level.SocketColumn[s], Level.SocketRow[s])] = s;
+            MarkPlaced(anchor, animate: false);
+        }
+
+        static long CellKey(int col, int row) => ((long)col << 32) ^ (uint)row;
+
+        static readonly int[] DirCol = { 1, -1, 0, 0 };
+        static readonly int[] DirRow = { 0, 0, -1, 1 };
+
+        /// <summary>
+        /// Grows the gold border around the restored group: the new shard's open edges gain a border segment, and
+        /// edges it now shares with placed neighbours lose theirs (they become seams).
+        /// </summary>
+        void MarkPlaced(int socket, bool animate)
+        {
+            shownPlaced[socket] = true;
+            int col = Level.SocketColumn[socket], row = Level.SocketRow[socket];
+            for (int dir = 0; dir < 4; dir++)
+            {
+                bool hasNeighbour = socketAtCell.TryGetValue(CellKey(col + DirCol[dir], row + DirRow[dir]), out int neighbour);
+                if (hasNeighbour && shownPlaced[neighbour])
+                {
+                    long shared = EdgeKey(neighbour, dir ^ 1);
+                    if (border.TryGetValue(shared, out var segment))
+                    {
+                        border.Remove(shared);
+                        Release(segment.gameObject);
+                    }
+                }
+                else
+                {
+                    border[EdgeKey(socket, dir)] = MakeBorderSegment(socket, dir, animate);
+                }
+            }
+        }
+
+        static long EdgeKey(int socket, int dir) => ((long)socket << 3) | (uint)dir;
+
+        SpriteRenderer MakeBorderSegment(int socket, int dir, bool animate)
+        {
+            float cell = layout.CellSize, width = cell * 0.075f;
+            var centre = layout.Socket(socket) + new Vector3(DirCol[dir] * cell * 0.5f, -DirRow[dir] * cell * 0.5f, 0f);
+            var size = dir < 2 ? new Vector2(width, cell + width) : new Vector2(cell + width, width);
+            var segment = MakeSprite("Border", vesselRoot, SpriteFactory.Square, centre, size, Gold, 8);
+            if (animate && Application.isPlaying) StartCoroutine(GrowSegment(segment, size, dir < 2));
+            return segment;
+        }
+
+        IEnumerator GrowSegment(SpriteRenderer segment, Vector2 size, bool upright)
+        {
+            float duration = Seconds(0.22f);
+            for (float t = 0f; t < 1f && segment != null; t += Time.deltaTime / duration)
+            {
+                float e = Ease.OutCubic(t);
+                segment.transform.localScale = upright ? new Vector3(size.x, size.y * e, 1f) : new Vector3(size.x * e, size.y, 1f);
+                segment.color = Color.Lerp(PaleGold, Gold, t);
+                yield return null;
+            }
+            if (segment == null) yield break;
+            segment.transform.localScale = new Vector3(size.x, size.y, 1f);
+            segment.color = Gold;
         }
 
         void BuildBench()
@@ -206,15 +289,81 @@ namespace GoldenMend.Presentation
             {
                 foreach (var frame in slotFrames) Release(frame.gameObject);
             }
+            if (slotLocks != null)
+            {
+                foreach (var icon in slotLocks)
+                {
+                    if (icon != null) Release(icon);
+                }
+            }
             int count = state.Bench.Length;
             float size = layout.SlotSizeFor(count);
             slotFrames = new SpriteRenderer[count];
+            slotLocks = new GameObject[count];
+            slotPips = new SpriteRenderer[count][];
             for (int i = 0; i < slotFrames.Length; i++)
             {
-                var color = state.SlotLocked[i] ? LockedSlotColor : SlotColor;
+                bool locked = state.SlotLocked[i] && i >= FirstShownLockedSlot();
+                var color = locked ? LockedSlotColor : SlotColor;
                 slotFrames[i] = MakeSprite($"Slot {i}", boardRoot, SpriteFactory.Rounded, layout.Slot(i, count),
                     new Vector2(size, size), color, 10);
+                if (locked) BuildSlotLock(i, layout.Slot(i, count), size);
             }
+            UpdateSlotPips();
+        }
+
+        // Slots unlock left to right; the first still-locked slot as the player has seen it.
+        int FirstShownLockedSlot() => Level.Def.BenchSize - Level.Def.LockedBenchSlots + shownUnlocks;
+
+        void BuildSlotLock(int slot, Vector3 centre, float size)
+        {
+            var root = new GameObject($"Slot {slot} lock");
+            root.transform.SetParent(boardRoot, false);
+            root.transform.position = centre;
+            MakeLockGlyph(root.transform, new Vector3(0f, size * 0.08f, 0f), size * 0.5f, 12);
+
+            int needed = Level.Def.PlacementsPerUnlock;
+            slotPips[slot] = new SpriteRenderer[needed];
+            float pip = size * 0.13f, gap = size * 0.2f;
+            for (int i = 0; i < needed; i++)
+            {
+                var at = centre + new Vector3((i - (needed - 1) / 2f) * gap, -size * 0.3f, 0f);
+                slotPips[slot][i] = MakeSprite($"Pip {i}", root.transform, SpriteFactory.Circle, at, new Vector2(pip, pip), PipEmpty, 12);
+            }
+            slotLocks[slot] = root;
+        }
+
+        /// <summary>Fills the next locked slot's pips with the placements made toward opening it.</summary>
+        void UpdateSlotPips()
+        {
+            if (slotPips == null) return;
+            int next = FirstShownLockedSlot();
+            int perUnlock = Level.Def.PlacementsPerUnlock;
+            int progress = Mathf.Clamp(shownPlacements - perUnlock * shownUnlocks, 0, perUnlock);
+            for (int slot = 0; slot < slotPips.Length; slot++)
+            {
+                var pips = slotPips[slot];
+                if (pips == null) continue;
+                for (int i = 0; i < pips.Length; i++)
+                {
+                    if (pips[i] != null) pips[i].color = slot == next && i < progress ? Gold : PipEmpty;
+                }
+            }
+        }
+
+        void UnlockSlot(int slot)
+        {
+            shownUnlocks++;
+            if (slotLocks != null && slot < slotLocks.Length && slotLocks[slot] != null)
+            {
+                Release(slotLocks[slot]);
+                slotLocks[slot] = null;
+                slotPips[slot] = null;
+            }
+            StartCoroutine(Tint(slotFrames[slot], SlotColor, 0.3f));
+            StartCoroutine(PopFrame(slotFrames[slot].transform));
+            feedback.Expand();
+            UpdateSlotPips();
         }
 
         void BuildPile()
@@ -243,7 +392,7 @@ namespace GoldenMend.Presentation
                 }
 
                 bool locked = Engine.IsLocked(i);
-                view.Renderer.color = locked ? LockedTint : Color.white;
+                view.Renderer.color = Color.white;
                 openFrames[i] = MakeSprite($"Open frame {i}", boardRoot, SpriteFactory.Rounded, layout.PileShard(i),
                     new Vector2(size * 1.1f, size * 1.1f), OpenFrameColor, 29);
                 openFrames[i].enabled = !locked;
@@ -253,24 +402,33 @@ namespace GoldenMend.Presentation
             }
         }
 
-        /// <summary>A small padlock (body + shackle) in the shard's corner, drawn from generated shapes.</summary>
+        /// <summary>A small padlock badge in the shard's corner; the shard itself keeps its full colour.</summary>
         static GameObject MakeLockIcon(ShardView view)
         {
             var icon = new GameObject("Lock");
             icon.transform.SetParent(view.transform, false);
-            icon.transform.localPosition = new Vector3(0.28f, -0.28f, 0f);
-            int order = view.Renderer.sortingOrder + 2;
-
-            var shackle = MakeSprite("Shackle", icon.transform, SpriteFactory.Circle, Vector3.zero, Vector2.one, LockIconColor, order);
-            shackle.transform.localPosition = new Vector3(0f, 0.07f, 0f);
-            shackle.transform.localScale = new Vector3(0.2f, 0.2f, 1f);
-            var hole = MakeSprite("Shackle hole", icon.transform, SpriteFactory.Circle, Vector3.zero, Vector2.one, LockedTint * 0.9f, order + 1);
-            hole.transform.localPosition = new Vector3(0f, 0.07f, 0f);
-            hole.transform.localScale = new Vector3(0.11f, 0.11f, 1f);
-            var body = MakeSprite("Body", icon.transform, SpriteFactory.Rounded, Vector3.zero, Vector2.one, LockIconColor, order + 2);
-            body.transform.localPosition = new Vector3(0f, -0.04f, 0f);
-            body.transform.localScale = new Vector3(0.26f, 0.2f, 1f);
+            icon.transform.localPosition = new Vector3(0.3f, -0.3f, 0f);
+            icon.transform.localScale = new Vector3(0.34f, 0.34f, 1f);
+            var badge = MakeSprite("Badge", icon.transform, SpriteFactory.Circle, Vector3.zero, Vector2.one, LockBadgeColor, view.Renderer.sortingOrder + 2);
+            badge.transform.localPosition = Vector3.zero;
+            badge.transform.localScale = Vector3.one;
+            MakeLockGlyph(icon.transform, Vector3.zero, 0.62f, view.Renderer.sortingOrder + 3);
             return icon;
+        }
+
+        /// <summary>A cream padlock (shackle ring and body), centred on a parent, in local units.</summary>
+        static void MakeLockGlyph(Transform parent, Vector3 centre, float size, int order)
+        {
+            void Part(string name, Sprite sprite, Vector2 offset, Vector2 scale, Color color, int sort)
+            {
+                var sr = MakeSprite(name, parent, sprite, Vector3.zero, Vector2.one, color, sort);
+                sr.transform.localPosition = centre + new Vector3(offset.x * size, offset.y * size, 0f);
+                sr.transform.localScale = new Vector3(scale.x * size, scale.y * size, 1f);
+            }
+            Part("Shackle", SpriteFactory.Circle, new Vector2(0f, 0.16f), new Vector2(0.56f, 0.56f), LockGlyphColor, order);
+            Part("Shackle hole", SpriteFactory.Circle, new Vector2(0f, 0.16f), new Vector2(0.3f, 0.3f), LockBadgeColor, order + 1);
+            Part("Body", SpriteFactory.Rounded, new Vector2(0f, -0.14f), new Vector2(0.74f, 0.54f), LockGlyphColor, order + 2);
+            Part("Keyhole", SpriteFactory.Circle, new Vector2(0f, -0.12f), new Vector2(0.14f, 0.14f), LockBadgeColor, order + 3);
         }
 
         void Update()
@@ -357,7 +515,7 @@ namespace GoldenMend.Presentation
                         queue.Enqueue(() => { StartCoroutine(GrowSeam(e.Socket, e.OtherSocket)); });
                         break;
                     case GameEventType.BenchSlotUnlocked:
-                        queue.Enqueue(() => { StartCoroutine(Tint(slotFrames[e.Slot], SlotColor, 0.3f)); });
+                        queue.Enqueue(() => UnlockSlot(e.Slot));
                         break;
                     case GameEventType.BenchExpanded:
                         queue.Enqueue(() => ExpandBench(e.Slot));
@@ -387,10 +545,13 @@ namespace GoldenMend.Presentation
             var view = shardViews[shard];
             openFrames[shard].enabled = false;
             float duration = Seconds(chainIndex == 0 ? 0.35f : 0.3f);
-            yield return view.FlyTo(layout.Socket(socket), layout.ShardInVesselSize, duration, 5);
+            yield return view.FlyTo(layout.Socket(socket), layout.CellSize, duration, 5);
 
             view.transform.SetParent(vesselRoot, true);
             socketGhosts[socket].enabled = false;
+            MarkPlaced(socket, animate: true);
+            shownPlacements++;
+            UpdateSlotPips();
             if (Level.Def.Shards[shard].Cracked) view.SetMarkColor(Gold);
             feedback.Lock(chainIndex);
             StartCoroutine(view.Punch(0.1f, Seconds(0.18f)));
@@ -410,8 +571,8 @@ namespace GoldenMend.Presentation
             Vector3 a = layout.Socket(socket);
             Vector3 b = layout.Socket(other);
             bool sideBySide = Mathf.Abs(a.y - b.y) < 0.01f;
-            float width = layout.CellSize * 0.12f;
-            float length = layout.CellSize * 0.98f;
+            float width = layout.CellSize * 0.06f;
+            float length = layout.CellSize;
             Vector2 full = sideBySide ? new Vector2(width, length) : new Vector2(length, width);
 
             var seam = MakeSprite("Seam", vesselRoot, SpriteFactory.Square, (a + b) * 0.5f, Vector2.zero, PaleGold, 6);
@@ -446,12 +607,14 @@ namespace GoldenMend.Presentation
                 vesselRoot.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(t * Mathf.PI * 2f) * 4f * (1f - t));
                 var glow = Color.Lerp(Gold, PaleGold, swell);
                 foreach (var seam in seams) seam.color = glow;
+                foreach (var segment in border.Values) segment.color = glow;
 
                 yield return null;
             }
             vesselRoot.localScale = Vector3.one;
             vesselRoot.localRotation = Quaternion.identity;
             foreach (var seam in seams) seam.color = Gold;
+            foreach (var segment in border.Values) segment.color = Gold;
 
             StatusShown?.Invoke(GameStatus.Won);
         }
@@ -471,38 +634,38 @@ namespace GoldenMend.Presentation
             StatusShown?.Invoke(GameStatus.Failed);
         }
 
-        /// <summary>Pulses the shard the solver would tap next (or any tappable shard if the level is lost).</summary>
+        /// <summary>The shard a hint points at, or -1. See <see cref="Solver.HintMove"/>.</summary>
+        public int HintShard => Engine != null && Engine.State.Status == GameStatus.Playing ? Solver.HintMove(Engine) : -1;
+
+        /// <summary>
+        /// Points at one shard to tap right now with a gold glow that stays until the player taps.
+        /// It prefers a shard that locks straight into the vessel and keeps the level winnable.
+        /// </summary>
         public void ShowHint()
         {
             if (Engine == null || Engine.State.Status != GameStatus.Playing) return;
             hintShown = true;
 
-            int move = Solver.BestMove(Engine);
-            if (move < 0)
-            {
-                for (int i = 0; i < shardViews.Length && move < 0; i++)
-                {
-                    if (Engine.CanTap(i)) move = i;
-                }
-            }
+            int move = HintShard;
             if (move < 0) return;
 
             StopHint();
             hintView = shardViews[move];
-            hintRoutine = StartCoroutine(HintPulse(hintView, hintView.Size));
+            float size = layout.PileShardSize * 1.28f;
+            hintGlow = MakeSprite("Hint", boardRoot, SpriteFactory.Rounded, layout.PileShard(move), new Vector2(size, size), Gold, 28).gameObject;
+            hintRoutine = StartCoroutine(HintPulse(hintView, hintGlow.GetComponent<SpriteRenderer>(), layout.PileShardSize));
         }
 
-        IEnumerator HintPulse(ShardView view, float baseSize)
+        IEnumerator HintPulse(ShardView view, SpriteRenderer glow, float baseSize)
         {
-            const float period = 0.6f;
-            for (float t = 0f; t < period * 4f; t += Time.deltaTime)
+            const float period = 0.9f;
+            for (float t = 0f; ; t += Time.deltaTime)
             {
-                view.SetSize(baseSize * (1f + 0.12f * Mathf.Abs(Mathf.Sin(t / period * Mathf.PI))));
+                float wave = Mathf.Abs(Mathf.Sin(t / period * Mathf.PI));
+                view.SetSize(baseSize * (1f + 0.07f * wave));
+                glow.color = new Color(Gold.r, Gold.g, Gold.b, 0.45f + 0.5f * wave);
                 yield return null;
             }
-            view.SetSize(baseSize);
-            hintRoutine = null;
-            hintView = null;
         }
 
         void StopHint()
@@ -514,8 +677,13 @@ namespace GoldenMend.Presentation
             }
             if (hintView != null)
             {
-                hintView.SetSize(layout.PileShardSize);
+                if (Engine != null && Engine.State.InPile[hintView.ShardId]) hintView.SetSize(layout.PileShardSize);
                 hintView = null;
+            }
+            if (hintGlow != null)
+            {
+                Release(hintGlow);
+                hintGlow = null;
             }
         }
 

@@ -87,6 +87,32 @@ namespace GoldenMend.Core
             return result.Status == SolveStatus.Solved && result.TapOrder.Count > 0 ? result.TapOrder[0] : -1;
         }
 
+        /// <summary>
+        /// The one shard a hint points at: an open shard that locks straight into the vessel and keeps the level
+        /// winnable; if none can lock yet, the solver's next move; if the level is already lost, any open shard.
+        /// </summary>
+        public static int HintMove(PuzzleEngine from, int maxStates = DefaultMaxStates)
+        {
+            if (from.State.Status != GameStatus.Playing) return -1;
+
+            for (int shard = 0; shard < from.Level.Shards.Count; shard++)
+            {
+                if (!from.CanTap(shard) || !from.CanLock(shard)) continue;
+                var next = from.Clone();
+                next.Tap(shard);
+                if (next.State.Status == GameStatus.Won || Solve(next, maxStates).Status == SolveStatus.Solved) return shard;
+            }
+
+            int best = BestMove(from, maxStates);
+            if (best >= 0) return best;
+
+            for (int shard = 0; shard < from.Level.Shards.Count; shard++)
+            {
+                if (from.CanTap(shard)) return shard;
+            }
+            return -1;
+        }
+
         static int Search(PuzzleEngine engine, Context ctx)
         {
             if (engine.State.Status == GameStatus.Won) return 0;

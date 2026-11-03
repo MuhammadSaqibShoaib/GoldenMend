@@ -19,7 +19,7 @@ namespace GoldenMend.Presentation
         public const float PileTop = -3.3f;
         public const float PileMaxWidth = 10.2f;
         public const float PileMaxHeight = 6.6f;
-        public const float PileMaxCell = 1.9f;
+        public const float PileMaxCell = 2.4f;
 
         readonly BuiltLevel level;
 
@@ -33,7 +33,7 @@ namespace GoldenMend.Presentation
         public BoardLayout(BuiltLevel level)
         {
             this.level = level;
-            CellSize = Mathf.Min(VesselMaxWidth / level.Columns, VesselMaxHeight / level.Rows, 1.9f);
+            CellSize = Mathf.Min(VesselMaxWidth / level.Columns, VesselMaxHeight / level.Rows, 2.6f);
             var pile = level.Pile;
             PileCellSize = Mathf.Min(PileMaxWidth / pile.Columns, PileMaxHeight / pile.Rows, PileMaxCell);
         }

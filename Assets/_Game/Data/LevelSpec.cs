@@ -24,10 +24,22 @@ namespace GoldenMend.Data
         public int MaxBenchPeak = 5;
         public bool Hard;
 
-        /// <summary>Key of the public-domain painting this vessel is glazed with (Content/Art/artworks.json).</summary>
-        public string Artwork;
+        /// <summary>
+        /// The glaze pattern painted across the vessel: seigaiha, sakura, kikko, uroko, kanoko or shippo.
+        /// Ignored when <see cref="Artwork"/> is set.
+        /// </summary>
+        public string Pattern = "shippo";
 
-        /// <summary>Glaze palette index for the generated vessel art (Classic build).</summary>
+        /// <summary>Glaze colour scheme for the generated pattern.</summary>
         public int Palette;
+
+        /// <summary>
+        /// Optional public-domain painting (Content/Art/artworks.json) used as the glaze instead of a pattern.
+        /// It is zoomed in on <see cref="ArtFocusX"/>/<see cref="ArtFocusY"/> so it reads as texture, not as the picture.
+        /// </summary>
+        public string Artwork;
+        public float ArtZoom = 1f;
+        public float ArtFocusX = 0.5f;
+        public float ArtFocusY = 0.5f;
     }
 }

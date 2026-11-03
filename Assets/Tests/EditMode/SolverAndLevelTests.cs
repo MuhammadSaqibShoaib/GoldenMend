@@ -56,6 +56,34 @@ namespace GoldenMend.Tests
         }
 
         [Test]
+        public void HintMove_PrefersAShardThatLocksRightNow()
+        {
+            // Shards 0 (beside the anchor) and 2 (two sockets away) are both open; only 0 locks straight in.
+            var engine = new PuzzleEngine(TestLevels.Line(3));
+
+            Assert.That(Solver.HintMove(engine), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void HintMove_FallsBackToTheSolverWhenNothingCanLockYet()
+        {
+            var engine = new PuzzleEngine(TestLevels.Line(3, benchSize: 2, coveredBy: TestLevels.Stack(0, 1, 2)));
+
+            Assert.That(Solver.HintMove(engine), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void HintMove_IsAlwaysATappableShard()
+        {
+            for (int i = 0; i < LevelCatalog.Count; i++)
+            {
+                var engine = new PuzzleEngine(LevelCatalog.Build(i).Def);
+                int hint = Solver.HintMove(engine);
+                Assert.That(engine.CanTap(hint), Is.True, LevelCatalog.Spec(i).Name);
+            }
+        }
+
+        [Test]
         public void Hint_PointsAtAShardThatKeepsTheLevelWinnable()
         {
             var level = TestLevels.Line(3, benchSize: 2, coveredBy: TestLevels.Stack(0, 1, 2));
@@ -112,14 +140,26 @@ namespace GoldenMend.Tests
         }
 
         [Test]
-        public void EveryLevel_HasItsOwnPainting()
+        public void EveryLevel_HasAGlaze()
         {
-            var keys = new System.Collections.Generic.HashSet<string>();
+            string[] patterns = { "seigaiha", "sakura", "kikko", "uroko", "kanoko", "shippo" };
             for (int i = 0; i < LevelCatalog.Count; i++)
             {
-                var key = LevelCatalog.Spec(i).Artwork;
-                Assert.That(key, Is.Not.Null.And.Not.Empty, LevelCatalog.Spec(i).Name);
-                Assert.That(keys.Add(key), Is.True, $"{key} is used twice");
+                var spec = LevelCatalog.Spec(i);
+                bool hasGlaze = !string.IsNullOrEmpty(spec.Artwork) || System.Array.IndexOf(patterns, spec.Pattern) >= 0;
+                Assert.That(hasGlaze, Is.True, spec.Name);
+            }
+        }
+
+        [Test]
+        public void ShardCount_NeverShrinksAsLevelsProgress()
+        {
+            int previous = 0;
+            for (int i = 0; i < LevelCatalog.Count; i++)
+            {
+                int shards = LevelCatalog.Build(i).Def.Shards.Count;
+                Assert.That(shards, Is.GreaterThanOrEqualTo(previous), LevelCatalog.Spec(i).Name);
+                previous = shards;
             }
         }
 
