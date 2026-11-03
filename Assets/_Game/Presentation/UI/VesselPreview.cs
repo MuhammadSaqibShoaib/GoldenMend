@@ -7,7 +7,7 @@ namespace GoldenMend.Presentation.UI
 {
     public enum VesselLook
     {
-        /// <summary>The finished piece: full glaze with gold seams on every join.</summary>
+        /// <summary>The finished piece: one merged glaze with a gold border around the outside, like the in-game finish.</summary>
         Restored,
 
         /// <summary>A dark silhouette, for vessels not yet unlocked.</summary>
@@ -44,6 +44,14 @@ namespace GoldenMend.Presentation.UI
                 float frame = cell * 1.04f;
                 b.Image("Anchor Gold", root, null, theme.Gold, Anchor.Center, Cell(def.AnchorSocket), new Vector2(frame, frame));
             }
+            else if (look == VesselLook.Restored)
+            {
+                // A slightly larger gold square under every cell: where cells meet the shards cover it, so only the
+                // outer edge of the vessel shows gold.
+                float frame = cell + Mathf.Max(4f, cell * 0.08f) * 2f;
+                for (int s = 0; s < def.SocketCount; s++)
+                    b.Image($"Border {s}", root, null, theme.Gold, Anchor.Center, Cell(s), new Vector2(frame, frame));
+            }
 
             for (int s = 0; s < def.SocketCount; s++)
             {
@@ -52,27 +60,12 @@ namespace GoldenMend.Presentation.UI
                 {
                     b.Image($"Edge {s}", root, null, silhouetteEdge, Anchor.Center, Cell(s), new Vector2(shard + 4f, shard + 4f));
                 }
-                var image = b.Image($"Shard {s}", root, sprites[s], lit ? Color.white : silhouette, Anchor.Center, Cell(s), new Vector2(shard, shard));
+                // Restored shards overlap by a pixel so the merged glaze shows no hairline between cells.
+                float size = look == VesselLook.Restored ? cell + 1f : shard;
+                var image = b.Image($"Shard {s}", root, sprites[s], lit ? Color.white : silhouette, Anchor.Center, Cell(s), new Vector2(size, size));
                 image.preserveAspect = false;
             }
 
-            if (look == VesselLook.Restored)
-            {
-                // Gold seams along every join, like the in-game finish.
-                float width = Mathf.Max(3f, cell * 0.07f), length = cell * 0.96f;
-                for (int a = 0; a < def.SocketCount; a++)
-                {
-                    foreach (int n in def.Neighbours[a])
-                    {
-                        if (n < a) continue;
-                        var pa = Cell(a);
-                        var pb = Cell(n);
-                        bool sideBySide = Mathf.Abs(pa.y - pb.y) < 0.01f;
-                        var size = sideBySide ? new Vector2(width, length) : new Vector2(length, width);
-                        b.Image("Seam", root, null, theme.Gold, Anchor.Center, (pa + pb) * 0.5f, size);
-                    }
-                }
-            }
             return root;
         }
 

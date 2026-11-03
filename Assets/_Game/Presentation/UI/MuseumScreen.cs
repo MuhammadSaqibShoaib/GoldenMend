@@ -8,12 +8,14 @@ namespace GoldenMend.Presentation.UI
 {
     /// <summary>
     /// The collection: every vessel as a card in a scrolling two-column grid. Restored pieces show in full with
-    /// their gold seams, the next one as a teaser, later ones as locked silhouettes.
+    /// their gold border, the next one as a teaser, later ones as locked silhouettes. Tapping an unlocked card
+    /// opens its details.
     /// </summary>
     public sealed class MuseumScreen : UiView
     {
         public Action Back;
         public Action<int> PlayLevel;
+        public Action<int> OpenDetails;
 
         const float HeaderHeight = 250f;
         static readonly Vector2 CardSize = new Vector2(460f, 610f);
@@ -75,6 +77,7 @@ namespace GoldenMend.Presentation.UI
         void BuildCard(int index, BuiltLevel level, bool isUnlocked, bool isCompleted, int starCount)
         {
             var card = B.Card($"Card {index + 1}", content, Anchor.TopLeft, Vector2.zero, CardSize);
+            if (isUnlocked) B.Tappable(card, () => OpenDetails?.Invoke(index));
 
             var niche = B.Image("Niche", card, T.Badge, Color.Lerp(T.Indigo, T.Ink, 0.45f), Anchor.Top, new Vector2(0f, -22f), new Vector2(CardSize.x - 44f, 300f), sliced: true);
             var look = isCompleted ? VesselLook.Restored : isUnlocked ? VesselLook.Teaser : VesselLook.Silhouette;
@@ -88,7 +91,7 @@ namespace GoldenMend.Presentation.UI
             if (isCompleted)
             {
                 B.Stars(card, starCount, Anchor.Top, new Vector2(0f, -432f), 46f, raised: false);
-                B.Button("Replay", card, "Replay", ButtonStyle.Secondary, Anchor.Bottom, new Vector2(0f, 22f), new Vector2(380f, 90f), () => PlayLevel?.Invoke(index));
+                B.Button("Details", card, "Details", ButtonStyle.Secondary, Anchor.Bottom, new Vector2(0f, 22f), new Vector2(380f, 90f), () => OpenDetails?.Invoke(index));
             }
             else if (isUnlocked)
             {

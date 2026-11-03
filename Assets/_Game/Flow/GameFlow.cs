@@ -36,6 +36,7 @@ namespace GoldenMend.Flow
 
         HomeScreen home;
         MuseumScreen museum;
+        VesselDetails details;
         GameplayHud hud;
         PausePopup pause;
         SettingsPopup settingsPopup;
@@ -66,7 +67,8 @@ namespace GoldenMend.Flow
             this.settings = settings;
 
             home = new HomeScreen(ui) { Play = () => StartLevel(progress.NextLevel), OpenMuseum = ShowMuseum, OpenSettings = () => OpenSettings(false) };
-            museum = new MuseumScreen(ui) { Back = ShowHome, PlayLevel = StartLevel };
+            museum = new MuseumScreen(ui) { Back = ShowHome, PlayLevel = StartLevel, OpenDetails = ShowDetails };
+            details = new VesselDetails(ui) { Close = () => details.Hide() };
             hud = new GameplayHud(ui) { Pause = Pause, Hint = OnHint, Pull = OfferPull };
             hud.SetPullPrice(EconomyService.PullCost);
             offer = new HelpOffer(ui) { Close = CloseOffer };
@@ -120,6 +122,17 @@ namespace GoldenMend.Flow
             museum.Bind(Levels, progress.IsUnlocked, progress.IsCompleted, progress.StarsFor);
             museum.Show();
             State = FlowState.Museum;
+        }
+
+        public void ShowDetails(int index)
+        {
+            if (!progress.IsUnlocked(index)) return;
+            var r = progress.RecordFor(index);
+            var record = r == null ? new VesselRecord(0, 0, -1, -1f, -1, -1f)
+                : new VesselRecord(r.Clears, r.Stars, r.BestPeak, r.BestSeconds, r.CleanPeak, r.CleanSeconds);
+            details.Bind(Levels[index], record);
+            details.Play = () => StartLevel(index);
+            details.Show();
         }
 
         public void StartLevel(int index)
@@ -285,12 +298,7 @@ namespace GoldenMend.Flow
             return line;
         }
 
-        static string Clock(float seconds)
-        {
-            if (seconds < 0f) return "--:--";
-            int total = Mathf.RoundToInt(seconds);
-            return $"{total / 60}:{total % 60:00}";
-        }
+        static string Clock(float seconds) => VesselDetails.Clock(seconds);
 
         void ContinueRun()
         {
@@ -317,6 +325,7 @@ namespace GoldenMend.Flow
         {
             home.Hide(true);
             museum.Hide(true);
+            details.Hide(true);
             hud.Hide(true);
             pause.Hide(true);
             settingsPopup.Hide(true);

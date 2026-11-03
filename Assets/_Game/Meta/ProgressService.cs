@@ -174,6 +174,9 @@ namespace GoldenMend.Meta
             return seconds >= 0f && (recordSeconds < 0f || seconds < recordSeconds);
         }
 
+        /// <summary>The saved record for a level, or null before its first win. Read it; don't change it.</summary>
+        public LevelRecord RecordFor(int level) => Find(level);
+
         public int BestPeakFor(int level) => Find(level)?.BestPeak ?? -1;
         public float BestSecondsFor(int level) => Find(level)?.BestSeconds ?? -1f;
 

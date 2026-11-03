@@ -209,6 +209,19 @@ namespace GoldenMend.Presentation.UI
             return button;
         }
 
+        /// <summary>Makes a whole panel a button (with the click sound), for cards that open on tap.</summary>
+        public Button Tappable(RectTransform rect, Action onClick)
+        {
+            var button = rect.gameObject.AddComponent<Button>();
+            button.targetGraphic = rect.GetComponent<Image>();
+            button.onClick.AddListener(() =>
+            {
+                click();
+                onClick();
+            });
+            return button;
+        }
+
         /// <summary>A gold coin: a darker rim, a bright face and a small shine.</summary>
         public RectTransform Coin(string name, Transform parent, Anchor anchor, Vector2 position, float size)
         {

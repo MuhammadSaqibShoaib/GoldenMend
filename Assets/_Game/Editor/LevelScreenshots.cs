@@ -57,7 +57,7 @@ namespace GoldenMend.EditorTools
             var save = new SaveData { Coins = 260, Unlocked = 3 };
             save.Levels.Add(new LevelRecord { Index = 0, Stars = 3, BestPeak = 0, Clears = 1 });
             save.Levels.Add(new LevelRecord { Index = 1, Stars = 2, BestPeak = 2, Clears = 1 });
-            save.Levels.Add(new LevelRecord { Index = 2, Stars = 3, BestPeak = 1, Clears = 2 });
+            save.Levels.Add(new LevelRecord { Index = 2, Stars = 3, BestPeak = 1, BestSeconds = 74f, Clears = 2, CleanClears = 1, CleanPeak = 2, CleanSeconds = 95f });
             store.Save(save);
 
             var root = new GameObject("Game").transform;
@@ -89,6 +89,10 @@ namespace GoldenMend.EditorTools
             Capture("1-home");
             flow.ShowMuseum();
             Capture("2-museum");
+            flow.ShowDetails(2);
+            Capture("2b-details");
+            flow.ShowDetails(3);
+            Capture("2c-details-new");
             flow.StartLevel(0);
             Capture("3-level1-tip");
             flow.StartLevel(3);
