@@ -21,6 +21,12 @@ namespace GoldenMend.Meta
             set => Set(ref data.Sound, value);
         }
 
+        public bool Music
+        {
+            get => data.Music;
+            set => Set(ref data.Music, value);
+        }
+
         public bool Haptics
         {
             get => data.Haptics;

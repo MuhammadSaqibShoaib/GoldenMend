@@ -17,8 +17,11 @@ namespace GoldenMend.Data
 
         public SolveResult Solution { get; }
 
+        /// <summary>The deal attempt that was accepted; the catalog stores it as <see cref="LevelSpec.Deal"/>.</summary>
+        public int Deal { get; }
+
         public BuiltLevel(LevelSpec spec, LevelDef def, int columns, int rows, int[] socketColumn, int[] socketRow,
-            SolveResult solution)
+            SolveResult solution, int deal = 0)
         {
             Spec = spec;
             Def = def;
@@ -27,6 +30,7 @@ namespace GoldenMend.Data
             SocketColumn = socketColumn;
             SocketRow = socketRow;
             Solution = solution;
+            Deal = deal;
         }
     }
 }

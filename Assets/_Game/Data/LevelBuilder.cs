@@ -27,7 +27,7 @@ namespace GoldenMend.Data
 
             ParsePile(spec, shardCount, out int pileColumns, out int pileRows, out var pileWalls, out var pileSlots);
 
-            for (int attempt = 0; attempt < MaxAttempts; attempt++)
+            for (int attempt = spec.Deal; attempt < spec.Deal + MaxAttempts; attempt++)
             {
                 var rng = new XorShift((uint)(spec.Seed * 7919 + attempt * 104729 + 1));
 
@@ -54,7 +54,7 @@ namespace GoldenMend.Data
                 if (solution.Status != SolveStatus.Solved) continue;
                 if (solution.MinBenchPeak < spec.MinBenchPeak || solution.MinBenchPeak > spec.MaxBenchPeak) continue;
 
-                return new BuiltLevel(spec, def, columns, rows, socketColumn, socketRow, solution);
+                return new BuiltLevel(spec, def, columns, rows, socketColumn, socketRow, solution, attempt);
             }
 
             throw new InvalidOperationException(

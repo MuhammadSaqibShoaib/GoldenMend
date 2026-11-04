@@ -197,6 +197,23 @@ namespace GoldenMend.Tests
         }
 
         [Test]
+        public void EveryCatalogLevel_StoresTheFirstDealItsBandAccepts()
+        {
+            for (int i = 0; i < LevelCatalog.Count; i++)
+            {
+                var spec = LevelCatalog.Spec(i);
+                var fromStart = LevelBuilder.Build(new LevelSpec
+                {
+                    Name = spec.Name, Shape = spec.Shape, PileShape = spec.PileShape, Seed = spec.Seed,
+                    LockedBenchSlots = spec.LockedBenchSlots, BenchSize = spec.BenchSize,
+                    MinBenchPeak = spec.MinBenchPeak, MaxBenchPeak = spec.MaxBenchPeak,
+                });
+
+                Assert.That(spec.Deal, Is.EqualTo(fromStart.Deal), spec.Name);
+            }
+        }
+
+        [Test]
         public void EveryLevel_HasAGlaze()
         {
             string[] patterns = { "seigaiha", "sakura", "kikko", "uroko", "kanoko", "shippo" };

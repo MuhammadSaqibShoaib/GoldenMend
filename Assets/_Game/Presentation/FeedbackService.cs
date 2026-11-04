@@ -3,8 +3,9 @@ using UnityEngine;
 namespace GoldenMend.Presentation
 {
     /// <summary>
-    /// Sound and haptics for every board moment. Plays the <see cref="SoundBank"/> when one is set, otherwise
-    /// generated tones (tests and tools). Lock chimes climb a pentatonic scale through a chain.
+    /// Sound, music and haptics for every board moment. Plays the <see cref="SoundBank"/> when one is set, otherwise
+    /// generated tones (tests and tools). Lock chimes climb a pentatonic scale through a chain. The music dips under
+    /// the win and fail jingles.
     /// </summary>
     public sealed class FeedbackService : MonoBehaviour
     {
@@ -13,7 +14,10 @@ namespace GoldenMend.Presentation
         const int Voices = 6;
 
         AudioSource[] voices;
+        AudioSource music;
         int nextVoice;
+        float duckUntil;
+        bool musicOn = true;
         SoundBank bank;
         float lastUncover;
 
@@ -23,13 +27,33 @@ namespace GoldenMend.Presentation
 
         public bool Muted { get; set; }
 
+        /// <summary>Music has its own switch: players often keep effects and turn music off, or the reverse.</summary>
+        public bool MusicOn
+        {
+            get => musicOn;
+            set
+            {
+                musicOn = value;
+                if (music == null) return;
+                if (value && !music.isPlaying && music.clip != null && Application.isPlaying) music.Play();
+                if (!value) music.Stop();
+            }
+        }
+
         public bool HapticsOn
         {
             get => Haptics.Enabled;
             set => Haptics.Enabled = value;
         }
 
-        public void Init(SoundBank sounds) => bank = sounds;
+        public void Init(SoundBank sounds)
+        {
+            bank = sounds;
+            if (music == null || bank == null || bank.Music == null) return;
+            music.clip = bank.Music;
+            music.volume = bank.MusicVolume;
+            if (musicOn && Application.isPlaying) music.Play();
+        }
 
         void Awake()
         {
@@ -39,6 +63,10 @@ namespace GoldenMend.Presentation
                 voices[i] = gameObject.AddComponent<AudioSource>();
                 voices[i].playOnAwake = false;
             }
+            music = gameObject.AddComponent<AudioSource>();
+            music.playOnAwake = false;
+            music.loop = true;
+            music.priority = 0;
             toneChime = Tone("chime", 880f, 0.7f, 5.5f, 0.35f);
             toneThud = Tone("thud", 196f, 0.18f, 18f, 0.4f);
             toneBuzz = Tone("buzz", 110f, 0.45f, 4f, 0.35f, square: true);
@@ -60,7 +88,7 @@ namespace GoldenMend.Presentation
         public void Lock(int chainIndex)
         {
             float pitch = Semitones(Pentatonic[Mathf.Min(chainIndex, Pentatonic.Length - 1)]);
-            Play(Any(bank != null ? bank.Lock : null) ?? toneChime, pitch, 1f);
+            Play((bank != null ? bank.Lock : null) ?? toneChime, pitch, 0.9f);
             if (chainIndex == 0) Haptics.Click();
             else Haptics.HeavyClick();
         }
@@ -89,14 +117,14 @@ namespace GoldenMend.Presentation
 
         public void Win()
         {
-            if (bank != null && bank.WinJingle != null) PlayJingle(bank.WinJingle);
+            if (bank != null && bank.WinJingle != null) PlayJingle(bank.WinJingle, 4.5f);
             else Play(toneChime, Semitones(12), 1f);
             Haptics.Success();
         }
 
         public void Fail()
         {
-            if (bank != null && bank.FailJingle != null) PlayJingle(bank.FailJingle);
+            if (bank != null && bank.FailJingle != null) PlayJingle(bank.FailJingle, 3f);
             else Play(toneBuzz, 1f, 1f);
             Haptics.Failure();
         }
@@ -120,15 +148,23 @@ namespace GoldenMend.Presentation
             voice.Play();
         }
 
-        void PlayJingle(AudioClip clip)
+        void PlayJingle(AudioClip clip, float duckSeconds)
         {
             if (Muted || voices == null) return;
+            duckUntil = Time.unscaledTime + duckSeconds;
             var voice = voices[nextVoice];
             nextVoice = (nextVoice + 1) % voices.Length;
             voice.pitch = 1f;
             voice.volume = bank.JingleVolume;
             voice.clip = clip;
             voice.Play();
+        }
+
+        void Update()
+        {
+            if (music == null || bank == null) return;
+            float target = bank.MusicVolume * (Time.unscaledTime < duckUntil ? 0.2f : 1f);
+            music.volume = Mathf.MoveTowards(music.volume, target, Time.unscaledDeltaTime * 0.6f);
         }
 
         static AudioClip Any(AudioClip[] clips) =>

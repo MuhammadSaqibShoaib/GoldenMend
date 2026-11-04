@@ -42,8 +42,12 @@ namespace GoldenMend.Presentation.UI
             Visible = true;
             Root.SetAsLastSibling();
             OnShow();
+            if (PlaysOpenSound) Ui.PopupSound();
             Ui.Fade(group, true, 0.2f);
         }
+
+        /// <summary>Popups whoosh in; full screens and the win sheet (which has its own jingle) stay quiet.</summary>
+        protected virtual bool PlaysOpenSound => Backdrop != null;
 
         public void Hide(bool instant = false)
         {

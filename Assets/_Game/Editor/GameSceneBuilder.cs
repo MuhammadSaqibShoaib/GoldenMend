@@ -108,13 +108,16 @@ namespace GoldenMend.EditorTools
             theme.IconPlay = Load<Sprite>(Icons + "arrowRight.png");
             theme.IconTrophy = Load<Sprite>(Icons + "trophy.png");
             theme.IconHaptics = Load<Sprite>(Icons + "phone.png");
+            theme.IconMusic = Load<Sprite>(Icons + "musicOn.png");
             theme.IconRestart = Load<Sprite>(Icons + "return.png");
             theme.IconHint = Load<Sprite>(GameIcons + "bulb.png");
             theme.IconPull = Load<Sprite>(GameIcons + "pull.png");
             theme.IconPrevious = Load<Sprite>(Icons + "arrowLeft.png");
             theme.IconNext = Load<Sprite>(Icons + "arrowRight.png");
 
-            theme.Click = Load<AudioClip>(Kenney + "Sounds/click-a.ogg");
+            theme.Click = Load<AudioClip>(Audio + "Sfx/button.ogg");
+            theme.Popup = Load<AudioClip>(Audio + "Sfx/popup.ogg");
+            theme.StarSound = Load<AudioClip>(Audio + "Sfx/star.ogg");
 
             // Berry Night palette (see the Figma file "Golden Mend – UI Revamp").
             theme.Cream = Color.white;
@@ -187,9 +190,9 @@ namespace GoldenMend.EditorTools
         }
 
         const string SoundBankPath = "Assets/_Game/Content/Audio/SoundBank.asset";
-        const string Audio = "Assets/ThirdParty/Kenney/Audio/";
+        const string Audio = "Assets/_Game/Content/Audio/";
 
-        /// <summary>Creates or refreshes the sound bank from Kenney's CC0 audio packs.</summary>
+        /// <summary>Creates or refreshes the sound bank from the clips Tools/Audio/make_sounds.py writes.</summary>
         [MenuItem("Golden Mend/Rebuild Sound Bank")]
         public static SoundBank BuildSoundBank()
         {
@@ -203,15 +206,16 @@ namespace GoldenMend.EditorTools
                 AssetDatabase.CreateAsset(bank, SoundBankPath);
             }
 
-            bank.Pick = Clips("Casino/chips-handle-1", "Casino/chips-handle-2", "Casino/chips-handle-3");
-            bank.Park = Clips("Casino/chip-lay-1", "Casino/chip-lay-2", "Casino/chip-lay-3");
-            bank.Lock = Clips("Interface/glass_001", "Interface/glass_002", "Interface/glass_003");
-            bank.Uncover = Clips("Interface/pluck_001", "Interface/pluck_002");
-            bank.Reject = Load<AudioClip>(Audio + "Interface/tick_002.ogg");
-            bank.Expand = Load<AudioClip>(Audio + "Interface/maximize_006.ogg");
-            bank.Coins = Clips("Casino/chips-stack-1", "Casino/chips-stack-2");
-            bank.WinJingle = Load<AudioClip>(Audio + "Jingles/jingles_STEEL02.ogg");
-            bank.FailJingle = Load<AudioClip>(Audio + "Jingles/jingles_STEEL14.ogg");
+            bank.Pick = Clips("Sfx/pick_1", "Sfx/pick_2", "Sfx/pick_3");
+            bank.Park = Clips("Sfx/park_1", "Sfx/park_2", "Sfx/park_3");
+            bank.Lock = Load<AudioClip>(Audio + "Sfx/lock.ogg");
+            bank.Uncover = Clips("Sfx/uncover");
+            bank.Reject = Load<AudioClip>(Audio + "Sfx/reject.ogg");
+            bank.Expand = Load<AudioClip>(Audio + "Sfx/expand.ogg");
+            bank.Coins = Clips("Sfx/coins_1", "Sfx/coins_2");
+            bank.WinJingle = Load<AudioClip>(Audio + "Sfx/win.ogg");
+            bank.FailJingle = Load<AudioClip>(Audio + "Sfx/fail.ogg");
+            bank.Music = Load<AudioClip>(Audio + "Music/night_workshop.ogg");
 
             EditorUtility.SetDirty(bank);
             AssetDatabase.SaveAssets();

@@ -7,6 +7,6 @@
 | [Baloo 2](https://github.com/EkType/Baloo2) (Bold, ExtraBold) | The Baloo 2 Project Authors | SIL Open Font License 1.1 (`OFL.txt` alongside the fonts) | `Assets/ThirdParty/Fonts/Baloo2` |
 | [UI Pack](https://kenney.nl/assets/ui-pack) | Kenney (kenney.nl) | CC0 1.0 (public domain; credit appreciated, not required) | `Assets/ThirdParty/Kenney/UIPack` |
 | [Game Icons](https://opengameart.org/content/game-icons) | Kenney (kenney.nl) | CC0 1.0 | `Assets/ThirdParty/Kenney/GameIcons` |
-| [Interface Sounds](https://opengameart.org/content/interface-sounds), [Casino Audio](https://opengameart.org/content/54-casino-sound-effects-cards-dice-chips), [Music Jingles](https://opengameart.org/node/22000) | Kenney (kenney.nl) | CC0 1.0 | `Assets/ThirdParty/Kenney/Audio` |
+| [Impact Sounds](https://kenney.nl/assets/impact-sounds), [RPG Audio](https://kenney.nl/assets/rpg-audio) (ceramic plates, soft impacts, glass click, coins) | Kenney (kenney.nl) | CC0 1.0 | `Tools/Audio/source`, processed into `Assets/_Game/Content/Audio/Sfx` by `Tools/Audio/make_sounds.py` |
 
-Everything else in this repository is original work.
+The music, jingles, chimes and button sounds are synthesised by `Tools/Audio/make_sounds.py`. Everything else in this repository is original work.

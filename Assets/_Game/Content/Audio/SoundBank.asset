@@ -13,26 +13,24 @@ MonoBehaviour:
   m_Name: SoundBank
   m_EditorClassIdentifier: GoldenMend.Presentation::GoldenMend.Presentation.SoundBank
   Pick:
-  - {fileID: 8300000, guid: 3d7a0962d317c074d942ca51872acca8, type: 3}
-  - {fileID: 8300000, guid: 9f71ccf0cdf0711439b525cf5d77f811, type: 3}
-  - {fileID: 8300000, guid: 0d9e7c35a66197b46bf31deb839ae83c, type: 3}
+  - {fileID: 8300000, guid: 5bd1d86ae7add344fbfcb86ad338f4a4, type: 3}
+  - {fileID: 8300000, guid: 1c08cb38f24403c4a9db2a94d84c95e5, type: 3}
+  - {fileID: 8300000, guid: 9f19fd02f58792845958ce7fc5172b71, type: 3}
   Park:
-  - {fileID: 8300000, guid: 86460f8dc1f91fd4b94eb4408b8c92e3, type: 3}
-  - {fileID: 8300000, guid: 94148a6e90a04bd4c82779b47abd5c4e, type: 3}
-  - {fileID: 8300000, guid: da0117cfbe8bbfb4c9357ed7e7dad22b, type: 3}
-  Lock:
-  - {fileID: 8300000, guid: 59d4254d233a133499dd62392157f9cf, type: 3}
-  - {fileID: 8300000, guid: b8713214303fd0c42a34171936fd7a97, type: 3}
-  - {fileID: 8300000, guid: 656c887fcbaeaed4bb40867c11de9736, type: 3}
+  - {fileID: 8300000, guid: 8fbec780596ad924988f5fd7bcef746d, type: 3}
+  - {fileID: 8300000, guid: a85eb8bfb2b841c46a915bdf8e345964, type: 3}
+  - {fileID: 8300000, guid: 4a07224220159494bae08e866bdbdc7a, type: 3}
+  Lock: {fileID: 8300000, guid: 9967a44351be07d41a766b3464c26c5d, type: 3}
   Uncover:
-  - {fileID: 8300000, guid: 6062f47bade7a8047a978ec607105d6c, type: 3}
-  - {fileID: 8300000, guid: 6c1d44f7cb5dbb143879d65d800c28fb, type: 3}
-  Reject: {fileID: 8300000, guid: 4c2b1cbc2cd709246bc21e9dbb0ff0de, type: 3}
-  Expand: {fileID: 8300000, guid: 1248f4deb3bc76143b9ab26cd3774269, type: 3}
+  - {fileID: 8300000, guid: 2285261774e418b48897767c2cf972b1, type: 3}
+  Reject: {fileID: 8300000, guid: b67758cf6b726de4488d4d1a1642ee71, type: 3}
+  Expand: {fileID: 8300000, guid: 2c71f85e2f0d1a0408ec87f1c838f37f, type: 3}
   Coins:
-  - {fileID: 8300000, guid: 4d97aa96c49821c4aa049057ebe72691, type: 3}
-  - {fileID: 8300000, guid: 1b403e167faf8bb458fb35d62f57b4ef, type: 3}
-  WinJingle: {fileID: 8300000, guid: 8a0a73db2265d8f499df33977ad81f05, type: 3}
-  FailJingle: {fileID: 8300000, guid: 02f5c99eb639e9f4ebed3fa538a0f887, type: 3}
+  - {fileID: 8300000, guid: 7a5668f44f90ab34796945765568410d, type: 3}
+  - {fileID: 8300000, guid: 383cd1c33439dfd47a1a217955410f2a, type: 3}
+  WinJingle: {fileID: 8300000, guid: 82db53f46f5c3c34d9a320ccdd5db307, type: 3}
+  FailJingle: {fileID: 8300000, guid: 3fa0ef6e30aa52a4a8d7bc85f0e1d836, type: 3}
+  Music: {fileID: 8300000, guid: d030e04d4efd30841888fc7022362d6c, type: 3}
   EffectsVolume: 0.8
   JingleVolume: 0.7
+  MusicVolume: 0.45

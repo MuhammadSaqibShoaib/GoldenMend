@@ -78,6 +78,7 @@ namespace GoldenMend.Flow
                 Done = CloseSettings,
                 SoundChanged = on => settings.Sound = on,
                 HapticsChanged = on => settings.Haptics = on,
+                MusicChanged = on => settings.Music = on,
             };
             win = new WinSheet(ui) { Next = NextAfterWin, Home = ShowHome };
             fail = new FailPopup(ui) { Continue = ContinueRun, Retry = () => StartLevel(current), Home = ShowHome };
@@ -252,7 +253,7 @@ namespace GoldenMend.Flow
         {
             settingsFromPause = fromPause;
             if (fromPause) pause.Hide();
-            settingsPopup.Bind(settings.Sound, settings.Haptics);
+            settingsPopup.Bind(settings.Sound, settings.Music, settings.Haptics);
             settingsPopup.Show();
         }
 
@@ -318,6 +319,7 @@ namespace GoldenMend.Flow
         {
             feedback.Muted = !settings.Sound;
             feedback.HapticsOn = settings.Haptics;
+            feedback.MusicOn = settings.Music;
             ui.SoundOn = settings.Sound;
         }
 
@@ -374,6 +376,18 @@ namespace GoldenMend.Flow
             banner.Hide();
             offer.Bind("Need a hint?", "Shows the piece that fits right now,\neven if it is buried.", "Get hint", EconomyService.HintCost, economy.Coins, true);
             offer.Show();
+        }
+
+        /// <summary>Shows any level on the board, locked or not, with no popups over it (screenshots).</summary>
+        public void PreviewLevel(int index)
+        {
+            offer.Hide(true);
+            current = index;
+            HideAll();
+            board.Load(Levels[index]);
+            hud.Bind(index, Levels[index].Spec);
+            RefreshHelpers();
+            hud.Show();
         }
 
         public void PreviewBanner()

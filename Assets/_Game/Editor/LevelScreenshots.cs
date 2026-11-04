@@ -113,6 +113,13 @@ namespace GoldenMend.EditorTools
             flow.PreviewOffer();
             Capture("9-hint-offer");
 
+            // Every later level, to check that bigger vessels and racks fit each screen shape.
+            for (int i = 8; i < LevelCatalog.Count; i++)
+            {
+                flow.PreviewLevel(i);
+                Capture($"L{i + 1:00}");
+            }
+
             camera.targetTexture = null;
             Object.DestroyImmediate(target);
             Object.DestroyImmediate(readback);

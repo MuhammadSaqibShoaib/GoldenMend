@@ -56,8 +56,9 @@ namespace GoldenMend.Presentation.UI
         public void Bind(int levelIndex, LevelSpec spec)
         {
             string pink = ColorUtility.ToHtmlStringRGB(T.Pink);
-            caption.text = spec.Hard ? $"LEVEL {levelIndex + 1} <color=#{pink}>HARD</color>" : $"LEVEL {levelIndex + 1}";
-            title.text = VesselArt.DisplayName(spec);
+            // HARD rides on the name line: the big caption has no room for it once levels reach two digits.
+            caption.text = $"LEVEL {levelIndex + 1}";
+            title.text = spec.Hard ? $"<color=#{pink}>HARD</color> · {VesselArt.DisplayName(spec)}" : VesselArt.DisplayName(spec);
         }
 
         /// <summary>Hints in stock; at zero the badge shows "+" because a tap offers more.</summary>

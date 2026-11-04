@@ -36,10 +36,12 @@ namespace GoldenMend.Presentation.UI
         public Action Done;
         public Action<bool> SoundChanged;
         public Action<bool> HapticsChanged;
+        public Action<bool> MusicChanged;
 
         readonly RectTransform card;
         readonly Switch sound;
         readonly Switch haptics;
+        readonly Switch music;
 
         sealed class Switch
         {
@@ -50,22 +52,24 @@ namespace GoldenMend.Presentation.UI
 
         public SettingsPopup(UiRoot ui) : base(ui, "Settings", popup: true)
         {
-            card = B.Popup(Root, new Vector2(920f, 1120f), Vector2.zero, () => Done?.Invoke(), out var title);
+            card = B.Popup(Root, new Vector2(920f, 1300f), Vector2.zero, () => Done?.Invoke(), out var title);
             title.text = "Settings";
 
             sound = Row("Sound", T.IconSoundOn, -196f, on => SoundChanged?.Invoke(on));
-            haptics = Row("Haptics", T.IconHaptics, -388f, on => HapticsChanged?.Invoke(on));
+            music = Row("Music", T.IconMusic, -388f, on => MusicChanged?.Invoke(on));
+            haptics = Row("Haptics", T.IconHaptics, -580f, on => HapticsChanged?.Invoke(on));
 
-            B.Text("Credits", card, "Paintings: public domain, Art Institute of Chicago and The Met (CC0)\nIcons and sounds: Kenney (kenney.nl), CC0\nFonts: Titan One and Baloo 2, SIL Open Font License",
-                T.BodyFont, 28, T.Muted, TextAnchor.UpperCenter, Anchor.Top, new Vector2(0f, -600f), new Vector2(820f, 180f));
-            B.Text("Version", card, $"Golden Mend  {Application.version}", T.BodyFont, 26, UiBuilder.WithAlpha(T.Muted, 0.6f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -800f), new Vector2(700f, 40f));
+            B.Text("Credits", card, "Paintings: public domain, Art Institute of Chicago and The Met (CC0)\nIcons and sound recordings: Kenney (kenney.nl), CC0\nFonts: Titan One and Baloo 2, SIL Open Font License",
+                T.BodyFont, 28, T.Muted, TextAnchor.UpperCenter, Anchor.Top, new Vector2(0f, -790f), new Vector2(820f, 180f));
+            B.Text("Version", card, $"Golden Mend  {Application.version}", T.BodyFont, 26, UiBuilder.WithAlpha(T.Muted, 0.6f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -985f), new Vector2(700f, 40f));
 
             B.Button("Done", card, "Done", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 64f), new Vector2(560f, 160f), () => Done?.Invoke());
         }
 
-        public void Bind(bool soundOn, bool hapticsOn)
+        public void Bind(bool soundOn, bool musicOn, bool hapticsOn)
         {
             Set(sound, soundOn);
+            Set(music, musicOn);
             Set(haptics, hapticsOn);
         }
 
@@ -113,6 +117,7 @@ namespace GoldenMend.Presentation.UI
 
         readonly RectTransform content;
         readonly RectTransform stars;
+        int earnedStars;
         readonly RectTransform showcase;
         readonly Text subtitle;
         readonly Text reward;
@@ -153,6 +158,7 @@ namespace GoldenMend.Presentation.UI
         {
             for (int i = stars.childCount - 1; i >= 0; i--) Release(stars.GetChild(i).gameObject);
             B.Stars(stars, starCount, Anchor.Center, Vector2.zero, 150f, raised: true);
+            earnedStars = starCount;
 
             if (preview != null) Release(preview.gameObject);
             preview = level != null ? VesselPreview.Build(B, showcase, level, VesselLook.Restored, Anchor.Center, Vector2.zero, new Vector2(720f, 460f)) : null;
@@ -165,10 +171,18 @@ namespace GoldenMend.Presentation.UI
             nextLabel.text = hasNext ? "NEXT" : "MUSEUM";
         }
 
+        protected override bool PlaysOpenSound => false;
+
         protected override void OnShow()
         {
-            Ui.Pop(stars, 0.25f);
-            Ui.Pop(reward.transform.parent, 0.4f);
+            // Stars land one by one, each with a ding a step higher.
+            for (int i = 0; i < stars.childCount; i++)
+            {
+                float delay = 0.3f + 0.22f * i;
+                Ui.Pop(stars.GetChild(i), delay);
+                if (i < earnedStars) Ui.StarSound(i, delay);
+            }
+            Ui.Pop(reward.transform.parent, 0.3f + 0.22f * stars.childCount);
         }
 
         static void Release(GameObject go)

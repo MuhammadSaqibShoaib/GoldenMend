@@ -5,26 +5,30 @@ namespace GoldenMend.EditorTools
 {
     /// <summary>
     /// Import settings for the Kenney UI Pack and Game Icons: every PNG becomes an uncompressed UI sprite, and buttons,
-    /// inputs and checkboxes get 9-slice borders so they stretch cleanly.
+    /// inputs and checkboxes get 9-slice borders so they stretch cleanly. Also sets up the game's sounds and music.
     /// </summary>
     public sealed class KenneyUiImport : AssetPostprocessor
     {
         const string Folder = "Assets/ThirdParty/Kenney/";
 
         // Bump when the settings below change so Unity reimports the pack.
-        public override uint GetVersion() => 4;
+        public override uint GetVersion() => 5;
 
-        // Short effects decompress on load for zero-latency playback; everything is mono to halve memory.
+        // The game's own sounds: short effects decompress on load for zero-latency playback, the music streams;
+        // everything is mono to halve memory.
         void OnPreprocessAudio()
         {
-            if (!assetPath.StartsWith(Folder)) return;
+            if (!assetPath.StartsWith("Assets/_Game/Content/Audio/")) return;
             var importer = (AudioImporter)assetImporter;
             importer.forceToMono = true;
+            bool music = assetPath.Contains("/Music/");
+            bool jingle = assetPath.EndsWith("/win.ogg") || assetPath.EndsWith("/fail.ogg");
             var settings = importer.defaultSampleSettings;
-            settings.loadType = assetPath.Contains("/Jingles/") ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
+            settings.loadType = music ? AudioClipLoadType.Streaming : jingle ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
             settings.compressionFormat = AudioCompressionFormat.Vorbis;
-            settings.quality = 0.6f;
+            settings.quality = music ? 0.5f : 0.7f;
             importer.defaultSampleSettings = settings;
+            importer.loadInBackground = music;
         }
 
         void OnPreprocessTexture()

@@ -31,18 +31,19 @@ namespace GoldenMend.Core
     }
 
     /// <summary>
-    /// Depth-first search over tap orders with memoisation. Finds whether a level can be won without boosters
+    /// Depth-first search over tap orders, remembering dead ends. Finds whether a level can be won without boosters
     /// and the lowest workbench peak a win needs.
     /// </summary>
     public static class Solver
     {
-        const int Unsolvable = int.MaxValue;
         public const int DefaultMaxStates = 2_000_000;
 
         sealed class Context
         {
-            public readonly Dictionary<(ulong pile, ulong placed), (int cost, int move)> Memo =
-                new Dictionary<(ulong, ulong), (int, int)>();
+            /// <summary>States already shown to have no win within <see cref="Bound"/>.</summary>
+            public readonly HashSet<(ulong pile, ulong placed)> Dead = new HashSet<(ulong, ulong)>();
+            public readonly List<int> Path = new List<int>();
+            public int Bound;
             public int MaxStates;
             public bool GaveUp;
         }
@@ -50,33 +51,31 @@ namespace GoldenMend.Core
         public static SolveResult Solve(LevelDef level, int maxStates = DefaultMaxStates) =>
             Solve(new PuzzleEngine(level), maxStates);
 
-        /// <summary>Solves from the engine's current state. The engine itself is not changed.</summary>
+        /// <summary>
+        /// Solves from the engine's current state. The engine itself is not changed. Asks "can it be won without the
+        /// workbench ever holding more than k?" for k = 0, 1, 2 and so on; the first k that works is the minimum peak.
+        /// Each question prunes every branch that goes over k, which is far cheaper than scoring every state.
+        /// </summary>
         public static SolveResult Solve(PuzzleEngine from, int maxStates = DefaultMaxStates)
         {
             if (from.Level.Shards.Count > 64 || from.Level.SocketCount > 64)
                 throw new NotSupportedException("The solver supports up to 64 shards and 64 sockets.");
 
-            var ctx = new Context { MaxStates = maxStates };
             var start = from.Clone();
-            int cost = Search(start, ctx);
-
-            if (cost == Unsolvable)
+            int explored = 0;
+            for (int bound = from.State.BenchCount; bound <= from.State.Bench.Length; bound++)
             {
-                var status = ctx.GaveUp ? SolveStatus.GaveUp : SolveStatus.Unsolvable;
-                return new SolveResult(status, -1, Array.Empty<int>(), ctx.Memo.Count);
+                var ctx = new Context { Bound = bound, MaxStates = maxStates - explored };
+                bool won = Search(start, ctx);
+                explored += ctx.Dead.Count + ctx.Path.Count;
+                if (won)
+                {
+                    ctx.Path.Reverse();
+                    return new SolveResult(SolveStatus.Solved, bound, ctx.Path, explored);
+                }
+                if (ctx.GaveUp) return new SolveResult(SolveStatus.GaveUp, -1, Array.Empty<int>(), explored);
             }
-
-            var order = new List<int>();
-            var walk = from.Clone();
-            while (walk.State.Status == GameStatus.Playing)
-            {
-                int move = ctx.Memo[Key(walk)].move;
-                order.Add(move);
-                walk.Tap(move);
-            }
-
-            int peak = Math.Max(cost, from.State.BenchCount);
-            return new SolveResult(SolveStatus.Solved, peak, order, ctx.Memo.Count);
+            return new SolveResult(SolveStatus.Unsolvable, -1, Array.Empty<int>(), explored);
         }
 
         /// <summary>A tap that keeps the level winnable with the lowest bench peak, or -1 if none does.</summary>
@@ -135,41 +134,41 @@ namespace GoldenMend.Core
             return best;
         }
 
-        static int Search(PuzzleEngine engine, Context ctx)
+        /// <summary>Depth-first: true if a win within the bound exists from here, with its taps pushed onto the path in reverse.</summary>
+        static bool Search(PuzzleEngine engine, Context ctx)
         {
-            if (engine.State.Status == GameStatus.Won) return 0;
+            if (engine.State.Status == GameStatus.Won) return true;
 
             var key = Key(engine);
-            if (ctx.Memo.TryGetValue(key, out var known)) return known.cost;
-            if (ctx.Memo.Count >= ctx.MaxStates)
+            if (ctx.Dead.Contains(key)) return false;
+            if (ctx.Dead.Count >= ctx.MaxStates)
             {
                 ctx.GaveUp = true;
-                return Unsolvable;
+                return false;
             }
 
-            int best = Unsolvable;
-            int bestMove = -1;
-            for (int shard = 0; shard < engine.Level.Shards.Count; shard++)
+            // Shards that fit the vessel go first: placing one never makes the rest harder, so wins turn up early.
+            for (int pass = 0; pass < 2; pass++)
             {
-                if (!engine.CanTap(shard)) continue;
-
-                var next = engine.Clone();
-                next.Tap(shard);
-                if (next.State.Status == GameStatus.Failed) continue;
-
-                int rest = Search(next, ctx);
-                if (rest == Unsolvable) continue;
-
-                int cost = Math.Max(next.State.BenchCount, rest);
-                if (cost < best)
+                for (int shard = 0; shard < engine.Level.Shards.Count; shard++)
                 {
-                    best = cost;
-                    bestMove = shard;
+                    if (!engine.CanTap(shard) || engine.CanPull(shard) != (pass == 0)) continue;
+
+                    var next = engine.Clone();
+                    next.Tap(shard);
+                    if (next.State.Status == GameStatus.Failed || next.State.BenchCount > ctx.Bound) continue;
+
+                    if (Search(next, ctx))
+                    {
+                        ctx.Path.Add(shard);
+                        return true;
+                    }
+                    if (ctx.GaveUp) return false;
                 }
             }
 
-            ctx.Memo[key] = (best, bestMove);
-            return best;
+            ctx.Dead.Add(key);
+            return false;
         }
 
         // The bench holds exactly the shards that left the pile but are not placed, and placements

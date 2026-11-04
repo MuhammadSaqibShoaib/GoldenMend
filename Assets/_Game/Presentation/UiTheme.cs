@@ -41,10 +41,17 @@ namespace GoldenMend.Presentation
         public Sprite IconPlay;
         public Sprite IconTrophy;
         public Sprite IconHaptics;
+        public Sprite IconMusic;
         public Sprite IconPull;
 
         [Header("Sounds")]
         public AudioClip Click;
+
+        [Tooltip("A popup card slides in.")]
+        public AudioClip Popup;
+
+        [Tooltip("A win star lands; played up the scale for each star.")]
+        public AudioClip StarSound;
 
         [Header("Palette")]
         /// <summary>Light text on the night background.</summary>

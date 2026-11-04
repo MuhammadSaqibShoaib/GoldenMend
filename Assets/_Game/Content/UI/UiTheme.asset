@@ -38,8 +38,11 @@ MonoBehaviour:
   IconPlay: {fileID: 21300000, guid: 0580df42748afbf4b9e0676a79ab7b40, type: 3}
   IconTrophy: {fileID: 21300000, guid: 96e2fa1b720105548ae8e53df5ed1a18, type: 3}
   IconHaptics: {fileID: 21300000, guid: 76eda873b3d5de34098c7e97ee2629f6, type: 3}
+  IconMusic: {fileID: 21300000, guid: af871b8f62592814fa7f9aa38386baa8, type: 3}
   IconPull: {fileID: -1660087943635961167, guid: 82ed797e20a7dd6449ad22d39b7a38dd, type: 3}
-  Click: {fileID: 8300000, guid: 169a1d844f711124083eb99e68b39ce3, type: 3}
+  Click: {fileID: 8300000, guid: c1a6862adc9b7064b8124651502a4c12, type: 3}
+  Popup: {fileID: 8300000, guid: 92ed278f7047db24b88118d6ffd470f7, type: 3}
+  StarSound: {fileID: 8300000, guid: 175329160148dc34ba8f4b3c8331f360, type: 3}
   Cream: {r: 1, g: 1, b: 1, a: 1}
   Paper: {r: 0.35686275, g: 0.2, b: 0.72156864, a: 1}
   PanelEdge: {r: 0.61960787, g: 0.48235294, b: 1, a: 1}

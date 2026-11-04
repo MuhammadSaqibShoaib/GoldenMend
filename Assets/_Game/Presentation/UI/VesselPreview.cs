@@ -25,7 +25,8 @@ namespace GoldenMend.Presentation.UI
         public static RectTransform Build(UiBuilder b, Transform parent, BuiltLevel level, VesselLook look, Anchor anchor, Vector2 position, Vector2 box)
         {
             var root = b.Node("Vessel " + level.Spec.Name, parent, anchor, position, box);
-            var sprites = SpritesFor(level);
+            // Silhouette cells are plain squares, so a locked vessel never pays for building its glaze.
+            var sprites = look == VesselLook.Silhouette ? null : SpritesFor(level);
             var theme = b.Theme;
 
             float cell = Mathf.Min(box.x / level.Columns, box.y / level.Rows);
@@ -62,7 +63,7 @@ namespace GoldenMend.Presentation.UI
                 }
                 // Restored shards overlap by a pixel so the merged glaze shows no hairline between cells.
                 float size = look == VesselLook.Restored ? cell + 1f : shard;
-                var image = b.Image($"Shard {s}", root, sprites[s], lit ? Color.white : silhouette, Anchor.Center, Cell(s), new Vector2(size, size));
+                var image = b.Image($"Shard {s}", root, lit ? sprites[s] : null, lit ? Color.white : silhouette, Anchor.Center, Cell(s), new Vector2(size, size));
                 image.preserveAspect = false;
             }
 

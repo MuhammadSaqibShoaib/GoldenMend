@@ -15,6 +15,12 @@ namespace GoldenMend.Data
         /// </summary>
         public string[] PileShape;
         public int Seed = 1;
+
+        /// <summary>
+        /// The deal attempt the builder starts from. The catalog stores the attempt it accepted, so the game finds the
+        /// level on its first solve instead of re-solving every rejected deal before it.
+        /// </summary>
+        public int Deal;
         public int CrackedCount;
         public int LockedBenchSlots;
         public int BenchSize = Core.LevelDef.DefaultBenchSize;

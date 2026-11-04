@@ -22,7 +22,7 @@ namespace GoldenMend.Presentation.UI
         public RectTransform Popups { get; private set; }
         public RectTransform Overlay { get; private set; }
 
-        /// <summary>UI clicks are silent when false.</summary>
+        /// <summary>UI clicks, popup and star sounds are silent when false.</summary>
         public bool SoundOn { get; set; } = true;
 
         public static UiRoot Create(UiTheme theme, Camera camera, Transform parent)
@@ -70,6 +70,28 @@ namespace GoldenMend.Presentation.UI
         public void Click()
         {
             if (SoundOn && Theme.Click != null) clickSource.PlayOneShot(Theme.Click, 0.6f);
+        }
+
+        public void PopupSound()
+        {
+            if (SoundOn && Theme.Popup != null && Application.isPlaying) clickSource.PlayOneShot(Theme.Popup, 0.7f);
+        }
+
+        /// <summary>The n-th win star's ding, after <paramref name="delay"/>: E6, G6, then C7.</summary>
+        public void StarSound(int index, float delay)
+        {
+            if (SoundOn && Theme.StarSound != null && Application.isPlaying) StartCoroutine(StarRoutine(index, delay));
+        }
+
+        IEnumerator StarRoutine(int index, float delay)
+        {
+            yield return new WaitForSecondsRealtime(delay);
+            var source = gameObject.AddComponent<AudioSource>();
+            source.playOnAwake = false;
+            source.pitch = Mathf.Pow(2f, new[] { 0, 3, 8 }[Mathf.Clamp(index, 0, 2)] / 12f);
+            source.PlayOneShot(Theme.StarSound, 0.8f);
+            yield return new WaitForSecondsRealtime(Theme.StarSound.length / source.pitch + 0.1f);
+            Destroy(source);
         }
 
         /// <summary>Fades a group in or out. Instant in edit mode (screenshots) or when <paramref name="duration"/> is 0.</summary>

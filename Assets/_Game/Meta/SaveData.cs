@@ -20,6 +20,7 @@ namespace GoldenMend.Meta
         public List<LevelRecord> Levels = new List<LevelRecord>();
 
         public bool Sound = true;
+        public bool Music = true;
         public bool Haptics = true;
 
         public SaveData Clone()
