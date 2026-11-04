@@ -207,7 +207,6 @@ namespace GoldenMend.EditorTools
             }
 
             bank.Pick = Clips("Sfx/pick_1", "Sfx/pick_2", "Sfx/pick_3");
-            bank.Park = Clips("Sfx/park_1", "Sfx/park_2", "Sfx/park_3");
             bank.Lock = Load<AudioClip>(Audio + "Sfx/lock.ogg");
             bank.Uncover = Clips("Sfx/uncover");
             bank.Reject = Load<AudioClip>(Audio + "Sfx/reject.ogg");

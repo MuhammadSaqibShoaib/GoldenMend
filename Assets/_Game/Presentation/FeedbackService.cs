@@ -74,15 +74,12 @@ namespace GoldenMend.Presentation
 
         public void Pick()
         {
-            Play(Any(bank != null ? bank.Pick : null), Vary(), 0.7f);
+            Play(Any(bank != null ? bank.Pick : null) ?? toneThud, Vary(), 0.8f);
             Haptics.Tick();
         }
 
-        public void Park()
-        {
-            Play(Any(bank != null ? bank.Park : null) ?? toneThud, Vary(), 1f);
-            Haptics.Tick();
-        }
+        /// <summary>A shard settles on the bench. Felt, not heard: the tap that sent it already made the one sound.</summary>
+        public void Park() => Haptics.Tick();
 
         /// <summary>The n-th lock within one tap plays a higher note and a firmer click.</summary>
         public void Lock(int chainIndex)

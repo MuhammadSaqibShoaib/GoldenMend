@@ -16,10 +16,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 5bd1d86ae7add344fbfcb86ad338f4a4, type: 3}
   - {fileID: 8300000, guid: 1c08cb38f24403c4a9db2a94d84c95e5, type: 3}
   - {fileID: 8300000, guid: 9f19fd02f58792845958ce7fc5172b71, type: 3}
-  Park:
-  - {fileID: 8300000, guid: 8fbec780596ad924988f5fd7bcef746d, type: 3}
-  - {fileID: 8300000, guid: a85eb8bfb2b841c46a915bdf8e345964, type: 3}
-  - {fileID: 8300000, guid: 4a07224220159494bae08e866bdbdc7a, type: 3}
   Lock: {fileID: 8300000, guid: 9967a44351be07d41a766b3464c26c5d, type: 3}
   Uncover:
   - {fileID: 8300000, guid: 2285261774e418b48897767c2cf972b1, type: 3}

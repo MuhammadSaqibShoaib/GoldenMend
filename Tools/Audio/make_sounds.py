@@ -153,10 +153,11 @@ def sweep_noise(seconds, f0, f1, seed=0):
 
 
 
-def wood_tok(freq, seconds=0.12, decay=45, seed=0):
-    """A woodblock knock: two inharmonic modes that die fast plus a tiny noise transient for the strike."""
+def wood_tok(freq, seconds=0.12, decay=45, ring=0.45, seed=0):
+    """A woodblock knock: two inharmonic modes that die fast plus a tiny noise transient for the strike.
+    `ring` sets the upper mode; keep it low for a dry tap rather than a bright, droplet-like tok."""
     t = t_axis(seconds)
-    body = np.sin(2 * np.pi * freq * t) * np.exp(-decay * t) + 0.45 * np.sin(2 * np.pi * freq * 2.76 * t) * np.exp(-decay * 1.8 * t)
+    body = np.sin(2 * np.pi * freq * t) * np.exp(-decay * t) + ring * np.sin(2 * np.pi * freq * 2.76 * t) * np.exp(-decay * 1.8 * t)
     strike = highpass(noise(0.004, seed), 2500) * 0.25
     return mix((0, body * np.minimum(1, t / 0.0008)), (0, strike))
 
@@ -195,18 +196,12 @@ def snap(seed=0):
 # ---------------------------------------------------------------- effects
 
 def make_effects():
-    # Pick: a light ceramic clink as the shard lifts out of the rack.
-    for i, name in enumerate(["impactPlate_light_000", "impactPlate_light_002", "impactPlate_light_003"]):
-        x = highpass(trim(load(name), keep=0.22, fade=0.08), 350)
-        write(f"Sfx/pick_{i + 1}", level(room(x, wet=0.08), -24))
-
-    # Park: the shard set down on the bench, a heavier plate with a soft wooden thump under it.
-    for i, (plate, soft) in enumerate([("impactPlate_medium_000", "impactSoft_medium_000"),
-                                       ("impactPlate_medium_002", "impactSoft_medium_002"),
-                                       ("impactPlate_medium_004", "impactSoft_medium_000")]):
-        clink = highpass(trim(load(plate), keep=0.28, fade=0.1), 180)
-        thump = lowpass(trim(load(soft), keep=0.12, fade=0.05), 900) * 0.45
-        write(f"Sfx/park_{i + 1}", level(room(mix((0, clink), (0, thump)), wet=0.1), -21))
+    # Tap: one light wooden tap when a shard is tapped (landing on the bench is silent). A low, dry woodblock
+    # with almost no ring, plus a little real wood knock for body; three pitches so repeats don't sound mechanical.
+    for i, freq in enumerate([700, 760, 820]):
+        tok = wood_tok(freq, 0.07, decay=85, ring=0.12, seed=40 + i)
+        knock = highpass(trim(load(["impactWood_light_000", "impactWood_light_002", "impactWood_light_003"][i]), keep=0.06, fade=0.035), 150) * 0.55
+        write(f"Sfx/pick_{i + 1}", level(room(lowpass(mix((0, tok), (0, knock)), 3200, order=4), wet=0.04), -23))
 
     # Lock: the gold seal. A tiny glass click, then a bell on C5 (FeedbackService pitches it up the scale through
     # a chain), with a soft octave shimmer.

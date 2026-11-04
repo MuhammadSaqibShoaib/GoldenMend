@@ -10,11 +10,8 @@ namespace GoldenMend.Presentation
     [CreateAssetMenu(menuName = "Golden Mend/Sound Bank", fileName = "SoundBank")]
     public sealed class SoundBank : ScriptableObject
     {
-        [Tooltip("Shard lifted out of the rack.")]
+        [Tooltip("A shard is tapped: one light wooden tap. Landing on the workbench is silent.")]
         public AudioClip[] Pick;
-
-        [Tooltip("Shard set down on the workbench.")]
-        public AudioClip[] Park;
 
         [Tooltip("Shard locks into the vessel. A C5 chime pitched up the pentatonic scale through a chain.")]
         public AudioClip Lock;
