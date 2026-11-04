@@ -5,96 +5,110 @@ using UnityEngine.UI;
 namespace GoldenMend.Presentation.UI
 {
     /// <summary>
-    /// Keeps the home screen alive: the vessel cascades in cell by cell, then floats and sways; the gold anchor
-    /// shard pulses with a soft glow; gold sparkles twinkle around it; the Play button breathes. All on unscaled
-    /// time, and nothing runs in edit mode, so screenshots show the resting pose.
+    /// Keeps the home screen's vessel alive, all inside its cells: they cascade in row by row, a soft light wave
+    /// sweeps across them every few seconds, a random cell hops now and then, another catches a gold glint, and the
+    /// gold anchor shard pulses. The Play button breathes. Unscaled time; nothing runs in edit mode, so screenshots
+    /// show the resting pose.
     /// </summary>
     public sealed class ShowcaseMotion : MonoBehaviour
     {
-        const int SparkleCount = 7;
         const float CascadeStep = 0.035f;
         const float CascadeTime = 0.32f;
+        const float WavePeriod = 3.2f;
+        const float WaveWidth = 1.6f;
+        const float HopEvery = 0.75f;
+        const float HopTime = 0.36f;
+        const float GlintEvery = 1.5f;
+        const float GlintTime = 0.9f;
 
-        RectTransform area;
-        RectTransform play;
-        RectTransform vessel;
-        RectTransform anchorTile;
-        RectTransform anchorShard;
-        Image glow;
-        readonly List<(RectTransform cell, float delay)> cells = new List<(RectTransform, float)>();
-        readonly List<Sparkle> sparkles = new List<Sparkle>();
-        float shownAt;
-        Vector2 vesselRest;
+        static readonly Color WaveColor = new Color(0.62f, 0.48f, 1f, 1f);
+        static readonly Color GlintColor = new Color(1f, 0.84f, 0.29f, 1f);
 
-        sealed class Sparkle
+        /// <summary>One vessel cell: its shard image plus the frame drawn under it, which move together.</summary>
+        sealed class Cell
         {
-            public Image Image;
-            public float Born;
-            public float Life;
-            public float Size;
+            public readonly List<RectTransform> Parts = new List<RectTransform>();
+            public Image Face;
+            public Color Base;
+            public float Row;
+            public float Column;
+            public float Delay;
+            public float HopAt = -10f;
+            public float GlintAt = -10f;
+            public bool IsAnchor;
         }
 
-        public static ShowcaseMotion Attach(UiBuilder b, RectTransform area, RectTransform play)
+        RectTransform play;
+        readonly List<Cell> cells = new List<Cell>();
+        float shownAt;
+        float nextHop;
+        float nextGlint;
+        float columns = 1f;
+
+        public static ShowcaseMotion Attach(RectTransform area, RectTransform play)
         {
             var motion = area.gameObject.AddComponent<ShowcaseMotion>();
-            motion.area = area;
             motion.play = play;
-            for (int i = 0; i < SparkleCount; i++)
-            {
-                var image = b.Image($"Sparkle {i + 1}", area, b.Theme.Star, UiBuilder.WithAlpha(b.Theme.Gold, 0f), Anchor.Center, Vector2.zero, new Vector2(40f, 40f));
-                motion.sparkles.Add(new Sparkle { Image = image, Born = -10f });
-            }
             return motion;
         }
 
-        /// <summary>Takes over a freshly built vessel preview: adds the anchor glow and restarts the entrance.</summary>
+        /// <summary>Takes over a freshly built vessel preview and restarts the entrance.</summary>
         public void Track(RectTransform preview)
         {
-            vessel = preview;
-            vesselRest = preview.anchoredPosition;
             cells.Clear();
-            anchorTile = null;
-            anchorShard = null;
-            glow = null;
-
-            float top = float.MinValue;
+            var byPosition = new Dictionary<Vector2Int, Cell>();
+            float top = float.MinValue, left = float.MaxValue, size = 1f;
             foreach (RectTransform child in preview)
             {
-                if (child.name.StartsWith("Shard")) top = Mathf.Max(top, child.anchoredPosition.y);
-            }
-            foreach (RectTransform child in preview)
-            {
-                if (child.name == "Anchor Gold") anchorTile = child;
-                // Every cell (and its frame) drops in by row, top first.
-                float row = (top - child.anchoredPosition.y) / Mathf.Max(1f, child.sizeDelta.y);
-                float column = child.anchoredPosition.x / Mathf.Max(1f, child.sizeDelta.x);
-                cells.Add((child, (row + column * 0.35f + 4f) * CascadeStep));
+                if (!child.name.StartsWith("Shard")) continue;
+                top = Mathf.Max(top, child.anchoredPosition.y);
+                left = Mathf.Min(left, child.anchoredPosition.x);
+                size = Mathf.Max(1f, child.sizeDelta.x);
             }
 
-            if (anchorTile != null)
+            RectTransform anchorFrame = null;
+            foreach (RectTransform child in preview)
             {
-                foreach (RectTransform child in preview)
+                if (child.name == "Anchor Gold") anchorFrame = child;
+                var key = Vector2Int.RoundToInt(child.anchoredPosition);
+                if (!byPosition.TryGetValue(key, out var cell))
                 {
-                    if (child.name.StartsWith("Shard") && (child.anchoredPosition - anchorTile.anchoredPosition).sqrMagnitude < 1f) anchorShard = child;
+                    cell = new Cell
+                    {
+                        Row = (top - child.anchoredPosition.y) / size,
+                        Column = (child.anchoredPosition.x - left) / size,
+                    };
+                    cell.Delay = (cell.Row + cell.Column * 0.35f + 4f) * CascadeStep;
+                    byPosition[key] = cell;
+                    cells.Add(cell);
                 }
-                glow = new GameObject("Anchor Glow", typeof(RectTransform)).AddComponent<Image>();
-                glow.rectTransform.SetParent(preview, false);
-                glow.rectTransform.SetAsFirstSibling();
-                glow.rectTransform.anchoredPosition = anchorTile.anchoredPosition;
-                glow.rectTransform.sizeDelta = anchorTile.sizeDelta * 3.2f;
-                glow.sprite = UiSkin.Glow;
-                glow.color = UiBuilder.WithAlpha(UiTheme.Hex(0xFFD54A), 0.45f);
-                glow.raycastTarget = false;
+                cell.Parts.Add(child);
+                if (child.name.StartsWith("Shard"))
+                {
+                    cell.Face = child.GetComponent<Image>();
+                    cell.Base = cell.Face.color;
+                }
             }
 
+            columns = 1f;
+            foreach (var cell in cells)
+            {
+                columns = Mathf.Max(columns, cell.Column + 1f);
+                if (anchorFrame != null && cell.Parts.Contains(anchorFrame)) cell.IsAnchor = true;
+            }
             Restart();
         }
 
         public void Restart()
         {
             shownAt = Time.unscaledTime;
+            nextHop = shownAt + 1.2f;
+            nextGlint = shownAt + 0.9f;
             if (!Application.isPlaying) return;
-            foreach (var (cell, _) in cells) cell.localScale = Vector3.zero;
+            foreach (var cell in cells)
+            {
+                foreach (var part in cell.Parts) part.localScale = Vector3.zero;
+            }
         }
 
         void Update()
@@ -102,55 +116,56 @@ namespace GoldenMend.Presentation.UI
             float now = Time.unscaledTime;
             float t = now - shownAt;
 
-            foreach (var (cell, delay) in cells)
+            if (cells.Count > 0 && now >= nextHop)
             {
-                if (cell == null) continue;
-                float k = Mathf.Clamp01((t - delay) / CascadeTime);
-                cell.localScale = Vector3.one * OutBack(k);
+                PickPlain().HopAt = now;
+                nextHop = now + HopEvery * Random.Range(0.7f, 1.3f);
+            }
+            if (cells.Count > 0 && now >= nextGlint)
+            {
+                PickPlain().GlintAt = now;
+                nextGlint = now + GlintEvery * Random.Range(0.7f, 1.3f);
             }
 
-            if (vessel != null)
-            {
-                vessel.anchoredPosition = vesselRest + new Vector2(0f, Mathf.Sin(now * 1.3f) * 12f);
-                vessel.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(now * 0.8f) * 1.6f);
-            }
-
+            // The wave runs diagonally from top-left to bottom-right, measured in cells.
+            float span = columns + 8f;
+            float wave = ((t % WavePeriod) / WavePeriod) * span - 2f;
             float pulse = 0.5f + 0.5f * Mathf.Sin(now * 3f);
-            if (anchorTile != null) anchorTile.localScale *= 1f + 0.06f * pulse;
-            if (anchorShard != null) anchorShard.localScale *= 1f + 0.06f * pulse;
-            if (glow != null)
+
+            foreach (var cell in cells)
             {
-                glow.color = UiBuilder.WithAlpha(glow.color, 0.25f + 0.4f * pulse);
-                glow.rectTransform.localScale = Vector3.one * (0.9f + 0.2f * pulse);
+                float scale = OutBack(Mathf.Clamp01((t - cell.Delay) / CascadeTime));
+
+                float hop = Mathf.Clamp01((now - cell.HopAt) / HopTime);
+                if (hop < 1f) scale *= 1f + 0.14f * Mathf.Sin(hop * Mathf.PI);
+                if (cell.IsAnchor) scale *= 1f + 0.06f * pulse;
+
+                foreach (var part in cell.Parts) part.localScale = Vector3.one * scale;
+
+                if (cell.Face == null || cell.IsAnchor) continue;
+                float lit = Mathf.Clamp01(1f - Mathf.Abs(cell.Row + cell.Column - wave) / WaveWidth);
+                float glint = Mathf.Clamp01((now - cell.GlintAt) / GlintTime);
+                float gold = glint < 1f ? Mathf.Sin(glint * Mathf.PI) : 0f;
+                var color = Color.Lerp(cell.Base, WaveColor, Smooth(lit) * 0.35f);
+                color = Color.Lerp(color, GlintColor, gold * 0.55f);
+                color.a = cell.Base.a;
+                cell.Face.color = color;
             }
 
             if (play != null) play.localScale = Vector3.one * (1f + 0.035f * Mathf.Sin(now * 3.4f));
-
-            foreach (var s in sparkles) UpdateSparkle(s, now);
         }
 
-        void UpdateSparkle(Sparkle s, float now)
+        Cell PickPlain()
         {
-            float age = now - s.Born;
-            if (age > s.Life)
+            for (int tries = 0; tries < 6; tries++)
             {
-                // Respawn somewhere on the card's rim area, away from the middle of the vessel.
-                var half = area.rect.size * 0.5f;
-                var dir = Random.insideUnitCircle.normalized;
-                var spot = new Vector2(dir.x * half.x * Random.Range(0.55f, 0.92f), dir.y * half.y * Random.Range(0.55f, 0.9f));
-                s.Image.rectTransform.anchoredPosition = spot;
-                s.Born = now + Random.Range(0f, 1.2f);
-                s.Life = Random.Range(1.1f, 1.8f);
-                s.Size = Random.Range(26f, 52f);
-                s.Image.color = UiBuilder.WithAlpha(s.Image.color, 0f);
-                return;
+                var cell = cells[Random.Range(0, cells.Count)];
+                if (!cell.IsAnchor) return cell;
             }
-            if (age < 0f) return;
-            float k = Mathf.Sin(Mathf.Clamp01(age / s.Life) * Mathf.PI);
-            s.Image.color = UiBuilder.WithAlpha(s.Image.color, k * 0.9f);
-            s.Image.rectTransform.sizeDelta = Vector2.one * s.Size * (0.4f + 0.6f * k);
-            s.Image.rectTransform.localRotation = Quaternion.Euler(0f, 0f, age * 90f);
+            return cells[0];
         }
+
+        static float Smooth(float x) => x * x * (3f - 2f * x);
 
         static float OutBack(float t)
         {

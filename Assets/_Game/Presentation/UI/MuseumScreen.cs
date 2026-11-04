@@ -7,11 +7,11 @@ using UnityEngine.UI;
 namespace GoldenMend.Presentation.UI
 {
     /// <summary>
-    /// The collection, a page of six vessels at a time in a two-column grid, with previous / next buttons below.
-    /// Only the visible page is built, so the museum costs the same with 30 vessels or 300. It opens on the page
-    /// holding the next vessel to restore. Restored pieces show in full with their gold border and stars, the next
-    /// one as a gold-edged teaser with a Restore button, later ones as locked silhouettes. Tapping an unlocked card
-    /// opens its details.
+    /// The collection: only what the player has reached, the restored vessels and the one they are on, six per page
+    /// with previous / next arrows when there is more than one page. Nothing hints at how many vessels are still to
+    /// come. Only the visible page is built, so the museum costs the same with 30 vessels or 300. It opens on the page
+    /// holding the current vessel. Restored pieces show in full with their gold border and stars, the current one as
+    /// a gold-edged teaser with a Restore button. Tapping a card opens its details.
     /// </summary>
     public sealed class MuseumScreen : UiView
     {
@@ -19,22 +19,18 @@ namespace GoldenMend.Presentation.UI
         public Action<int> PlayLevel;
         public Action<int> OpenDetails;
 
-        const float HeaderHeight = 300f;
+        const float HeaderHeight = 200f;
         const float FooterHeight = 190f;
         public const int PageSize = 6;
-        const float ProgressWidth = 520f;
         static readonly Vector2 CardSize = new Vector2(480f, 440f);
 
-        readonly Text subtitle;
-        readonly RectTransform progressFill;
         readonly RectTransform content;
         readonly ScrollRect scroll;
-        readonly Text pageLabel;
         readonly Button previous;
         readonly Button next;
 
         int page;
-        int count;
+        int count; // vessels shown: every unlocked one
         Func<int, BuiltLevel> levelAt;
         Func<int, bool> unlocked;
         Func<int, bool> completed;
@@ -48,19 +44,11 @@ namespace GoldenMend.Presentation.UI
             B.IconButton("Back", header, T.IconPrevious, ButtonStyle.Secondary, Anchor.TopLeft, new Vector2(36f, -44f), 124f, () => Back?.Invoke());
             var title = B.Text("Title", header, "Museum", T.DisplayFont, 104, T.Gold, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -40f), new Vector2(640f, 130f));
             UiBuilder.Lip(title, UiTheme.Hex(0xA1501A), 8f);
-            subtitle = B.Text("Subtitle", header, "", T.BodyFont, 40, T.Muted, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -172f), new Vector2(760f, 56f));
-            var track = B.Image("Progress Track", header, UiSkin.Pill, UiBuilder.WithAlpha(Color.white, 0.12f), Anchor.Top, new Vector2(0f, -244f), new Vector2(ProgressWidth, 32f), sliced: true);
-            track.pixelsPerUnitMultiplier = 2f;
-            var fill = B.Image("Progress Fill", track.transform, UiSkin.Pill, T.Gold, Anchor.Left, Vector2.zero, new Vector2(0f, 32f), sliced: true);
-            fill.pixelsPerUnitMultiplier = 2f;
-            progressFill = fill.rectTransform;
 
             // Page turner pinned to the bottom.
             var footer = B.Node("Footer", Root, Anchor.StretchBottom, Vector2.zero, new Vector2(0f, FooterHeight));
             previous = B.IconButton("Previous Page", footer, T.IconPrevious, ButtonStyle.Secondary, Anchor.Left, new Vector2(60f, 10f), 132f, () => TurnPage(-1));
             next = B.IconButton("Next Page", footer, T.IconNext, ButtonStyle.Secondary, Anchor.Right, new Vector2(-60f, 10f), 132f, () => TurnPage(1));
-            var pill = B.Image("Page Pill", footer, UiSkin.Pill, UiBuilder.WithAlpha(Color.white, 0.1f), Anchor.Center, new Vector2(0f, 10f), new Vector2(420f, 100f), sliced: true);
-            pageLabel = B.Text("Page", pill.transform, "", T.TitleFont, 46, T.Cream, TextAnchor.MiddleCenter, Anchor.Fill, Vector2.zero, Vector2.zero);
 
             // The page's cards between header and footer; scrolls only if a short screen can't fit three rows.
             var viewport = B.Node("Viewport", Root, Anchor.Fill, Vector2.zero, Vector2.zero);
@@ -90,24 +78,17 @@ namespace GoldenMend.Presentation.UI
         }
 
         /// <param name="levelAt">Builds a level on demand; only the shown page's levels are asked for.</param>
-        /// <param name="focus">The level whose page opens first: the next one to restore.</param>
+        /// <param name="focus">The level whose page opens first: the current one.</param>
         public void Bind(int levelCount, Func<int, BuiltLevel> levelAt, Func<int, bool> unlocked, Func<int, bool> completed, Func<int, int> stars,
             int focus)
         {
-            count = levelCount;
+            // Levels unlock in order, so the reached ones are a prefix of the list.
+            count = 0;
+            while (count < levelCount && unlocked(count)) count++;
             this.levelAt = levelAt;
             this.unlocked = unlocked;
             this.completed = completed;
             this.stars = stars;
-
-            int done = 0;
-            for (int i = 0; i < count; i++)
-            {
-                if (completed(i)) done++;
-            }
-            subtitle.text = $"{done} of {count} vessels restored";
-            float fraction = count > 0 ? done / (float)count : 0f;
-            progressFill.sizeDelta = new Vector2(fraction > 0f ? Mathf.Max(32f, ProgressWidth * fraction) : 0f, progressFill.sizeDelta.y);
 
             ShowPage(Mathf.Clamp(focus, 0, Mathf.Max(0, count - 1)) / PageSize);
         }
@@ -123,7 +104,8 @@ namespace GoldenMend.Presentation.UI
             for (int i = first; i < Mathf.Min(first + PageSize, count); i++)
                 BuildCard(i, levelAt(i), unlocked(i), completed(i), stars(i));
 
-            pageLabel.text = $"{page + 1} / {PageCount}";
+            previous.gameObject.SetActive(PageCount > 1);
+            next.gameObject.SetActive(PageCount > 1);
             SetInteractable(previous, page > 0);
             SetInteractable(next, page < PageCount - 1);
 
