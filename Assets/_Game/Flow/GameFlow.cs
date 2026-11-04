@@ -47,7 +47,9 @@ namespace GoldenMend.Flow
 
         int current = -1;
         bool settingsFromPause;
-        List<BuiltLevel> levels;
+
+        /// <summary>Continues per attempt: one rescue, then the player retries. Endless slots would erase the puzzle.</summary>
+        const int MaxContinues = 1;
 
         public FlowState State { get; private set; }
         public int CurrentLevel => current;
@@ -96,31 +98,26 @@ namespace GoldenMend.Flow
             ApplySettings();
         }
 
-        List<BuiltLevel> Levels
-        {
-            get
-            {
-                if (levels != null) return levels;
-                levels = new List<BuiltLevel>();
-                for (int i = 0; i < LevelCatalog.Count; i++) levels.Add(LevelCatalog.Build(i));
-                return levels;
-            }
-        }
+        /// <summary>Levels are built on first use and cached by the catalog; nothing builds the whole list up front.</summary>
+        static BuiltLevel Level(int index) => LevelCatalog.Build(index);
 
         public void ShowHome()
         {
             Time.timeScale = 1f;
             board.Unload();
             HideAll();
-            home.Bind(economy.Coins, Levels[progress.NextLevel], progress.NextLevel, progress.CompletedCount, progress.LevelCount, progress.AllComplete);
+            home.Bind(economy.Coins, Level(progress.NextLevel), progress.NextLevel, progress.CompletedCount, progress.LevelCount, progress.AllComplete);
             home.Show();
             State = FlowState.Home;
         }
 
+        /// <summary>Turns the museum to a page (screenshots).</summary>
+        public void PreviewMuseumPage(int page) => museum.ShowPage(page);
+
         public void ShowMuseum()
         {
             HideAll();
-            museum.Bind(Levels, progress.IsUnlocked, progress.IsCompleted, progress.StarsFor);
+            museum.Bind(LevelCatalog.Count, Level, progress.IsUnlocked, progress.IsCompleted, progress.StarsFor, progress.NextLevel);
             museum.Show();
             State = FlowState.Museum;
         }
@@ -131,7 +128,7 @@ namespace GoldenMend.Flow
             var r = progress.RecordFor(index);
             var record = r == null ? new VesselRecord(0, 0, -1, -1f, -1, -1f)
                 : new VesselRecord(r.Clears, r.Stars, r.BestPeak, r.BestSeconds, r.CleanPeak, r.CleanSeconds);
-            details.Bind(Levels[index], record);
+            details.Bind(Level(index), record);
             details.Play = () => StartLevel(index);
             details.Show();
         }
@@ -143,7 +140,7 @@ namespace GoldenMend.Flow
             current = index;
             HideAll();
 
-            var level = Levels[index];
+            var level = Level(index);
             board.Load(level);
             hud.Bind(index, level.Spec);
             RefreshHelpers();
@@ -261,7 +258,7 @@ namespace GoldenMend.Flow
         {
             settingsPopup.Hide();
             if (settingsFromPause) pause.Show();
-            else if (State == FlowState.Home) home.Bind(economy.Coins, Levels[progress.NextLevel], progress.NextLevel, progress.CompletedCount, progress.LevelCount, progress.AllComplete);
+            else if (State == FlowState.Home) home.Bind(economy.Coins, Level(progress.NextLevel), progress.NextLevel, progress.CompletedCount, progress.LevelCount, progress.AllComplete);
         }
 
         void OnStatusShown(GameStatus status)
@@ -269,7 +266,7 @@ namespace GoldenMend.Flow
             banner.Hide();
             if (status == GameStatus.Won)
             {
-                var level = Levels[current];
+                var level = Level(current);
                 int best = level.Solution.MinBenchPeak;
                 var run = new RunStats(board.BenchPeak, board.PlaySeconds, board.HintsUsed, board.PullsUsed, board.ContinuesUsed, board.Moves);
                 var result = progress.Complete(current, run, best, level.Spec.Hard);
@@ -282,7 +279,7 @@ namespace GoldenMend.Flow
             }
             else if (status == GameStatus.Failed)
             {
-                fail.Bind(EconomyService.ContinueCost, economy.Coins);
+                fail.Bind(EconomyService.ContinueCost, economy.Coins, board.ContinuesUsed < MaxContinues);
                 fail.Show();
                 State = FlowState.WorkbenchFull;
             }
@@ -303,7 +300,7 @@ namespace GoldenMend.Flow
 
         void ContinueRun()
         {
-            if (!economy.TrySpend(EconomyService.ContinueCost)) return;
+            if (board.ContinuesUsed >= MaxContinues || !economy.TrySpend(EconomyService.ContinueCost)) return;
             fail.Hide();
             board.ContinueRun();
             State = FlowState.Playing;
@@ -356,7 +353,7 @@ namespace GoldenMend.Flow
 
         public void PreviewWin(int stars, int coins)
         {
-            var level = Levels[current];
+            var level = Level(current);
             win.Bind(VesselArt.DisplayName(level.Spec), null, stars, coins, true, level.Solution.MinBenchPeak, level.Solution.MinBenchPeak, true,
                 $"New personal best!   0:42   ·   no-help bonus +{ProgressService.CleanBonusCoins}", level);
             banner.Hide();
@@ -364,10 +361,10 @@ namespace GoldenMend.Flow
             win.Show();
         }
 
-        public void PreviewFail()
+        public void PreviewFail(bool continueUsed = false)
         {
             banner.Hide();
-            fail.Bind(EconomyService.ContinueCost, economy.Coins);
+            fail.Bind(EconomyService.ContinueCost, economy.Coins, !continueUsed);
             fail.Show();
         }
 
@@ -384,15 +381,15 @@ namespace GoldenMend.Flow
             offer.Hide(true);
             current = index;
             HideAll();
-            board.Load(Levels[index]);
-            hud.Bind(index, Levels[index].Spec);
+            board.Load(Level(index));
+            hud.Bind(index, Level(index).Spec);
             RefreshHelpers();
             hud.Show();
         }
 
         public void PreviewBanner()
         {
-            var level = Levels[current];
+            var level = Level(current);
             banner.Show(VesselArt.DisplayName(level.Spec), BannerDetail(current, level.Spec));
         }
     }

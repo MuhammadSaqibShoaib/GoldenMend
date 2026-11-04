@@ -52,16 +52,14 @@ namespace GoldenMend.Presentation.UI
 
         public SettingsPopup(UiRoot ui) : base(ui, "Settings", popup: true)
         {
-            card = B.Popup(Root, new Vector2(920f, 1300f), Vector2.zero, () => Done?.Invoke(), out var title);
+            card = B.Popup(Root, new Vector2(920f, 1080f), Vector2.zero, () => Done?.Invoke(), out var title);
             title.text = "Settings";
 
             sound = Row("Sound", T.IconSoundOn, -196f, on => SoundChanged?.Invoke(on));
             music = Row("Music", T.IconMusic, -388f, on => MusicChanged?.Invoke(on));
             haptics = Row("Haptics", T.IconHaptics, -580f, on => HapticsChanged?.Invoke(on));
 
-            B.Text("Credits", card, "Paintings: public domain, Art Institute of Chicago and The Met (CC0)\nIcons and sound recordings: Kenney (kenney.nl), CC0\nFonts: Titan One and Baloo 2, SIL Open Font License",
-                T.BodyFont, 28, T.Muted, TextAnchor.UpperCenter, Anchor.Top, new Vector2(0f, -790f), new Vector2(820f, 180f));
-            B.Text("Version", card, $"Golden Mend  {Application.version}", T.BodyFont, 26, UiBuilder.WithAlpha(T.Muted, 0.6f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -985f), new Vector2(700f, 40f));
+            B.Text("Version", card, $"Golden Mend  {Application.version}", T.BodyFont, 26, UiBuilder.WithAlpha(T.Muted, 0.6f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -745f), new Vector2(700f, 40f));
 
             B.Button("Done", card, "Done", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 64f), new Vector2(560f, 160f), () => Done?.Invoke());
         }
@@ -194,7 +192,8 @@ namespace GoldenMend.Presentation.UI
 
     /// <summary>
     /// Workbench full: the continue offer (+2 slots for coins) as the main action, then retry and home.
-    /// The offer greys out with a clear reason when the player can't afford it.
+    /// The offer greys out with a clear reason when the player can't afford it, and is gone once it was used this
+    /// attempt: one continue per try keeps the bench limit meaningful.
     /// </summary>
     public sealed class FailPopup : UiView
     {
@@ -206,21 +205,25 @@ namespace GoldenMend.Presentation.UI
         readonly Button continueButton;
         readonly Text price;
         readonly Text shortfall;
+        readonly Text body;
+        readonly Text slots;
+        readonly RectTransform retry;
+        readonly RectTransform home;
 
         public FailPopup(UiRoot ui) : base(ui, "Workbench Full", popup: true)
         {
             card = B.Popup(Root, new Vector2(920f, 940f), new Vector2(0f, -20f), null, out var title);
             title.text = "Bench full!";
 
-            B.Text("Body", card, "No free slot for that shard.\nAdd two more and keep going?", T.TitleFont, 44, T.Cream,
+            body = B.Text("Body", card, "No free slot for that shard.\nAdd two more and keep going?", T.TitleFont, 44, T.Cream,
                 TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -184f), new Vector2(820f, 130f));
 
             continueButton = OfferButton(B, card, "Continue", new Vector2(0f, -352f), () => Continue?.Invoke(), out price);
-            B.Text("Slots", card, "Adds 2 workbench slots", T.BodyFont, 34, T.Muted, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -566f), new Vector2(800f, 48f));
+            slots = B.Text("Slots", card, "Adds 2 workbench slots", T.BodyFont, 34, T.Muted, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -566f), new Vector2(800f, 48f));
             shortfall = B.Text("Shortfall", card, "", T.TitleFont, 34, UiTheme.Hex(0xFF9A9A), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -614f), new Vector2(800f, 48f));
 
-            B.Button("Retry", card, "Retry", ButtonStyle.Secondary, Anchor.Top, new Vector2(-190f, -690f), new Vector2(360f, 152f), () => Retry?.Invoke(), T.IconRestart);
-            B.Button("Home", card, "Home", ButtonStyle.Secondary, Anchor.Top, new Vector2(190f, -690f), new Vector2(360f, 152f), () => Home?.Invoke(), T.IconHome);
+            retry = (RectTransform)B.Button("Retry", card, "Retry", ButtonStyle.Secondary, Anchor.Top, new Vector2(-190f, -690f), new Vector2(360f, 152f), () => Retry?.Invoke(), T.IconRestart).transform;
+            home = (RectTransform)B.Button("Home", card, "Home", ButtonStyle.Secondary, Anchor.Top, new Vector2(190f, -690f), new Vector2(360f, 152f), () => Home?.Invoke(), T.IconHome).transform;
         }
 
         /// <summary>A green buy button: the action on the left, the coin price in a dark capsule on the right.</summary>
@@ -237,12 +240,22 @@ namespace GoldenMend.Presentation.UI
             return button;
         }
 
-        public void Bind(int cost, int coins)
+        public void Bind(int cost, int coins, bool canContinue = true)
         {
+            continueButton.gameObject.SetActive(canContinue);
+            slots.gameObject.SetActive(canContinue);
+            body.text = canContinue
+                ? "No free slot for that shard.\nAdd two more and keep going?"
+                : "No free slot for that shard.\nYou already used this try's continue.";
+            float buttonsY = canContinue ? -690f : -400f;
+            retry.anchoredPosition = new Vector2(-190f, buttonsY);
+            home.anchoredPosition = new Vector2(190f, buttonsY);
+            card.sizeDelta = new Vector2(card.sizeDelta.x, canContinue ? 940f : 650f);
+
             price.text = cost.ToString();
             bool canAfford = coins >= cost;
             SetInteractable(continueButton, canAfford);
-            shortfall.text = canAfford ? "" : $"Not enough coins (you have {coins})";
+            shortfall.text = canContinue && !canAfford ? $"Not enough coins (you have {coins})" : "";
         }
 
         protected override void OnShow() => Ui.Pop(card);

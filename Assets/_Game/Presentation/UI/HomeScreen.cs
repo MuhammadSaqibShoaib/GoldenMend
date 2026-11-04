@@ -6,8 +6,8 @@ using UnityEngine.UI;
 namespace GoldenMend.Presentation.UI
 {
     /// <summary>
-    /// Main menu. Top: coins and settings. Middle: the gold title, the next level and its vessel on a glass card.
-    /// Bottom (thumb zone): progress, the big Play button and the museum.
+    /// Main menu. Top: coins and settings. Middle: the gold title, the next level and its vessel on a glass card,
+    /// kept alive by <see cref="ShowcaseMotion"/>. Bottom (thumb zone): progress, the big Play button and the museum.
     /// </summary>
     public sealed class HomeScreen : UiView
     {
@@ -22,6 +22,7 @@ namespace GoldenMend.Presentation.UI
         readonly RectTransform progressFill;
         readonly RectTransform playButton;
         RectTransform preview;
+        readonly ShowcaseMotion motion;
 
         const float ProgressWidth = 600f;
 
@@ -48,6 +49,8 @@ namespace GoldenMend.Presentation.UI
             playButton = (RectTransform)play.transform;
 
             B.Button("Museum", Root, "Museum", ButtonStyle.Secondary, Anchor.Bottom, new Vector2(0f, 56f), new Vector2(520f, 148f), () => OpenMuseum?.Invoke(), T.IconMuseum);
+
+            motion = ShowcaseMotion.Attach(B, showcase, playButton);
         }
 
         public void Bind(int coinCount, BuiltLevel next, int nextIndex, int completed, int total, bool allComplete)
@@ -59,12 +62,13 @@ namespace GoldenMend.Presentation.UI
 
             if (preview != null) Release(preview.gameObject);
             preview = VesselPreview.Build(B, showcase, next, allComplete ? VesselLook.Restored : VesselLook.Teaser, Anchor.Center, Vector2.zero, new Vector2(700f, 600f));
+            motion.Track(preview);
 
             string name = VesselArt.DisplayName(next.Spec).ToUpperInvariant();
             levelChip.text = allComplete ? "ALL RESTORED  ·  REPLAY ANY" : $"LEVEL {nextIndex + 1}  ·  {name}";
         }
 
-        protected override void OnShow() => Ui.Pop(playButton, 0.1f);
+        protected override void OnShow() => motion.Restart();
 
         static void Release(GameObject go)
         {

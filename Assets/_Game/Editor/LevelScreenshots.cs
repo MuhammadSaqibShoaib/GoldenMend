@@ -89,6 +89,8 @@ namespace GoldenMend.EditorTools
             Capture("1-home");
             flow.ShowMuseum();
             Capture("2-museum");
+            flow.PreviewMuseumPage(1);
+            Capture("2a-museum-page2");
             flow.ShowDetails(2);
             Capture("2b-details");
             flow.ShowDetails(3);
@@ -106,6 +108,9 @@ namespace GoldenMend.EditorTools
             flow.StartLevel(3);
             flow.PreviewFail();
             Capture("7-workbench-full");
+            flow.StartLevel(3);
+            flow.PreviewFail(continueUsed: true);
+            Capture("7b-workbench-full-used");
             flow.StartLevel(3);
             flow.PreviewWin(stars: 2, coins: 40);
             Capture("8-level-complete");
