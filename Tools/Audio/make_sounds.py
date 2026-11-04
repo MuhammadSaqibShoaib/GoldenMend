@@ -3,8 +3,9 @@ Builds Golden Mend's sound effects and music into Assets/_Game/Content/Audio.
 
 Physical sounds (ceramic clinks, coins) start from Kenney's CC0 recordings in Tools/Audio/source and are cleaned up:
 mono, trimmed so the hit starts on the first sample, filtered, given one shared small-room reverb and matched in
-loudness. Musical sounds (the gold-seal chime, jingles, button pop, stars, music) are synthesised here, all in
-C major pentatonic so they agree with each other and with the pitched lock chain in FeedbackService.
+loudness. The rest is synthesised here in C major so it agrees with the pitched lock chain in FeedbackService:
+wooden taps for buttons and popups, the gold-seal chime, stars, glockenspiel-and-keys jingles and a light pop
+music loop.
 
 Run from the repository root:  python Tools/Audio/make_sounds.py
 Needs numpy, scipy and soundfile.
@@ -129,33 +130,8 @@ def bell(freq, seconds=1.2, bright=1.0, decay=3.0):
     return y * attack
 
 
-def pluck(freq, seconds=0.9, bright=0.55, seed=0):
-    """Kalimba / koto-like pluck (Karplus-Strong with a soft, slightly muted string)."""
-    rng = np.random.default_rng(seed)
-    period = int(round(SR / freq))
-    n = int(SR * seconds)
-    buf = lowpass(rng.uniform(-1, 1, period), freq * 6) if period > 12 else rng.uniform(-1, 1, period)
-    y = np.zeros(n)
-    y[:period] = buf
-    damp = 0.5 + 0.495 * bright
-    for i in range(period, n):
-        y[i] = damp * 0.5 * (y[i - period] + y[i - period + 1]) + (1 - damp) * y[i - period]
-    body = 0.6 * np.sin(2 * np.pi * freq * t_axis(seconds)) * np.exp(-5 * t_axis(seconds))
-    out = y / (np.abs(y).max() + 1e-9) + body
-    return out * np.minimum(1, t_axis(seconds) / 0.002)
 
 
-def pad(freqs, seconds, attack=0.8, release=1.0, tone=1800):
-    """Soft warm pad: slightly detuned triangle pairs, low-passed, with slow swells."""
-    t = t_axis(seconds)
-    y = np.zeros(len(t))
-    for f in freqs:
-        for detune in (-0.12, 0.12):
-            ph = 2 * np.pi * (f * (1 + detune / 100)) * t + np.sin(2 * np.pi * 0.17 * t) * 0.6
-            y += (2 / np.pi) * np.arcsin(np.sin(ph))
-    y = lowpass(y, tone)
-    env = np.minimum(1, t / attack) * np.minimum(1, (seconds - t) / release)
-    return y * np.clip(env, 0, 1) / max(1, len(freqs))
 
 
 def noise(seconds, seed=0):
@@ -175,12 +151,45 @@ def sweep_noise(seconds, f0, f1, seed=0):
     return out
 
 
-def blip(f0, f1, seconds, decay=30):
-    """A pitch-dropping sine 'pop', the hyper-casual button sound."""
+
+
+def wood_tok(freq, seconds=0.12, decay=45, seed=0):
+    """A woodblock knock: two inharmonic modes that die fast plus a tiny noise transient for the strike."""
     t = t_axis(seconds)
-    f = f1 + (f0 - f1) * np.exp(-t * 40)
-    ph = 2 * np.pi * np.cumsum(f) / SR
-    return np.sin(ph) * np.exp(-decay * t) * np.minimum(1, t / 0.001)
+    body = np.sin(2 * np.pi * freq * t) * np.exp(-decay * t) + 0.45 * np.sin(2 * np.pi * freq * 2.76 * t) * np.exp(-decay * 1.8 * t)
+    strike = highpass(noise(0.004, seed), 2500) * 0.25
+    return mix((0, body * np.minimum(1, t / 0.0008)), (0, strike))
+
+
+def keys(freq, seconds=1.6, decay=1.6):
+    """Soft electric-piano note: a warm sine with a short bright tine on top and gentle tremolo."""
+    t = t_axis(seconds)
+    tone = np.sin(2 * np.pi * freq * t) + 0.18 * np.sin(2 * np.pi * freq * 2 * t) * np.exp(-3 * t)
+    tine = 0.22 * np.sin(2 * np.pi * freq * 7.0 * t) * np.exp(-30 * t)
+    trem = 1 + 0.06 * np.sin(2 * np.pi * 4.5 * t)
+    env = np.minimum(1, t / 0.004) * np.exp(-decay * t)
+    return (tone + tine) * trem * env
+
+
+def glock(freq, seconds=1.0):
+    """Glockenspiel: bright, clean, short; reads as playful rather than exotic."""
+    t = t_axis(seconds)
+    y = np.sin(2 * np.pi * freq * t) * np.exp(-4.0 * t) + 0.3 * np.sin(2 * np.pi * freq * 2.76 * t) * np.exp(-9 * t) \
+        + 0.12 * np.sin(2 * np.pi * freq * 5.4 * t) * np.exp(-16 * t)
+    return y * np.minimum(1, t / 0.001)
+
+
+def kick(seconds=0.35):
+    t = t_axis(seconds)
+    f = 50 + 90 * np.exp(-t * 35)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-9 * t)
+
+
+def snap(seed=0):
+    """Finger-snap / soft clap: a short band of noise."""
+    n = noise(0.12, seed)
+    band = sosfilt(butter(2, [1200, 5000], "bandpass", fs=SR, output="sos"), n)
+    return band * np.exp(-t_axis(0.12) * 38)
 
 
 # ---------------------------------------------------------------- effects
@@ -199,19 +208,18 @@ def make_effects():
         thump = lowpass(trim(load(soft), keep=0.12, fade=0.05), 900) * 0.45
         write(f"Sfx/park_{i + 1}", level(room(mix((0, clink), (0, thump)), wet=0.1), -21))
 
-    # Lock: the gold seal. A tiny glass click, then a bell on C5 (FeedbackService pitches it up the pentatonic
-    # scale through a chain), with a soft octave shimmer.
+    # Lock: the gold seal. A tiny glass click, then a bell on C5 (FeedbackService pitches it up the scale through
+    # a chain), with a soft octave shimmer.
     click = highpass(trim(load("impactGlass_light_001"), keep=0.06, fade=0.03), 1500) * 0.35
     chime = mix((0, bell(note("C5"), 1.1, bright=0.8, decay=3.2)), (0, 0.25 * bell(note("C6"), 0.8, bright=0.5, decay=4.5)))
     write("Sfx/lock", level(room(mix((0, click), (0.004, chime)), wet=0.16), -19))
 
-    # Uncover: a soft wooden tok when a buried shard frees up; quiet, it often comes with another sound.
-    tok = mix((0, blip(note("G5") * 1.6, note("G5"), 0.12, decay=38)), (0, 0.3 * blip(note("G6"), note("G6"), 0.05, decay=70)))
-    write("Sfx/uncover", level(room(lowpass(tok, 5000), wet=0.1), -27))
+    # Uncover: a small high wooden tick when a buried shard frees up; quiet, it often comes with another sound.
+    write("Sfx/uncover", level(room(wood_tok(1650, 0.08, decay=60, seed=3), wet=0.08), -28))
 
-    # Reject: a dull low bonk for a shard that can't move yet. Gentle, not a buzzer.
-    bonk = mix((0, blip(220, 150, 0.16, decay=22)), (0, 0.6 * lowpass(trim(load("impactSoft_medium_002"), keep=0.12, fade=0.05), 600)))
-    write("Sfx/reject", level(room(bonk, wet=0.06), -22))
+    # Reject: a dull low wooden knock for a shard that can't move yet. Gentle, not a buzzer.
+    knock = highpass(trim(load("impactWood_medium_001"), keep=0.16, fade=0.06), 90)
+    write("Sfx/reject", level(room(mix((0, knock), (0, 0.5 * wood_tok(330, 0.12, decay=40, seed=4))), wet=0.06), -22))
 
     # Expand: rising whoosh with a quick three-note bell run as the workbench grows.
     whoosh = sweep_noise(0.3, 700, 4500, seed=3) * np.hanning(int(0.3 * SR)) ** 0.5 * 0.5
@@ -224,13 +232,13 @@ def make_effects():
         ding = bell(note("E7"), 0.5, bright=0.4, decay=6) * 0.25
         write(f"Sfx/coins_{i + 1}", level(room(mix((0, coins), (0.01, ding)), wet=0.1), -22))
 
-    # Button: a round bubble pop.
-    pop = mix((0, blip(1150, 520, 0.09, decay=45)), (0, 0.15 * highpass(noise(0.006, 7), 3000)))
-    write("Sfx/button", level(pop, -18))
+    # Button: a crisp woodblock tap with a little real wood knock underneath for body.
+    body = highpass(trim(load("impactWood_light_002"), keep=0.08, fade=0.04), 200) * 0.45
+    write("Sfx/button", level(room(mix((0, wood_tok(1050, 0.1, decay=52, seed=7)), (0, body)), wet=0.05), -18))
 
-    # Popup: a short soft whoosh into a pop as a card slides in.
-    swish = sweep_noise(0.16, 900, 3500, seed=5) * np.hanning(int(0.16 * SR)) * 0.35
-    write("Sfx/popup", level(room(mix((0, swish), (0.12, blip(900, 450, 0.1, decay=40))), wet=0.1), -23))
+    # Popup: a soft double wooden tap as a card lands, low then high, like setting a tray down.
+    land = mix((0, wood_tok(520, 0.12, decay=40, seed=8) * 0.7), (0.055, wood_tok(880, 0.1, decay=50, seed=9) * 0.5))
+    write("Sfx/popup", level(room(land, wet=0.08), -24))
 
     # Star: one bright ding, played three times up the scale as the win stars land.
     star = mix((0, bell(note("E6"), 0.9, bright=0.9, decay=3.6)), (0, 0.35 * bell(note("B6"), 0.5, bright=0.5, decay=6)))
@@ -240,72 +248,85 @@ def make_effects():
 # ---------------------------------------------------------------- jingles
 
 def make_jingles():
-    # Win: a quick kalimba run up the pentatonic scale into a held bell chord with sparkles.
-    notes = ["C5", "D5", "E5", "G5", "A5", "C6", "E6"]
-    run = [(0.075 * k, pluck(note(n), 0.9, seed=k) * (0.6 + 0.06 * k)) for k, n in enumerate(notes)]
-    chord_at = 0.075 * len(notes) + 0.05
-    chord = [(chord_at, bell(note(n), 2.2, bright=0.6, decay=1.4) * 0.5) for n in ["C5", "G5", "E6"]]
-    warm = [(chord_at - 0.1, pad([note("C4"), note("G4"), note("E5")], 2.3, attack=0.25, release=1.2) * 0.5)]
-    rng = np.random.default_rng(11)
-    sparkle = [(chord_at + 0.1 + 0.12 * k + rng.uniform(0, 0.05),
-                bell(note(rng.choice(["C7", "D7", "E7", "G7", "A7"])), 0.5, bright=0.3, decay=7) * 0.12) for k in range(8)]
-    win = mix(*run, *chord, *warm, *sparkle)
-    write("Sfx/win", level(room(win, seconds=1.2, wet=0.28, seed=2), -17))
+    # Win: a bouncy major arpeggio on glockenspiel over a warm keys chord, the same sound world as the music.
+    notes = ["C5", "E5", "G5", "C6", "E6", "G6"]
+    run = [(0.08 * k, glock(note(n), 1.1) * (0.5 + 0.05 * k)) for k, n in enumerate(notes)]
+    chord_at = 0.08 * len(notes)
+    chord = [(chord_at, keys(note(n), 2.4, decay=1.1) * 0.45) for n in ["C4", "G4", "C5", "E5"]]
+    bass = [(chord_at, lowpass(keys(note("C3"), 2.0, decay=1.4), 400) * 0.5)]
+    hits = [(chord_at, kick() * 0.5), (chord_at, snap(31) * 0.25)]
+    win = mix(*run, *chord, *bass, *hits)
+    write("Sfx/win", level(room(win, seconds=1.0, wet=0.2, seed=2), -17))
 
-    # Fail: three soft plucks stepping down, ending on a calm low chord. Disappointment, not punishment.
-    down = [(0.17 * k, pluck(note(n), 1.0, bright=0.4, seed=20 + k) * 0.7) for k, n in enumerate(["G4", "E4", "D4"])]
-    rest = [(0.55, pad([note("A3"), note("C4"), note("E4")], 1.4, attack=0.15, release=0.9) * 0.6)]
+    # Fail: three soft keys notes stepping down to a gentle minor-sixth chord. Disappointment, not punishment.
+    down = [(0.2 * k, keys(note(n), 1.0, decay=2.4) * 0.6) for k, n in enumerate(["G4", "F4", "E4"])]
+    rest = [(0.62, keys(note(n), 1.6, decay=1.5) * 0.35) for n in ["F3", "A3", "D4"]]
     fail = lowpass(mix(*down, *rest), 3500)
-    write("Sfx/fail", level(room(fail, seconds=1.2, wet=0.25, seed=4), -21))
+    write("Sfx/fail", level(room(fail, seconds=1.0, wet=0.2, seed=4), -21))
 
 
 # ---------------------------------------------------------------- music
 
 def make_music():
-    """'Night Workshop': a calm 16-bar loop at 76 bpm. Soft pad and bass, a sparse kalimba melody, a light shaker.
-    The reverb tail past the end is folded back onto the start so the loop has no seam."""
-    bpm = 76
+    """'Bright Workshop': a light, simple 16-bar loop at 100 bpm in C major (I-V-vi-IV). Soft keys chords, round
+    bass, kick and finger snaps, a quiet shaker and a short glockenspiel tune. The reverb tail past the end is
+    folded back onto the start so the loop has no seam."""
+    bpm = 100
     beat = 60 / bpm
     bar = beat * 4
     bars = 16
     length = bar * bars
-    chords = [  # two bars each, pentatonic-friendly
-        ("A3", ["A3", "C4", "E4", "G4"]), ("F3", ["F3", "A3", "C4", "E4"]),
-        ("C3", ["C4", "E4", "G4", "D5"]), ("G3", ["G3", "C4", "D4", "A4"]),
+    progression = [
+        ("C3", ["C4", "E4", "G4"]), ("G2", ["B3", "D4", "G4"]),
+        ("A2", ["C4", "E4", "A4"]), ("F2", ["C4", "F4", "A4"]),
     ]
-    scale = ["C", "D", "E", "G", "A"]
-    melody_notes = [s + "5" for s in scale] + ["C6", "D6", "E6"]
-    rng = np.random.default_rng(76)
+    # One note per eighth, None for a rest; diatonic C major, so it reads as Western pop, not pentatonic.
+    tune = [
+        ["E5", None, "G5", None, "A5", "G5", "E5", None],
+        ["D5", None, "G5", None, "B5", None, "A5", "G5"],
+        ["C6", None, "B5", "A5", None, "E5", None, None],
+        ["F5", None, "A5", None, "C6", None, "A5", None],
+        ["G5", None, "E5", None, "G5", "C6", None, None],
+        ["B5", None, "D6", None, "B5", "A5", "G5", None],
+        ["A5", None, "C6", "B5", "A5", None, "E5", None],
+        ["F5", None, "E5", None, "D5", None, "C5", None],
+    ]
 
     parts = []
-    for b in range(0, bars, 2):
-        root, voicing = chords[(b // 2) % len(chords)]
+    for b in range(bars):
+        root, chord = progression[b % 4]
         at = b * bar
-        parts.append((at, pad([note(n) for n in voicing], bar * 2 + 0.6, attack=1.2, release=1.4) * 0.30))
-        bass = np.sin(2 * np.pi * note(root) / 2 * t_axis(bar * 2)) * np.exp(-0.25 * t_axis(bar * 2))
-        parts.append((at, lowpass(bass, 300) * 0.32))
+        intro = b < 4
+        # Keys: a chord on beat 1 and a lighter push on the "and" of 2.
+        for offset, vel in ((0.0, 0.26), (beat * 1.5, 0.16), (beat * 3, 0.14)):
+            for n in chord:
+                parts.append((at + offset, keys(note(n), 1.4, decay=2.2) * vel))
+        # Bass: root on 1 and 3, octave on the "and" of 3.
+        for offset, octave, vel in ((0, 1, 0.42), (beat * 2, 1, 0.34), (beat * 2.5, 2, 0.24)):
+            parts.append((at + offset, lowpass(keys(note(root) * octave, 0.6, decay=4), 500) * vel))
+        # Drums: kick on 1 and 3, snap on 2 and 4 (lighter in the intro), shaker eighths.
+        for k in range(4):
+            if k % 2 == 0:
+                parts.append((at + beat * k, kick() * (0.35 if intro else 0.5)))
+            else:
+                parts.append((at + beat * k, snap(b * 4 + k) * (0.12 if intro else 0.2)))
+        for e in range(8):
+            hit = highpass(noise(0.04, 500 + b * 8 + e), 7000) * np.exp(-t_axis(0.04) * 80)
+            parts.append((at + e * beat / 2, hit * (0.05 if e % 2 else 0.03)))
+        # Tune from bar 5; the last four bars repeat its first half an octave lower as a calm turnaround.
+        if 4 <= b < 12 or b >= 12:
+            line = tune[(b - 4) % 8] if b < 12 else tune[b - 12]
+            shift = 1.0 if b < 12 else 0.5
+            for e, n in enumerate(line):
+                if n is not None:
+                    parts.append((at + e * beat / 2, glock(note(n) * shift, 0.9) * (0.2 if b < 12 else 0.15)))
 
-    # Melody: an eighth-note grid, sparse, a gentle random walk on the scale; quieter in the first four bars.
-    idx = 3
-    for step in range(bars * 8):
-        b = step // 8
-        density = 0.18 if b < 4 else 0.34
-        if step % 8 == 0 or rng.random() < density:
-            idx = int(np.clip(idx + rng.choice([-2, -1, -1, 0, 1, 1, 2]), 0, len(melody_notes) - 1))
-            vel = 0.22 + 0.12 * rng.random() + (0.06 if step % 8 == 0 else 0)
-            parts.append((step * beat / 2, pluck(note(melody_notes[idx]), 1.4, bright=0.5, seed=step) * vel))
-
-    # Shaker on the off-beats, very quiet.
-    for k in range(bars * 4):
-        hit = highpass(noise(0.05, 100 + k), 6000) * np.exp(-t_axis(0.05) * 70)
-        parts.append((k * beat + beat / 2, hit * (0.035 if k % 2 else 0.025)))
-
-    song = room(mix(*parts), seconds=2.2, wet=0.32, tone=4000, seed=9)
+    song = room(mix(*parts), seconds=1.4, wet=0.2, tone=5000, seed=9)
     n = int(length * SR)
     loop = song[:n].copy()
     tail = song[n:]
     loop[: len(tail)] += tail
-    write("Music/night_workshop", level(loop, -21, peak_db=-2))
+    write("Music/bright_workshop", level(loop, -21, peak_db=-2))
 
 
 if __name__ == "__main__":

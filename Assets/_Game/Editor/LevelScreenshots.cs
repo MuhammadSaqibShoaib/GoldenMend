@@ -89,8 +89,6 @@ namespace GoldenMend.EditorTools
             Capture("1-home");
             flow.ShowMuseum();
             Capture("2-museum");
-            flow.PreviewMuseumPage(1);
-            Capture("2a-museum-page2");
             flow.ShowDetails(2);
             Capture("2b-details");
             flow.ShowDetails(3);

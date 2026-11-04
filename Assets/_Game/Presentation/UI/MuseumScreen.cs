@@ -7,11 +7,12 @@ using UnityEngine.UI;
 namespace GoldenMend.Presentation.UI
 {
     /// <summary>
-    /// The collection: only what the player has reached, the restored vessels and the one they are on, six per page
-    /// with previous / next arrows when there is more than one page. Nothing hints at how many vessels are still to
-    /// come. Only the visible page is built, so the museum costs the same with 30 vessels or 300. It opens on the page
-    /// holding the current vessel. Restored pieces show in full with their gold border and stars, the current one as
-    /// a gold-edged teaser with a Restore button. Tapping a card opens its details.
+    /// The collection: only what the player has reached, the restored vessels and the one they are on, in a
+    /// scrolling two-column grid. Nothing hints at how many vessels are still to come. Cards are built lazily: only
+    /// the rows in view (plus one spare row each side) exist, and rows that scroll away are released, so the museum
+    /// costs the same with 30 vessels or 300. It opens scrolled to the current vessel. Restored pieces show in full
+    /// with their gold border and stars, the current one as a gold-edged teaser with a Restore button. Tapping a card
+    /// opens its details.
     /// </summary>
     public sealed class MuseumScreen : UiView
     {
@@ -20,23 +21,25 @@ namespace GoldenMend.Presentation.UI
         public Action<int> OpenDetails;
 
         const float HeaderHeight = 200f;
-        const float FooterHeight = 190f;
-        public const int PageSize = 6;
+        const float Padding = 24f;
+        const float Spacing = 20f;
+        const int SpareRows = 1;
         static readonly Vector2 CardSize = new Vector2(480f, 440f);
+        static float Stride => CardSize.y + Spacing;
 
         readonly RectTransform content;
+        readonly RectTransform viewport;
         readonly ScrollRect scroll;
-        readonly Button previous;
-        readonly Button next;
+        readonly Dictionary<int, RectTransform> built = new Dictionary<int, RectTransform>();
 
-        int page;
         int count; // vessels shown: every unlocked one
+        int firstRow = -1;
+        int lastRow = -1;
         Func<int, BuiltLevel> levelAt;
-        Func<int, bool> unlocked;
         Func<int, bool> completed;
         Func<int, int> stars;
 
-        int PageCount => Mathf.Max(1, (count + PageSize - 1) / PageSize);
+        int RowCount => (count + 1) / 2;
 
         public MuseumScreen(UiRoot ui) : base(ui, "Museum", popup: false)
         {
@@ -45,29 +48,13 @@ namespace GoldenMend.Presentation.UI
             var title = B.Text("Title", header, "Museum", T.DisplayFont, 104, T.Gold, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -40f), new Vector2(640f, 130f));
             UiBuilder.Lip(title, UiTheme.Hex(0xA1501A), 8f);
 
-            // Page turner pinned to the bottom.
-            var footer = B.Node("Footer", Root, Anchor.StretchBottom, Vector2.zero, new Vector2(0f, FooterHeight));
-            previous = B.IconButton("Previous Page", footer, T.IconPrevious, ButtonStyle.Secondary, Anchor.Left, new Vector2(60f, 10f), 132f, () => TurnPage(-1));
-            next = B.IconButton("Next Page", footer, T.IconNext, ButtonStyle.Secondary, Anchor.Right, new Vector2(-60f, 10f), 132f, () => TurnPage(1));
-
-            // The page's cards between header and footer; scrolls only if a short screen can't fit three rows.
-            var viewport = B.Node("Viewport", Root, Anchor.Fill, Vector2.zero, Vector2.zero);
+            viewport = B.Node("Viewport", Root, Anchor.Fill, Vector2.zero, Vector2.zero);
             viewport.offsetMax = new Vector2(0f, -HeaderHeight);
-            viewport.offsetMin = new Vector2(0f, FooterHeight);
             viewport.gameObject.AddComponent<RectMask2D>();
             var hitArea = viewport.gameObject.AddComponent<Image>();
             hitArea.color = Color.clear;
 
             content = B.Node("Content", viewport, Anchor.StretchTop, Vector2.zero, new Vector2(0f, 0f));
-            var grid = content.gameObject.AddComponent<GridLayoutGroup>();
-            grid.cellSize = CardSize;
-            grid.spacing = new Vector2(24f, 20f);
-            grid.padding = new RectOffset(48, 48, 24, 24);
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 2;
-            grid.childAlignment = TextAnchor.UpperCenter;
-            var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             scroll = viewport.gameObject.AddComponent<ScrollRect>();
             scroll.content = content;
@@ -75,10 +62,11 @@ namespace GoldenMend.Presentation.UI
             scroll.horizontal = false;
             scroll.movementType = ScrollRect.MovementType.Elastic;
             scroll.scrollSensitivity = 40f;
+            scroll.onValueChanged.AddListener(_ => RefreshVisible());
         }
 
-        /// <param name="levelAt">Builds a level on demand; only the shown page's levels are asked for.</param>
-        /// <param name="focus">The level whose page opens first: the current one.</param>
+        /// <param name="levelAt">Builds a level on demand; only levels whose cards come into view are asked for.</param>
+        /// <param name="focus">The level the museum opens scrolled to: the current one.</param>
         public void Bind(int levelCount, Func<int, BuiltLevel> levelAt, Func<int, bool> unlocked, Func<int, bool> completed, Func<int, int> stars,
             int focus)
         {
@@ -86,70 +74,72 @@ namespace GoldenMend.Presentation.UI
             count = 0;
             while (count < levelCount && unlocked(count)) count++;
             this.levelAt = levelAt;
-            this.unlocked = unlocked;
             this.completed = completed;
             this.stars = stars;
 
-            ShowPage(Mathf.Clamp(focus, 0, Mathf.Max(0, count - 1)) / PageSize);
+            foreach (var card in built.Values) Release(card.gameObject);
+            built.Clear();
+            firstRow = lastRow = -1;
+
+            float height = Padding * 2f + RowCount * CardSize.y + Mathf.Max(0, RowCount - 1) * Spacing;
+            content.sizeDelta = new Vector2(0f, height);
+
+            // Centre the current vessel's row in view, within the scroll range.
+            scroll.StopMovement();
+            int row = Mathf.Clamp(focus, 0, Mathf.Max(0, count - 1)) / 2;
+            float view = viewport.rect.height;
+            float target = Padding + row * Stride - (view - CardSize.y) / 2f;
+            content.anchoredPosition = new Vector2(0f, Mathf.Clamp(target, 0f, Mathf.Max(0f, height - view)));
+            RefreshVisible();
         }
 
-        public int Page => page;
-
-        public void ShowPage(int index)
+        /// <summary>Builds the cards of rows in view and releases rows that have scrolled well away.</summary>
+        void RefreshVisible()
         {
-            page = Mathf.Clamp(index, 0, PageCount - 1);
-            for (int i = content.childCount - 1; i >= 0; i--) Release(content.GetChild(i).gameObject);
+            if (count == 0) return;
+            float top = content.anchoredPosition.y;
+            float view = viewport.rect.height;
+            int first = Mathf.Max(0, Mathf.FloorToInt((top - Padding) / Stride) - SpareRows);
+            int last = Mathf.Min(RowCount - 1, Mathf.FloorToInt((top + view - Padding) / Stride) + SpareRows);
+            if (first == firstRow && last == lastRow) return;
+            firstRow = first;
+            lastRow = last;
 
-            int first = page * PageSize;
-            for (int i = first; i < Mathf.Min(first + PageSize, count); i++)
-                BuildCard(i, levelAt(i), unlocked(i), completed(i), stars(i));
+            var gone = new List<int>();
+            foreach (var pair in built)
+            {
+                int r = pair.Key / 2;
+                if (r < first || r > last) gone.Add(pair.Key);
+            }
+            foreach (int index in gone)
+            {
+                Release(built[index].gameObject);
+                built.Remove(index);
+            }
 
-            previous.gameObject.SetActive(PageCount > 1);
-            next.gameObject.SetActive(PageCount > 1);
-            SetInteractable(previous, page > 0);
-            SetInteractable(next, page < PageCount - 1);
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
-            scroll.verticalNormalizedPosition = 1f;
+            for (int index = first * 2; index <= Mathf.Min(count - 1, last * 2 + 1); index++)
+            {
+                if (built.ContainsKey(index)) continue;
+                built[index] = BuildCard(index, levelAt(index), completed(index), stars(index));
+            }
         }
 
-        void TurnPage(int step)
+        RectTransform BuildCard(int index, BuiltLevel level, bool isCompleted, int starCount)
         {
-            int target = Mathf.Clamp(page + step, 0, PageCount - 1);
-            if (target == page) return;
-            ShowPage(target);
-            Ui.SlideIn(content, new Vector2(0f, content.anchoredPosition.y), new Vector2(step * 160f, 0f));
-        }
-
-        void BuildCard(int index, BuiltLevel level, bool isUnlocked, bool isCompleted, int starCount)
-        {
-            var card = B.Card($"Card {index + 1}", content, Anchor.TopLeft, Vector2.zero, CardSize, radius: 0.75f);
-            bool teaser = isUnlocked && !isCompleted;
-            var edge = card.Find("Edge").GetComponent<Image>();
-            if (teaser) edge.color = T.Gold;
-            else if (!isUnlocked) edge.color = UiBuilder.WithAlpha(T.PanelEdge, 0.4f);
-            if (isUnlocked) B.Tappable(card, () => OpenDetails?.Invoke(index));
+            float x = (index % 2 == 0 ? -1f : 1f) * (CardSize.x + 24f) / 2f;
+            float y = -(Padding + index / 2 * Stride);
+            var card = B.Card($"Card {index + 1}", content, Anchor.Top, new Vector2(x, y), CardSize, radius: 0.75f);
+            if (!isCompleted) card.Find("Edge").GetComponent<Image>().color = T.Gold;
+            B.Tappable(card, () => OpenDetails?.Invoke(index));
 
             var niche = B.Inset("Niche", card, Anchor.Top, new Vector2(0f, -20f), new Vector2(CardSize.x - 48f, 228f));
-            var look = isCompleted ? VesselLook.Restored : isUnlocked ? VesselLook.Teaser : VesselLook.Silhouette;
-            VesselPreview.Build(B, niche.transform, level, look, Anchor.Center, Vector2.zero, new Vector2(360f, 192f));
-            if (!isUnlocked) B.Image("Lock", niche.transform, T.IconLock, UiBuilder.WithAlpha(T.Cream, 0.85f), Anchor.Center, Vector2.zero, new Vector2(84f, 84f));
+            VesselPreview.Build(B, niche.transform, level, isCompleted ? VesselLook.Restored : VesselLook.Teaser, Anchor.Center, Vector2.zero, new Vector2(360f, 192f));
 
-            string name = isUnlocked ? VesselArt.DisplayName(level.Spec) : $"No. {index + 1}";
-            B.Text("Name", card, name, T.TitleFont, 46, isUnlocked ? T.Cream : T.Muted, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -258f), new Vector2(440f, 60f));
+            B.Text("Name", card, VesselArt.DisplayName(level.Spec), T.TitleFont, 46, T.Cream, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -258f), new Vector2(440f, 60f));
 
-            if (isCompleted)
-            {
-                B.Stars(card, starCount, Anchor.Top, new Vector2(0f, -338f), 56f, raised: false);
-            }
-            else if (isUnlocked)
-            {
-                B.Button("Restore", card, "Restore", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 24f), new Vector2(380f, 96f), () => PlayLevel?.Invoke(index));
-            }
-            else
-            {
-                B.Text("State", card, "Locked", T.BodyFont, 34, T.Muted, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -330f), new Vector2(420f, 48f));
-            }
+            if (isCompleted) B.Stars(card, starCount, Anchor.Top, new Vector2(0f, -338f), 56f, raised: false);
+            else B.Button("Restore", card, "Restore", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 24f), new Vector2(380f, 96f), () => PlayLevel?.Invoke(index));
+            return card;
         }
 
         static void Release(GameObject go)

@@ -215,7 +215,7 @@ namespace GoldenMend.EditorTools
             bank.Coins = Clips("Sfx/coins_1", "Sfx/coins_2");
             bank.WinJingle = Load<AudioClip>(Audio + "Sfx/win.ogg");
             bank.FailJingle = Load<AudioClip>(Audio + "Sfx/fail.ogg");
-            bank.Music = Load<AudioClip>(Audio + "Music/night_workshop.ogg");
+            bank.Music = Load<AudioClip>(Audio + "Music/bright_workshop.ogg");
 
             EditorUtility.SetDirty(bank);
             AssetDatabase.SaveAssets();

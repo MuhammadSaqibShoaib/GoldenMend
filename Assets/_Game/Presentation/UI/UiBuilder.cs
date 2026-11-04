@@ -350,9 +350,13 @@ namespace GoldenMend.Presentation.UI
             var card = Card("Card", parent, Anchor.Center, position, size);
             Inset("Inner", card, Anchor.Fill, new Vector2(0f, -60f), new Vector2(28f, 88f), 0.35f);
 
-            var ribbon = Image("Ribbon", card, UiSkin.Chunky, Theme.Pink, Anchor.Top, new Vector2(0f, 64f), new Vector2(size.x - 150f, 150f), sliced: true);
+            // The ribbon stops short of the top-right corner so the close button never sits on it.
+            var ribbon = Image("Ribbon", card, UiSkin.Chunky, Theme.Pink, Anchor.Top, new Vector2(0f, 64f), new Vector2(size.x - 290f, 150f), sliced: true);
             ribbon.pixelsPerUnitMultiplier = 0.9f;
-            title = Text("Title", ribbon.transform, "", Theme.DisplayFont, 76, Theme.Cream, TextAnchor.MiddleCenter, Anchor.Fill, new Vector2(0f, UiSkin.LipHeight / 2f), new Vector2(20f, 0f));
+            title = Text("Title", ribbon.transform, "", Theme.DisplayFont, 76, Theme.Cream, TextAnchor.MiddleCenter, Anchor.Fill, new Vector2(0f, UiSkin.LipHeight / 2f), new Vector2(28f, 0f));
+            title.resizeTextForBestFit = true;
+            title.resizeTextMinSize = 40;
+            title.resizeTextMaxSize = 76;
             Lip(title, Darken(Theme.Pink, 0.45f), 5f);
 
             if (close != null) IconButton("Close", card, Theme.IconClose, ButtonStyle.Danger, Anchor.TopRight, new Vector2(30f, 78f), 112f, close);

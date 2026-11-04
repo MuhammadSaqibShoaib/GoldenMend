@@ -30,7 +30,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 383cd1c33439dfd47a1a217955410f2a, type: 3}
   WinJingle: {fileID: 8300000, guid: 82db53f46f5c3c34d9a320ccdd5db307, type: 3}
   FailJingle: {fileID: 8300000, guid: 3fa0ef6e30aa52a4a8d7bc85f0e1d836, type: 3}
-  Music: {fileID: 8300000, guid: d030e04d4efd30841888fc7022362d6c, type: 3}
+  Music: {fileID: 8300000, guid: c4b9fc26b16bfab459ab4c7c12348112, type: 3}
   EffectsVolume: 0.8
   JingleVolume: 0.7
   MusicVolume: 0.45

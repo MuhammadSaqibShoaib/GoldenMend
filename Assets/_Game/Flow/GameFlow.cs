@@ -111,9 +111,6 @@ namespace GoldenMend.Flow
             State = FlowState.Home;
         }
 
-        /// <summary>Turns the museum to a page (screenshots).</summary>
-        public void PreviewMuseumPage(int page) => museum.ShowPage(page);
-
         public void ShowMuseum()
         {
             HideAll();
