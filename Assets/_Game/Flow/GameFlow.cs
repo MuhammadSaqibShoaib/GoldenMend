@@ -182,7 +182,7 @@ namespace GoldenMend.Flow
                 return;
             }
 
-            offer.Bind("Need a hint?", "Shows the piece that fits right now,\neven if it is buried.", "Get a hint", EconomyService.HintCost, economy.Coins, ads.IsReady);
+            offer.Bind("Need a hint?", "Shows the piece that fits right now,\neven if it is buried.", "Get hint", EconomyService.HintCost, economy.Coins, ads.IsReady);
             offer.Buy = () =>
             {
                 if (!economy.TryBuyHint()) return;
@@ -203,7 +203,7 @@ namespace GoldenMend.Flow
         void OfferPull()
         {
             if (State != FlowState.Playing || !board.CanPull) return;
-            offer.Bind("Pull a piece", "Lifts a buried piece that fits\nstraight into the vessel.", "Pull it out", EconomyService.PullCost, economy.Coins, ads.IsReady);
+            offer.Bind("Pull a piece", "Lifts a buried piece that fits\nstraight into the vessel.", "Pull it", EconomyService.PullCost, economy.Coins, ads.IsReady, ui.Theme.IconPull);
             offer.Buy = () =>
             {
                 if (!economy.TrySpend(EconomyService.PullCost)) return;
@@ -273,7 +273,7 @@ namespace GoldenMend.Flow
                 var run = new RunStats(board.BenchPeak, board.PlaySeconds, board.HintsUsed, board.PullsUsed, board.ContinuesUsed, board.Moves);
                 var result = progress.Complete(current, run, best, level.Spec.Hard);
                 win.Bind(VesselArt.DisplayName(level.Spec), null, result.Stars, result.Coins, result.FirstClear, board.BenchPeak, best,
-                    current + 1 < progress.LevelCount, RecordLine(run, result));
+                    current + 1 < progress.LevelCount, RecordLine(run, result), level);
                 hud.Hide();
                 win.Show();
                 feedback.Coins();
@@ -356,7 +356,7 @@ namespace GoldenMend.Flow
         {
             var level = Levels[current];
             win.Bind(VesselArt.DisplayName(level.Spec), null, stars, coins, true, level.Solution.MinBenchPeak, level.Solution.MinBenchPeak, true,
-                $"New personal best!   0:42   ·   no-help bonus +{ProgressService.CleanBonusCoins}");
+                $"New personal best!   0:42   ·   no-help bonus +{ProgressService.CleanBonusCoins}", level);
             banner.Hide();
             hud.Hide(true);
             win.Show();
@@ -367,6 +367,13 @@ namespace GoldenMend.Flow
             banner.Hide();
             fail.Bind(EconomyService.ContinueCost, economy.Coins);
             fail.Show();
+        }
+
+        public void PreviewOffer()
+        {
+            banner.Hide();
+            offer.Bind("Need a hint?", "Shows the piece that fits right now,\neven if it is buried.", "Get hint", EconomyService.HintCost, economy.Coins, true);
+            offer.Show();
         }
 
         public void PreviewBanner()

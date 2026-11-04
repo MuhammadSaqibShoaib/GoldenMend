@@ -109,6 +109,9 @@ namespace GoldenMend.EditorTools
             flow.StartLevel(3);
             flow.PreviewWin(stars: 2, coins: 40);
             Capture("8-level-complete");
+            flow.StartLevel(3);
+            flow.PreviewOffer();
+            Capture("9-hint-offer");
 
             camera.targetTexture = null;
             Object.DestroyImmediate(target);

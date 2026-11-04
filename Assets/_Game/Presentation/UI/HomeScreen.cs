@@ -6,8 +6,8 @@ using UnityEngine.UI;
 namespace GoldenMend.Presentation.UI
 {
     /// <summary>
-    /// Main menu. Top: coins and settings. Middle: the title and the next vessel waiting to be restored.
-    /// Bottom (thumb zone): progress, the Play button and the museum.
+    /// Main menu. Top: coins and settings. Middle: the gold title, the next level and its vessel on a glass card.
+    /// Bottom (thumb zone): progress, the big Play button and the museum.
     /// </summary>
     public sealed class HomeScreen : UiView
     {
@@ -16,57 +16,52 @@ namespace GoldenMend.Presentation.UI
         public Action OpenSettings;
 
         readonly Text coins;
-        readonly Text nextCaption;
+        readonly Text levelChip;
         readonly Text progressCaption;
-        readonly Text playLevel;
         readonly RectTransform showcase;
         readonly RectTransform progressFill;
         readonly RectTransform playButton;
         RectTransform preview;
 
-        const float ProgressWidth = 560f;
+        const float ProgressWidth = 600f;
 
         public HomeScreen(UiRoot ui) : base(ui, "Home", popup: false)
         {
-            coins = B.CoinPill("Coins", Root, T.Indigo, "0", T.Cream, 44, Anchor.TopLeft, new Vector2(UiType.Margin, -40f), new Vector2(270f, 100f));
-            B.IconButton("Settings", Root, T.IconSettings, ButtonStyle.Secondary, Anchor.TopRight, new Vector2(-UiType.Margin, -32f), UiType.IconButton, () => OpenSettings?.Invoke());
+            coins = B.CoinPill("Coins", Root, UiBuilder.WithAlpha(Color.black, 0.3f), "0", T.Cream, 50, Anchor.TopLeft, new Vector2(40f, -52f), new Vector2(312f, 104f));
+            B.IconButton("Settings", Root, T.IconSettings, ButtonStyle.Secondary, Anchor.TopRight, new Vector2(-36f, -44f), 124f, () => OpenSettings?.Invoke());
 
-            B.Text("Title", Root, "Golden Mend", T.DisplayFont, 112, T.Gold, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -196f), new Vector2(1000f, 150f));
-            B.Text("Subtitle", Root, "a kintsugi puzzle", T.BodyFont, 36, UiBuilder.WithAlpha(T.Cream, 0.62f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -340f), new Vector2(900f, 56f));
+            var title = B.Text("Title", Root, "Golden Mend", T.DisplayFont, 128, T.Gold, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -196f), new Vector2(1060f, 170f));
+            UiBuilder.Lip(title, UiTheme.Hex(0xA1501A), 10f);
+            levelChip = B.Pill("Level", Root, UiBuilder.WithAlpha(Color.white, 0.12f), null, Color.clear, "", T.Cream, 36, Anchor.Top, new Vector2(0f, -380f), new Vector2(520f, 84f));
 
-            showcase = B.Node("Showcase", Root, Anchor.Center, new Vector2(0f, 90f), new Vector2(760f, 640f));
-            B.Image("Glow", showcase, T.Circle, UiBuilder.WithAlpha(T.Gold, 0.06f), Anchor.Center, Vector2.zero, new Vector2(700f, 700f));
-            nextCaption = B.Text("Next", Root, "", T.BodyFont, 36, T.Cream, TextAnchor.MiddleCenter, Anchor.Center, new Vector2(0f, -284f), new Vector2(940f, 60f));
+            showcase = B.Card("Showcase", Root, Anchor.Top, new Vector2(0f, -512f), new Vector2(920f, 740f), glass: true);
 
-            progressCaption = B.Text("Progress", Root, "", T.BodyFont, UiType.Caption, UiBuilder.WithAlpha(T.Cream, 0.7f), TextAnchor.MiddleCenter, Anchor.Bottom, new Vector2(0f, 478f), new Vector2(800f, 44f));
-            var track = B.Image("Progress Track", Root, T.Badge, UiBuilder.WithAlpha(T.Indigo, 0.9f), Anchor.Bottom, new Vector2(0f, 446f), new Vector2(ProgressWidth, 22f), sliced: true);
-            var fill = B.Image("Progress Fill", track.transform, T.Badge, T.Gold, Anchor.Left, Vector2.zero, new Vector2(0f, 22f), sliced: true);
+            progressCaption = B.Text("Progress", Root, "", T.BodyFont, 40, T.Cream, TextAnchor.MiddleCenter, Anchor.Bottom, new Vector2(0f, 572f), new Vector2(800f, 56f));
+            var track = B.Image("Progress Track", Root, UiSkin.Pill, UiBuilder.WithAlpha(Color.white, 0.12f), Anchor.Bottom, new Vector2(0f, 520f), new Vector2(ProgressWidth, 40f), sliced: true);
+            track.pixelsPerUnitMultiplier = 64f / 40f;
+            var fill = B.Image("Progress Fill", track.transform, UiSkin.Pill, T.Gold, Anchor.Left, Vector2.zero, new Vector2(0f, 40f), sliced: true);
+            fill.pixelsPerUnitMultiplier = 64f / 40f;
             progressFill = fill.rectTransform;
 
-            var play = B.Button("Play", Root, "Play", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 228f), new Vector2(660f, 178f), () => Play?.Invoke());
+            var play = B.Button("Play", Root, "Play", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 236f), new Vector2(700f, 216f), () => Play?.Invoke());
+            play.GetComponentInChildren<Text>().fontSize = 100;
             playButton = (RectTransform)play.transform;
-            var playLabel = play.GetComponentInChildren<Text>();
-            playLabel.fontSize = 64;
-            playLabel.rectTransform.anchoredPosition += new Vector2(0f, 20f);
-            playLevel = B.Text("Level", play.transform, "", T.TitleFont, UiType.Caption, UiBuilder.WithAlpha(T.Ink, 0.7f), TextAnchor.MiddleCenter, Anchor.Bottom, new Vector2(0f, 30f), new Vector2(500f, 40f));
 
-            B.Button("Museum", Root, "Museum", ButtonStyle.Secondary, Anchor.Bottom, new Vector2(0f, 72f), new Vector2(440f, 124f), () => OpenMuseum?.Invoke(), T.IconMuseum);
+            B.Button("Museum", Root, "Museum", ButtonStyle.Secondary, Anchor.Bottom, new Vector2(0f, 56f), new Vector2(520f, 148f), () => OpenMuseum?.Invoke(), T.IconMuseum);
         }
 
         public void Bind(int coinCount, BuiltLevel next, int nextIndex, int completed, int total, bool allComplete)
         {
             coins.text = coinCount.ToString();
-            progressCaption.text = $"{completed} of {total} vessels restored";
-            progressFill.sizeDelta = new Vector2(ProgressWidth * Mathf.Clamp01(total > 0 ? completed / (float)total : 0f), progressFill.sizeDelta.y);
+            progressCaption.text = $"{completed} of {total} restored";
+            float fraction = Mathf.Clamp01(total > 0 ? completed / (float)total : 0f);
+            progressFill.sizeDelta = new Vector2(fraction > 0f ? Mathf.Max(40f, ProgressWidth * fraction) : 0f, progressFill.sizeDelta.y);
 
             if (preview != null) Release(preview.gameObject);
-            preview = VesselPreview.Build(B, showcase, next, allComplete ? VesselLook.Restored : VesselLook.Teaser, Anchor.Center, Vector2.zero, new Vector2(560f, 470f));
+            preview = VesselPreview.Build(B, showcase, next, allComplete ? VesselLook.Restored : VesselLook.Teaser, Anchor.Center, Vector2.zero, new Vector2(700f, 600f));
 
-            string gold = ColorUtility.ToHtmlStringRGB(T.Gold);
-            nextCaption.text = allComplete
-                ? "Every vessel restored. Replay any piece from the museum."
-                : $"Next to restore  ·  <color=#{gold}>{VesselArt.DisplayName(next.Spec)}</color>";
-            playLevel.text = allComplete ? $"Replay level {nextIndex + 1}" : $"Level {nextIndex + 1}";
+            string name = VesselArt.DisplayName(next.Spec).ToUpperInvariant();
+            levelChip.text = allComplete ? "ALL RESTORED  ·  REPLAY ANY" : $"LEVEL {nextIndex + 1}  ·  {name}";
         }
 
         protected override void OnShow() => Ui.Pop(playButton, 0.1f);

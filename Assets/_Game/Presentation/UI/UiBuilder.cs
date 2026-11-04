@@ -23,14 +23,23 @@ namespace GoldenMend.Presentation.UI
 
     public enum ButtonStyle
     {
-        /// <summary>Gold with ink text: the one main action on a screen.</summary>
+        /// <summary>Candy pink: the one main action on a screen.</summary>
         Primary,
 
-        /// <summary>Indigo with cream text: other actions.</summary>
+        /// <summary>Purple: other actions.</summary>
         Secondary,
 
-        /// <summary>No background, indigo text: low-emphasis actions such as Home.</summary>
+        /// <summary>No background, muted text: low-emphasis actions such as Home.</summary>
         Ghost,
+
+        /// <summary>Green: go ahead (resume, continue, buy).</summary>
+        Confirm,
+
+        /// <summary>Gold-yellow with dark text: boosters.</summary>
+        Accent,
+
+        /// <summary>Red: close.</summary>
+        Danger,
     }
 
     /// <summary>Shared type scale and spacing, in canvas units of the 1080x1920 reference layout.</summary>
@@ -153,15 +162,45 @@ namespace GoldenMend.Presentation.UI
             return label;
         }
 
-        /// <summary>A full-width text button. Returns the button; its label is the first <see cref="Text"/> child.</summary>
+        /// <summary>Adds a hard drop shadow under text, icons or stars: the chunky "lip" of the Berry Night look.</summary>
+        public static Shadow Lip(Graphic graphic, Color color, float distance = 4f)
+        {
+            var shadow = graphic.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = color;
+            shadow.effectDistance = new Vector2(0f, -distance);
+            return shadow;
+        }
+
+        public static Color Darken(Color c, float amount) => new Color(c.r * (1f - amount), c.g * (1f - amount), c.b * (1f - amount), c.a);
+
+        public Color StyleColor(ButtonStyle style)
+        {
+            switch (style)
+            {
+                case ButtonStyle.Primary: return Theme.Pink;
+                case ButtonStyle.Secondary: return Theme.Indigo;
+                case ButtonStyle.Confirm: return Theme.Green;
+                case ButtonStyle.Accent: return Theme.Yellow;
+                case ButtonStyle.Danger: return Theme.Clay;
+                default: return Color.clear;
+            }
+        }
+
+        Color InkFor(ButtonStyle style) => style == ButtonStyle.Accent ? Theme.Ink : style == ButtonStyle.Ghost ? Theme.Muted : Theme.Cream;
+
+        /// <summary>
+        /// A chunky button with an uppercase label. Returns the button; its label is the first <see cref="Text"/> child.
+        /// With an icon, the icon sits at the left and the label centres in the rest.
+        /// </summary>
         public Button Button(string name, Transform parent, string label, ButtonStyle style, Anchor anchor, Vector2 position, Vector2 size,
             Action onClick, Sprite icon = null)
         {
             var rect = Node(name, parent, anchor, position, size);
             var image = rect.gameObject.AddComponent<Image>();
-            image.sprite = Theme.Button;
+            image.sprite = UiSkin.Chunky;
             image.type = UnityEngine.UI.Image.Type.Sliced;
-            image.color = style == ButtonStyle.Primary ? Theme.Gold : style == ButtonStyle.Secondary ? Theme.Indigo : Color.clear;
+            image.color = StyleColor(style);
+            if (style == ButtonStyle.Ghost) image.sprite = null;
 
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
@@ -171,20 +210,25 @@ namespace GoldenMend.Presentation.UI
                 onClick();
             });
 
-            var ink = style == ButtonStyle.Primary ? Theme.Ink : style == ButtonStyle.Secondary ? Theme.Cream : Theme.Indigo;
-            float lift = style == ButtonStyle.Ghost ? 0f : 5f;
-            int fontSize = Mathf.RoundToInt(Mathf.Min(UiType.Button, size.y * 0.36f));
-            // Ghost buttons are text links; an icon pinned to the edge would float away from the word.
+            var ink = InkFor(style);
+            float lift = style == ButtonStyle.Ghost ? 0f : UiSkin.LipHeight / 2f;
+            int fontSize = Mathf.RoundToInt(Mathf.Min(UiType.Button, size.y * 0.4f));
+            Text text;
             if (icon != null && style != ButtonStyle.Ghost)
             {
                 float iconSize = size.y * 0.42f;
-                Image("Icon", rect, icon, ink, Anchor.Left, new Vector2(size.y * 0.32f, lift), new Vector2(iconSize, iconSize));
-                Text("Label", rect, label, Theme.TitleFont, fontSize, ink, TextAnchor.MiddleCenter, Anchor.Fill, new Vector2(size.y * 0.22f, lift), new Vector2(size.y * 0.5f, 0f));
+                var glyph = Image("Icon", rect, icon, ink, Anchor.Left, new Vector2(size.y * 0.3f, lift), new Vector2(iconSize, iconSize));
+                if (style != ButtonStyle.Accent) Lip(glyph, Darken(image.color, 0.45f), 3f);
+                text = Text("Label", rect, label.ToUpperInvariant(), Theme.DisplayFont, fontSize, ink, TextAnchor.MiddleCenter, Anchor.Fill,
+                    new Vector2(size.y * 0.24f, lift), new Vector2(size.y * 0.5f, 0f));
             }
             else
             {
-                Text("Label", rect, label, Theme.TitleFont, fontSize, ink, TextAnchor.MiddleCenter, Anchor.Fill, new Vector2(0f, lift), new Vector2(16f, 0f));
+                var font = style == ButtonStyle.Ghost ? Theme.TitleFont : Theme.DisplayFont;
+                text = Text("Label", rect, style == ButtonStyle.Ghost ? label : label.ToUpperInvariant(), font, fontSize, ink, TextAnchor.MiddleCenter, Anchor.Fill,
+                    new Vector2(0f, lift), new Vector2(16f, 0f));
             }
+            if (style != ButtonStyle.Ghost && style != ButtonStyle.Accent) Lip(text, Darken(image.color, 0.45f), 4f);
             return button;
         }
 
@@ -192,9 +236,10 @@ namespace GoldenMend.Presentation.UI
         {
             var rect = Node(name, parent, anchor, position, new Vector2(size, size));
             var image = rect.gameObject.AddComponent<Image>();
-            image.sprite = Theme.IconButton;
+            image.sprite = style == ButtonStyle.Ghost ? null : UiSkin.Chunky;
             image.type = UnityEngine.UI.Image.Type.Sliced;
-            image.color = style == ButtonStyle.Primary ? Theme.Gold : style == ButtonStyle.Secondary ? Theme.Indigo : Color.clear;
+            image.pixelsPerUnitMultiplier = 1.4f;
+            image.color = StyleColor(style);
 
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
@@ -204,8 +249,8 @@ namespace GoldenMend.Presentation.UI
                 onClick();
             });
 
-            var ink = style == ButtonStyle.Primary ? Theme.Ink : style == ButtonStyle.Secondary ? Theme.Cream : Theme.Indigo;
-            Image("Icon", rect, icon, ink, Anchor.Center, new Vector2(0f, style == ButtonStyle.Ghost ? 0f : 5f), new Vector2(size * 0.5f, size * 0.5f));
+            var glyph = Image("Icon", rect, icon, InkFor(style), Anchor.Center, new Vector2(0f, style == ButtonStyle.Ghost ? 0f : UiSkin.LipHeight / 2.8f), new Vector2(size * 0.52f, size * 0.52f));
+            if (style != ButtonStyle.Ghost && style != ButtonStyle.Accent) Lip(glyph, Darken(image.color, 0.45f), 3f);
             return button;
         }
 
@@ -213,7 +258,8 @@ namespace GoldenMend.Presentation.UI
         public Button Tappable(RectTransform rect, Action onClick)
         {
             var button = rect.gameObject.AddComponent<Button>();
-            button.targetGraphic = rect.GetComponent<Image>();
+            button.targetGraphic = rect.GetComponentInChildren<Image>();
+            button.transition = Selectable.Transition.None;
             button.onClick.AddListener(() =>
             {
                 click();
@@ -226,31 +272,33 @@ namespace GoldenMend.Presentation.UI
         public RectTransform Coin(string name, Transform parent, Anchor anchor, Vector2 position, float size)
         {
             var rim = Image(name, parent, Theme.Circle, Color.Lerp(Theme.Gold, Theme.Ink, 0.35f), anchor, position, new Vector2(size, size));
-            Image("Face", rim.transform, Theme.Circle, Theme.Gold, Anchor.Center, Vector2.zero, new Vector2(size * 0.78f, size * 0.78f));
-            Image("Shine", rim.transform, Theme.Circle, WithAlpha(Color.white, 0.55f), Anchor.Center, new Vector2(-size * 0.14f, size * 0.14f), new Vector2(size * 0.2f, size * 0.2f));
+            Image("Face", rim.transform, Theme.Circle, Theme.Gold, Anchor.Center, Vector2.zero, new Vector2(size * 0.8f, size * 0.8f));
+            Image("Ring", rim.transform, Theme.Circle, WithAlpha(Color.white, 0.5f), Anchor.Center, Vector2.zero, new Vector2(size * 0.5f, size * 0.5f));
+            Image("Core", rim.transform, Theme.Circle, Theme.Gold, Anchor.Center, Vector2.zero, new Vector2(size * 0.38f, size * 0.38f));
             return rim.rectTransform;
         }
 
-        /// <summary>A rounded pill with a coin on the left and a label, for prices and rewards.</summary>
+        /// <summary>A capsule with a coin on the left and a label, for prices and rewards.</summary>
         public Text CoinPill(string name, Transform parent, Color background, string label, Color labelColor, int fontSize, Anchor anchor, Vector2 position, Vector2 size)
         {
             var text = Pill(name, parent, background, null, Color.clear, label, labelColor, fontSize, anchor, position, size);
             var rect = (RectTransform)text.transform.parent;
-            float coin = size.y * 0.62f, pad = size.y * 0.2f;
+            float coin = size.y * 0.72f, pad = size.y * 0.14f;
             Coin("Coin", rect, Anchor.Left, new Vector2(pad, 0f), coin);
-            text.rectTransform.offsetMin = new Vector2(coin + pad * 1.5f, 0f);
-            text.rectTransform.offsetMax = new Vector2(-pad, 0f);
+            text.rectTransform.offsetMin = new Vector2(coin + pad * 2f, 0f);
+            text.rectTransform.offsetMax = new Vector2(-pad * 1.5f, 0f);
             return text;
         }
 
-        /// <summary>A rounded pill: background plus an optional icon on the left and a label.</summary>
+        /// <summary>A capsule: background plus an optional icon on the left and a label.</summary>
         public Text Pill(string name, Transform parent, Color background, Sprite icon, Color iconColor, string label, Color labelColor, int fontSize,
             Anchor anchor, Vector2 position, Vector2 size)
         {
             var rect = Node(name, parent, anchor, position, size);
             var image = rect.gameObject.AddComponent<Image>();
-            image.sprite = Theme.Badge;
+            image.sprite = UiSkin.Pill;
             image.type = UnityEngine.UI.Image.Type.Sliced;
+            image.pixelsPerUnitMultiplier = 64f / size.y;
             image.color = background;
             image.raycastTarget = false;
 
@@ -265,18 +313,53 @@ namespace GoldenMend.Presentation.UI
             return Text("Label", rect, label, Theme.TitleFont, fontSize, labelColor, TextAnchor.MiddleCenter, Anchor.Fill, Vector2.zero, new Vector2(pad, 0f));
         }
 
-        /// <summary>A paper card for popups and lists.</summary>
-        public RectTransform Card(string name, Transform parent, Anchor anchor, Vector2 position, Vector2 size)
+        /// <summary>
+        /// A panel: a soft shadow, a purple gradient fill and a lighter edge. A glass card is see-through instead,
+        /// for showcases on the night background. Content added to the returned rect draws on top.
+        /// </summary>
+        public RectTransform Card(string name, Transform parent, Anchor anchor, Vector2 position, Vector2 size, bool glass = false, float radius = 1f)
         {
             var rect = Node(name, parent, anchor, position, size);
-            var image = rect.gameObject.AddComponent<Image>();
-            image.sprite = Theme.Panel;
-            image.type = UnityEngine.UI.Image.Type.Sliced;
-            image.color = Theme.Paper;
+            if (!glass)
+            {
+                var shadow = Image("Shadow", rect, UiSkin.Shadow, WithAlpha(Color.black, 0.55f), Anchor.Fill, new Vector2(0f, -14f), new Vector2(-30f, -30f), sliced: true);
+                shadow.pixelsPerUnitMultiplier = 0.8f;
+            }
+            var fill = Image("Fill", rect, glass ? UiSkin.Round : UiSkin.Panel, glass ? WithAlpha(Theme.PanelEdge, 0.14f) : Theme.Paper, Anchor.Fill, Vector2.zero, Vector2.zero, sliced: true);
+            fill.pixelsPerUnitMultiplier = 0.6f / radius;
+            fill.raycastTarget = true;
+            var ring = Image("Edge", rect, UiSkin.Ring, glass ? WithAlpha(Theme.PanelEdge, 0.45f) : Theme.PanelEdge, Anchor.Fill, Vector2.zero, Vector2.zero, sliced: true);
+            ring.pixelsPerUnitMultiplier = 0.6f / radius;
             return rect;
         }
 
-        /// <summary>Three stars; the first <paramref name="earned"/> are gold.</summary>
+        /// <summary>A sunken well inside a panel.</summary>
+        public Image Inset(string name, Transform parent, Anchor anchor, Vector2 position, Vector2 size, float alpha = 0.55f)
+        {
+            var image = Image(name, parent, UiSkin.Inset, WithAlpha(Theme.Well, alpha), anchor, position, size, sliced: true);
+            image.pixelsPerUnitMultiplier = 0.75f;
+            return image;
+        }
+
+        /// <summary>
+        /// A popup panel with a pink title ribbon across its top edge and, when <paramref name="close"/> is given, a red
+        /// close button on the corner. Content goes into the returned panel, below the ribbon (about 150 units down).
+        /// </summary>
+        public RectTransform Popup(Transform parent, Vector2 size, Vector2 position, Action close, out Text title)
+        {
+            var card = Card("Card", parent, Anchor.Center, position, size);
+            Inset("Inner", card, Anchor.Fill, new Vector2(0f, -60f), new Vector2(28f, 88f), 0.35f);
+
+            var ribbon = Image("Ribbon", card, UiSkin.Chunky, Theme.Pink, Anchor.Top, new Vector2(0f, 64f), new Vector2(size.x - 150f, 150f), sliced: true);
+            ribbon.pixelsPerUnitMultiplier = 0.9f;
+            title = Text("Title", ribbon.transform, "", Theme.DisplayFont, 76, Theme.Cream, TextAnchor.MiddleCenter, Anchor.Fill, new Vector2(0f, UiSkin.LipHeight / 2f), new Vector2(20f, 0f));
+            Lip(title, Darken(Theme.Pink, 0.45f), 5f);
+
+            if (close != null) IconButton("Close", card, Theme.IconClose, ButtonStyle.Danger, Anchor.TopRight, new Vector2(30f, 78f), 112f, close);
+            return card;
+        }
+
+        /// <summary>Three stars; the first <paramref name="earned"/> are gold, the rest sunk into the panel.</summary>
         public void Stars(Transform parent, int earned, Anchor anchor, Vector2 position, float size, bool raised)
         {
             for (int i = 0; i < 3; i++)
@@ -284,8 +367,10 @@ namespace GoldenMend.Presentation.UI
                 bool middle = i == 1;
                 float s = raised && middle ? size * 1.3f : size;
                 float y = raised && middle ? size * 0.22f : 0f;
-                var color = i < earned ? Theme.Gold : WithAlpha(Theme.Ink, 0.16f);
-                Image($"Star {i + 1}", parent, Theme.Star, color, anchor, position + new Vector2((i - 1) * size * 1.08f, y), new Vector2(s, s));
+                bool on = i < earned;
+                var star = Image($"Star {i + 1}", parent, Theme.Star, on ? Theme.Gold : new Color(0.16f, 0.09f, 0.38f, 1f), anchor,
+                    position + new Vector2((i - 1) * size * 1.08f, y), new Vector2(s, s));
+                if (on) Lip(star, Darken(Theme.Gold, 0.4f), Mathf.Max(3f, size * 0.07f));
             }
         }
 

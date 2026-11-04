@@ -36,8 +36,8 @@ namespace GoldenMend.Presentation.UI
         public Action Play;
         public Action Close;
 
-        static readonly Vector2 CardSize = new Vector2(880f, 1360f);
-        const float RowHeight = 76f;
+        static readonly Vector2 CardSize = new Vector2(920f, 1500f);
+        const float RowHeight = 92f;
 
         readonly RectTransform card;
         readonly RectTransform showcase;
@@ -50,27 +50,25 @@ namespace GoldenMend.Presentation.UI
 
         public VesselDetails(UiRoot ui) : base(ui, "Vessel Details", popup: true)
         {
-            card = B.Card("Card", Root, Anchor.Center, Vector2.zero, CardSize);
-            var niche = B.Image("Niche", card, T.Badge, Color.Lerp(T.Indigo, T.Ink, 0.45f), Anchor.Top, new Vector2(0f, -40f), new Vector2(CardSize.x - 80f, 470f), sliced: true);
-            showcase = niche.rectTransform;
-            B.IconButton("Close", card, T.IconClose, ButtonStyle.Secondary, Anchor.TopRight, new Vector2(-12f, -12f), 100f, () => Close?.Invoke());
+            card = B.Popup(Root, CardSize, new Vector2(0f, -20f), () => Close?.Invoke(), out title);
+            showcase = B.Inset("Niche", card, Anchor.Top, new Vector2(0f, -176f), new Vector2(CardSize.x - 136f, 500f)).rectTransform;
 
-            byline = B.Text("Byline", card, "", T.TitleFont, 28, UiBuilder.WithAlpha(T.Ink, 0.5f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -530f), new Vector2(800f, 40f));
-            title = B.Text("Title", card, "", T.DisplayFont, 72, T.Indigo, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -572f), new Vector2(820f, 96f));
-            stars = B.Node("Stars", card, Anchor.Top, new Vector2(0f, -680f), new Vector2(300f, 70f));
-            state = B.Text("State", card, "", T.BodyFont, 32, UiBuilder.WithAlpha(T.Ink, 0.55f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -688f), new Vector2(800f, 50f));
+            byline = B.Text("Byline", card, "", T.BodyFont, 38, T.Muted, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -696f), new Vector2(820f, 52f));
+            stars = B.Node("Stars", card, Anchor.Top, new Vector2(0f, -790f), new Vector2(400f, 110f));
+            state = B.Text("State", card, "", T.TitleFont, 42, T.Muted, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -800f), new Vector2(820f, 60f));
 
             string[] labels = { "Your best", "Best possible", "No-help best", "Times restored" };
             for (int i = 0; i < labels.Length; i++)
             {
-                float y = -782f - i * RowHeight;
-                if (i > 0) B.Image("Rule", card, null, UiBuilder.WithAlpha(T.Ink, 0.1f), Anchor.Top, new Vector2(0f, y), new Vector2(720f, 2f));
-                B.Text($"Label {i}", card, labels[i], T.BodyFont, 34, UiBuilder.WithAlpha(T.Ink, 0.65f), TextAnchor.MiddleLeft, Anchor.Top, new Vector2(-170f, y), new Vector2(380f, RowHeight));
-                values[i] = B.Text($"Value {i}", card, "", T.TitleFont, 34, T.Ink, TextAnchor.MiddleRight, Anchor.Top, new Vector2(150f, y), new Vector2(420f, RowHeight));
+                float y = -930f - i * RowHeight;
+                B.Text($"Label {i}", card, labels[i], T.BodyFont, 40, T.Muted, TextAnchor.MiddleLeft, Anchor.Top, new Vector2(-230f, y), new Vector2(300f, RowHeight - 12f));
+                values[i] = B.Text($"Value {i}", card, "", T.TitleFont, 40, T.Cream, TextAnchor.MiddleRight, Anchor.Top, new Vector2(100f, y), new Vector2(560f, RowHeight - 12f));
+                if (i < labels.Length - 1) B.Image("Rule", card, null, UiBuilder.WithAlpha(Color.white, 0.08f), Anchor.Top, new Vector2(0f, y - RowHeight + 6f), new Vector2(760f, 3f));
             }
 
-            var play = B.Button("Play", card, "", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 48f), new Vector2(680f, 150f), () => Play?.Invoke(), T.IconPlay);
+            var play = B.Button("Play", card, "Replay", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, -36f), new Vector2(680f, 184f), () => Play?.Invoke(), T.IconPlay);
             playLabel = play.GetComponentInChildren<Text>();
+            playLabel.fontSize = 72;
         }
 
         public void Bind(BuiltLevel level, VesselRecord record)
@@ -79,22 +77,22 @@ namespace GoldenMend.Presentation.UI
             for (int i = stars.childCount - 1; i >= 0; i--) Release(stars.GetChild(i).gameObject);
 
             bool restored = record.Clears > 0;
-            VesselPreview.Build(B, showcase, level, restored ? VesselLook.Restored : VesselLook.Teaser, Anchor.Center, Vector2.zero, new Vector2(620f, 400f));
+            VesselPreview.Build(B, showcase, level, restored ? VesselLook.Restored : VesselLook.Teaser, Anchor.Center, Vector2.zero, new Vector2(700f, 440f));
             byline.text = VesselArt.Byline(level.Spec) ?? "";
             title.text = VesselArt.DisplayName(level.Spec);
 
             stars.gameObject.SetActive(restored);
-            if (restored) B.Stars(stars, record.Stars, Anchor.Center, Vector2.zero, 60f, raised: false);
+            if (restored) B.Stars(stars, record.Stars, Anchor.Center, Vector2.zero, 84f, raised: true);
             state.text = restored ? "" : "Waiting for repair";
 
             int possible = level.Solution.MinBenchPeak;
             values[0].text = restored ? Run(record.BestPeak, record.BestSeconds) : "-";
             values[1].text = !restored ? "Win once to see"
-                : record.BestPeak == possible ? $"Workbench {possible}  <color=#{Hex(T.Indigo)}>· matched!</color>"
+                : record.BestPeak == possible ? $"<color=#{Hex(T.Gold)}>Workbench {possible}  · matched!</color>"
                 : $"Workbench {possible}";
             values[2].text = record.CleanPeak >= 0 ? Run(record.CleanPeak, record.CleanSeconds) : restored ? "Not yet" : "-";
             values[3].text = record.Clears.ToString();
-            playLabel.text = restored ? "Replay" : "Restore";
+            playLabel.text = restored ? "REPLAY" : "RESTORE";
         }
 
         /// <summary>Minutes and seconds, "--:--" when the time is unknown.</summary>

@@ -19,15 +19,17 @@ namespace GoldenMend.Presentation
     {
         static readonly Color Gold = new Color(1f, 0.80f, 0.32f, 1f);
         static readonly Color PaleGold = new Color(1f, 0.95f, 0.75f, 1f);
-        static readonly Color GhostTint = new Color(0.42f, 0.42f, 0.46f, 0.4f);
-        static readonly Color OpenFrameColor = new Color(1f, 0.93f, 0.72f, 0.95f);
-        static readonly Color PileTileColor = new Color(1f, 1f, 1f, 0.07f);
+        static readonly Color GhostTint = new Color(0.62f, 0.52f, 0.95f, 0.35f);
+        static readonly Color OpenFrameColor = new Color(1f, 0.84f, 0.29f, 1f);
+        static readonly Color PileTileColor = new Color(1f, 1f, 1f, 0.05f);
         static readonly Color LockBadgeColor = new Color(0.1f, 0.09f, 0.08f, 0.82f);
         static readonly Color LockGlyphColor = new Color(0.98f, 0.94f, 0.86f, 1f);
         static readonly Color PipEmpty = new Color(1f, 1f, 1f, 0.22f);
-        static readonly Color SlotColor = new Color(1f, 1f, 1f, 0.12f);
-        static readonly Color LockedSlotColor = new Color(0f, 0f, 0f, 0.55f);
-        static readonly Color TableColor = new Color(1f, 1f, 1f, 0.045f);
+        static readonly Color SlotColor = new Color(0.11f, 0.055f, 0.27f, 1f);
+        static readonly Color LockedSlotColor = new Color(0.05f, 0.02f, 0.15f, 1f);
+        static readonly Color TrayColor = new Color(0.165f, 0.086f, 0.376f, 1f);
+        static readonly Color GlassColor = new Color(0.62f, 0.48f, 1f, 0.1f);
+        static readonly Color GlassEdge = new Color(0.62f, 0.48f, 1f, 0.35f);
         static readonly Color FailTint = new Color(1f, 0.55f, 0.5f, 1f);
 
         public event Action<GameStatus> StatusShown;
@@ -216,12 +218,23 @@ namespace GoldenMend.Presentation
             frame.localScale = target;
         }
 
+        // Glass card behind the vessel, a dark tray under the workbench, and a glass panel under the pile.
         void BuildTable()
         {
-            MakeSprite("Bench strip", boardRoot, SpriteFactory.Rounded, new Vector3(0f, BoardLayout.BenchY, 0f),
-                new Vector2(10.8f, 2.4f), TableColor, -40);
-            var extent = layout.PileExtent + new Vector2(0.5f, 0.5f);
-            MakeSprite("Pile table", boardRoot, SpriteFactory.Rounded, layout.PileCentre, extent, TableColor, -40);
+            // Tall vessels reach down toward the workbench; the card stops short of the tray.
+            float top = BoardLayout.VesselCenterY + Level.Rows * layout.CellSize / 2f + 0.55f;
+            float bottom = Mathf.Max(BoardLayout.VesselCenterY - Level.Rows * layout.CellSize / 2f - 0.55f, BoardLayout.BenchY + 1.3f);
+            var vesselSize = new Vector2(Level.Columns * layout.CellSize + 1.1f, top - bottom);
+            MakeGlass("Vessel card", new Vector3(0f, (top + bottom) / 2f, 0f), vesselSize);
+            MakePanel("Bench tray", boardRoot, UiSkin.WorldRound, new Vector3(0f, BoardLayout.BenchY, 0f), new Vector2(10.9f, 2.3f), TrayColor, -40);
+            MakeGlass("Pile table", layout.PileCentre, layout.PileExtent + new Vector2(0.6f, 0.6f));
+        }
+
+        void MakeGlass(string name, Vector3 centre, Vector2 size)
+        {
+            MakePanel(name + " edge", boardRoot, UiSkin.WorldRound, centre, size + new Vector2(0.1f, 0.1f), GlassEdge, -42);
+            MakePanel(name, boardRoot, UiSkin.WorldRound, centre, size, new Color(0.17f, 0.08f, 0.38f, 1f), -41);
+            MakePanel(name + " glaze", boardRoot, UiSkin.WorldRound, centre, size, GlassColor, -40);
         }
 
         void BuildVessel()
@@ -330,7 +343,7 @@ namespace GoldenMend.Presentation
             {
                 bool locked = state.SlotLocked[i] && i >= FirstShownLockedSlot();
                 var color = locked ? LockedSlotColor : SlotColor;
-                slotFrames[i] = MakeSprite($"Slot {i}", boardRoot, SpriteFactory.Rounded, layout.Slot(i, count),
+                slotFrames[i] = MakePanel($"Slot {i}", boardRoot, UiSkin.WorldInset, layout.Slot(i, count),
                     new Vector2(size, size), color, 10);
                 if (locked) BuildSlotLock(i, layout.Slot(i, count), size);
             }
@@ -755,6 +768,15 @@ namespace GoldenMend.Presentation
             if (obj == null) return;
             if (Application.isPlaying) Destroy(obj);
             else DestroyImmediate(obj);
+        }
+
+        /// <summary>A 9-sliced sprite drawn at <paramref name="size"/> world units, so its rounded corners stay crisp.</summary>
+        static SpriteRenderer MakePanel(string name, Transform parent, Sprite sprite, Vector3 worldPosition, Vector2 size, Color color, int order)
+        {
+            var sr = MakeSprite(name, parent, sprite, worldPosition, Vector2.one, color, order);
+            sr.drawMode = SpriteDrawMode.Sliced;
+            sr.size = size;
+            return sr;
         }
 
         static SpriteRenderer MakeSprite(string name, Transform parent, Sprite sprite, Vector3 worldPosition, Vector2 size, Color color, int order)

@@ -19,7 +19,8 @@ namespace GoldenMend.EditorTools
         const string BootstrapType = "GoldenMend.Bootstrap.GameBootstrap, Assembly-CSharp";
         const string ThemePath = "Assets/_Game/Content/UI/UiTheme.asset";
         const string Kenney = "Assets/ThirdParty/Kenney/UIPack/";
-        const string Fonts = "Assets/ThirdParty/Fonts/ZenMaruGothic/";
+        const string Fonts = "Assets/ThirdParty/Fonts/";
+        const string GameIcons = "Assets/_Game/Content/UI/Icons/";
 
         [MenuItem("Golden Mend/Rebuild Game Scene")]
         public static void Build() => Build(withPaintings: true);
@@ -38,7 +39,7 @@ namespace GoldenMend.EditorTools
             camera.orthographic = true;
             camera.orthographicSize = 10.4f;
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.11f, 0.095f, 0.085f);
+            camera.backgroundColor = UiTheme.Hex(0x1A0B3B);
             cameraObject.transform.position = new Vector3(0f, 0f, -10f);
 
             var lightObject = new GameObject("Global Light 2D");
@@ -66,11 +67,12 @@ namespace GoldenMend.EditorTools
             Debug.Log($"Golden Mend: game scene saved to {ScenePath}");
         }
 
-        /// <summary>Creates or refreshes the UI theme from the Kenney UI Pack, Kenney Game Icons and Zen Maru Gothic.</summary>
+        /// <summary>Creates or refreshes the UI theme: Titan One and Baloo 2, Kenney Game Icons, the game's own icons and the palette.</summary>
         [MenuItem("Golden Mend/Rebuild UI Theme")]
         public static UiTheme BuildTheme()
         {
             AssetDatabase.ImportAsset("Assets/ThirdParty/Kenney", ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
+            ImportIcons();
 
             var theme = AssetDatabase.LoadAssetAtPath<UiTheme>(ThemePath);
             if (theme == null)
@@ -80,9 +82,9 @@ namespace GoldenMend.EditorTools
                 AssetDatabase.CreateAsset(theme, ThemePath);
             }
 
-            theme.BodyFont = Load<Font>(Fonts + "ZenMaruGothic-Regular.ttf");
-            theme.TitleFont = Load<Font>(Fonts + "ZenMaruGothic-Bold.ttf");
-            theme.DisplayFont = Load<Font>(Fonts + "ZenMaruGothic-Black.ttf");
+            theme.BodyFont = Load<Font>(Fonts + "Baloo2/Baloo2-Bold.ttf");
+            theme.TitleFont = Load<Font>(Fonts + "Baloo2/Baloo2-ExtraBold.ttf");
+            theme.DisplayFont = Load<Font>(Fonts + "TitanOne/TitanOne-Regular.ttf");
 
             theme.Panel = Load<Sprite>(Kenney + "Sprites/Grey/button_square_flat.png");
             theme.Button = Load<Sprite>(Kenney + "Sprites/Grey/button_rectangle_depth_flat.png");
@@ -107,15 +109,49 @@ namespace GoldenMend.EditorTools
             theme.IconTrophy = Load<Sprite>(Icons + "trophy.png");
             theme.IconHaptics = Load<Sprite>(Icons + "phone.png");
             theme.IconRestart = Load<Sprite>(Icons + "return.png");
-            theme.IconHint = Load<Sprite>(Icons + "question.png");
+            theme.IconHint = Load<Sprite>(GameIcons + "bulb.png");
+            theme.IconPull = Load<Sprite>(GameIcons + "pull.png");
             theme.IconPrevious = Load<Sprite>(Icons + "arrowLeft.png");
             theme.IconNext = Load<Sprite>(Icons + "arrowRight.png");
 
             theme.Click = Load<AudioClip>(Kenney + "Sounds/click-a.ogg");
 
+            // Berry Night palette (see the Figma file "Golden Mend – UI Revamp").
+            theme.Cream = Color.white;
+            theme.Paper = UiTheme.Hex(0x5B33B8);
+            theme.PanelEdge = UiTheme.Hex(0x9E7BFF);
+            theme.Indigo = UiTheme.Hex(0x7357F5);
+            theme.Gold = UiTheme.Hex(0xFFD54A);
+            theme.Ink = UiTheme.Hex(0x3A1A00);
+            theme.Clay = UiTheme.Hex(0xF25C5C);
+            theme.Pink = UiTheme.Hex(0xFF5FA2);
+            theme.Green = UiTheme.Hex(0x4FD06A);
+            theme.Yellow = UiTheme.Hex(0xFFD34D);
+            theme.Muted = UiTheme.Hex(0xC9B6F2);
+            theme.Night = UiTheme.Hex(0x4A2391);
+            theme.NightDeep = UiTheme.Hex(0x1A0B3B);
+            theme.Well = UiTheme.Hex(0x120830);
+            theme.Scrim = new Color(0.043f, 0.016f, 0.125f, 0.72f);
+
             EditorUtility.SetDirty(theme);
             AssetDatabase.SaveAssets();
             return theme;
+        }
+
+        /// <summary>The game's own icons (exported from the Figma file) import as sprites.</summary>
+        static void ImportIcons()
+        {
+            foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { GameIcons.TrimEnd('/') }))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                if (importer.textureType == TextureImporterType.Sprite) continue;
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.SaveAndReimport();
+            }
         }
 
         const string ArtCatalogPath = "Assets/_Game/Content/Art/ArtCatalog.asset";

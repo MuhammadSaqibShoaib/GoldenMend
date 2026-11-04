@@ -24,6 +24,7 @@ namespace GoldenMend.Flow
             feedback.Init(sounds);
             var board = boardObject.AddComponent<BoardPresenter>();
 
+            Backdrop.Create(theme, camera, parent);
             var ui = UiRoot.Create(theme, camera, parent);
 
             var flow = new GameObject("Game Flow").AddComponent<GameFlow>();

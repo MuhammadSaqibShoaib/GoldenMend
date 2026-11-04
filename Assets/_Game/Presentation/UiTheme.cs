@@ -4,7 +4,8 @@ namespace GoldenMend.Presentation
 {
     /// <summary>
     /// Everything the screens are drawn with: fonts, sprites, icons, sounds and the palette.
-    /// Built from the Kenney UI Pack, Kenney Game Icons and Zen Maru Gothic by Golden Mend > Rebuild UI Theme.
+    /// The Berry Night look: Titan One and Baloo 2 type, Kenney Game Icons, and the generated shapes in UiSkin.
+    /// Built by Golden Mend > Rebuild UI Theme.
     /// </summary>
     [CreateAssetMenu(menuName = "Golden Mend/UI Theme", fileName = "UiTheme")]
     public sealed class UiTheme : ScriptableObject
@@ -40,17 +41,40 @@ namespace GoldenMend.Presentation
         public Sprite IconPlay;
         public Sprite IconTrophy;
         public Sprite IconHaptics;
+        public Sprite IconPull;
 
         [Header("Sounds")]
         public AudioClip Click;
 
         [Header("Palette")]
-        public Color Cream = new Color(0.96f, 0.92f, 0.84f, 1f);
-        public Color Paper = new Color(1f, 0.98f, 0.93f, 1f);
-        public Color Indigo = new Color(0.22f, 0.27f, 0.45f, 1f);
-        public Color Gold = new Color(0.97f, 0.77f, 0.33f, 1f);
-        public Color Ink = new Color(0.16f, 0.13f, 0.12f, 1f);
-        public Color Clay = new Color(0.80f, 0.38f, 0.30f, 1f);
-        public Color Scrim = new Color(0.05f, 0.04f, 0.04f, 0.62f);
+        /// <summary>Light text on the night background.</summary>
+        public Color Cream = Color.white;
+        /// <summary>Popup and card panels.</summary>
+        public Color Paper = Hex(0x5B33B8);
+        /// <summary>Panel edges.</summary>
+        public Color PanelEdge = Hex(0x9E7BFF);
+        /// <summary>Secondary buttons.</summary>
+        public Color Indigo = Hex(0x7357F5);
+        public Color Gold = Hex(0xFFD54A);
+        /// <summary>Dark text on gold and yellow.</summary>
+        public Color Ink = Hex(0x3A1A00);
+        /// <summary>Warnings and the close button.</summary>
+        public Color Clay = Hex(0xF25C5C);
+        /// <summary>The main action on every screen.</summary>
+        public Color Pink = Hex(0xFF5FA2);
+        /// <summary>Go-ahead actions: resume, continue, buy.</summary>
+        public Color Green = Hex(0x4FD06A);
+        /// <summary>The pull booster and other gold-yellow buttons.</summary>
+        public Color Yellow = Hex(0xFFD34D);
+        /// <summary>Secondary text on dark panels.</summary>
+        public Color Muted = Hex(0xC9B6F2);
+        /// <summary>Background gradient, top and bottom.</summary>
+        public Color Night = Hex(0x4A2391);
+        public Color NightDeep = Hex(0x1A0B3B);
+        /// <summary>Sunken wells inside panels.</summary>
+        public Color Well = Hex(0x120830);
+        public Color Scrim = new Color(0.043f, 0.016f, 0.125f, 0.72f);
+
+        public static Color Hex(int rgb) => new Color(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
     }
 }

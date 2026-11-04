@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29558f999348ce34dadd8cb3e3fc0929, type: 3}
   m_Name: UiTheme
   m_EditorClassIdentifier: GoldenMend.Presentation::GoldenMend.Presentation.UiTheme
-  BodyFont: {fileID: 12800000, guid: 4aaa32f864fb5dc44a3e6aa319925028, type: 3}
-  TitleFont: {fileID: 12800000, guid: 96e688f410139ce43808629b9d51197d, type: 3}
-  DisplayFont: {fileID: 12800000, guid: f648da0470dc5974895fa45459bed6f5, type: 3}
+  BodyFont: {fileID: 12800000, guid: 2244204e06d08b44b902e5df0f153039, type: 3}
+  TitleFont: {fileID: 12800000, guid: d54102e6304ccde4581d497897c2e37a, type: 3}
+  DisplayFont: {fileID: 12800000, guid: 41ea5ac234311cf4ea0021c3fbd0b456, type: 3}
   Panel: {fileID: 21300000, guid: 81bc0ddc39c9ddb4899802dc1023e078, type: 3}
   Button: {fileID: 21300000, guid: 5026f02812fa4bb4db3f84e68de0dac3, type: 3}
   IconButton: {fileID: 21300000, guid: 287a8266c2b7dea49a9ecb4c12d840da, type: 3}
@@ -22,7 +22,7 @@ MonoBehaviour:
   Divider: {fileID: 21300000, guid: 541ec19f2f71d9c4bac072ad7227384d, type: 3}
   Circle: {fileID: 21300000, guid: 6ee8710cfdf2dcd4b967dbcbf0b4fafd, type: 3}
   IconRestart: {fileID: 21300000, guid: c8f9ae09e25d6784c974696641475d2a, type: 3}
-  IconHint: {fileID: 21300000, guid: e14750fb8194f5b42820ce2e99c5e71f, type: 3}
+  IconHint: {fileID: 7470584903754895727, guid: ac272930a8ff59a4cb4f9afca803e0ac, type: 3}
   IconPrevious: {fileID: 21300000, guid: baf95116941e3c04f8542f45c5210fc7, type: 3}
   IconNext: {fileID: 21300000, guid: 0580df42748afbf4b9e0676a79ab7b40, type: 3}
   Star: {fileID: 21300000, guid: dce8116d65ed6b04a82e86d6ee20d217, type: 3}
@@ -38,11 +38,20 @@ MonoBehaviour:
   IconPlay: {fileID: 21300000, guid: 0580df42748afbf4b9e0676a79ab7b40, type: 3}
   IconTrophy: {fileID: 21300000, guid: 96e2fa1b720105548ae8e53df5ed1a18, type: 3}
   IconHaptics: {fileID: 21300000, guid: 76eda873b3d5de34098c7e97ee2629f6, type: 3}
+  IconPull: {fileID: -1660087943635961167, guid: 82ed797e20a7dd6449ad22d39b7a38dd, type: 3}
   Click: {fileID: 8300000, guid: 169a1d844f711124083eb99e68b39ce3, type: 3}
-  Cream: {r: 0.96, g: 0.92, b: 0.84, a: 1}
-  Paper: {r: 1, g: 0.98, b: 0.93, a: 1}
-  Indigo: {r: 0.22, g: 0.27, b: 0.45, a: 1}
-  Gold: {r: 0.97, g: 0.77, b: 0.33, a: 1}
-  Ink: {r: 0.16, g: 0.13, b: 0.12, a: 1}
-  Clay: {r: 0.8, g: 0.38, b: 0.3, a: 1}
-  Scrim: {r: 0.05, g: 0.04, b: 0.04, a: 0.62}
+  Cream: {r: 1, g: 1, b: 1, a: 1}
+  Paper: {r: 0.35686275, g: 0.2, b: 0.72156864, a: 1}
+  PanelEdge: {r: 0.61960787, g: 0.48235294, b: 1, a: 1}
+  Indigo: {r: 0.4509804, g: 0.34117648, b: 0.9607843, a: 1}
+  Gold: {r: 1, g: 0.8352941, b: 0.2901961, a: 1}
+  Ink: {r: 0.22745098, g: 0.101960786, b: 0, a: 1}
+  Clay: {r: 0.9490196, g: 0.36078432, b: 0.36078432, a: 1}
+  Pink: {r: 1, g: 0.37254903, b: 0.63529414, a: 1}
+  Green: {r: 0.30980393, g: 0.8156863, b: 0.41568628, a: 1}
+  Yellow: {r: 1, g: 0.827451, b: 0.3019608, a: 1}
+  Muted: {r: 0.7882353, g: 0.7137255, b: 0.9490196, a: 1}
+  Night: {r: 0.2901961, g: 0.13725491, b: 0.5686275, a: 1}
+  NightDeep: {r: 0.101960786, g: 0.043137256, b: 0.23137255, a: 1}
+  Well: {r: 0.07058824, g: 0.03137255, b: 0.1882353, a: 1}
+  Scrim: {r: 0.043, g: 0.016, b: 0.125, a: 0.72}

@@ -7,8 +7,8 @@ namespace GoldenMend.Presentation.UI
 {
     /// <summary>
     /// In-level HUD, kept to the top edge so the board stays clear: pause on the left, the level plate in the
-    /// middle, and the two helpers on the right: pull (lift a buried piece, for coins) and hint (from the player's
-    /// stock). A tip line under the plate teaches the first level.
+    /// middle, and the two helpers on the right: pull (lift a buried piece, for coins, price underneath) and hint
+    /// (from the player's stock, count on a gold badge). A tip line under the plate teaches the first level.
     /// </summary>
     public sealed class GameplayHud : UiView
     {
@@ -27,34 +27,36 @@ namespace GoldenMend.Presentation.UI
 
         public GameplayHud(UiRoot ui) : base(ui, "Gameplay HUD", popup: false)
         {
-            float top = -32f, size = UiType.IconButton, gap = 20f;
-            B.IconButton("Pause", Root, T.IconPause, ButtonStyle.Secondary, Anchor.TopLeft, new Vector2(UiType.Margin, top), size, () => Pause?.Invoke());
+            float top = -44f, size = 124f;
+            B.IconButton("Pause", Root, T.IconPause, ButtonStyle.Secondary, Anchor.TopLeft, new Vector2(36f, top), size, () => Pause?.Invoke());
 
-            hintButton = B.IconButton("Hint", Root, T.IconHint, ButtonStyle.Secondary, Anchor.TopRight, new Vector2(-UiType.Margin, top), size, () => Hint?.Invoke());
-            var badge = B.Image("Count", hintButton.transform, T.Circle, T.Gold, Anchor.TopRight, new Vector2(16f, 16f), new Vector2(54f, 54f));
+            hintButton = B.IconButton("Hint", Root, T.IconHint, ButtonStyle.Secondary, Anchor.TopRight, new Vector2(-36f, top), size, () => Hint?.Invoke());
+            var badge = B.Image("Count", hintButton.transform, T.Circle, T.Gold, Anchor.TopRight, new Vector2(22f, 22f), new Vector2(64f, 64f));
             badge.raycastTarget = false;
-            hintCount = B.Text("Label", badge.transform, "", T.TitleFont, 32, T.Ink, TextAnchor.MiddleCenter, Anchor.Fill, Vector2.zero, Vector2.zero);
+            UiBuilder.Lip(badge, UiBuilder.Darken(T.Gold, 0.45f), 4f);
+            hintCount = B.Text("Label", badge.transform, "", T.TitleFont, 38, T.Ink, TextAnchor.MiddleCenter, Anchor.Fill, new Vector2(0f, 2f), Vector2.zero);
 
-            // The pull icon is the play arrow turned to point up: the piece comes up out of the pile.
-            pullButton = B.IconButton("Pull", Root, T.IconPlay, ButtonStyle.Secondary, Anchor.TopRight, new Vector2(-UiType.Margin - size - gap, top), size, () => Pull?.Invoke());
-            pullButton.transform.Find("Icon").localRotation = Quaternion.Euler(0f, 0f, 90f);
-            pullPrice = B.CoinPill("Price", pullButton.transform, T.Gold, "", T.Ink, 26, Anchor.Bottom, new Vector2(0f, -24f), new Vector2(104f, 44f));
+            // The pull button lifts a piece up out of the pile; its price sits under it.
+            pullButton = B.IconButton("Pull", Root, T.IconPull, ButtonStyle.Accent, Anchor.TopRight, new Vector2(-36f - size - 32f, top), size, () => Pull?.Invoke());
+            pullPrice = B.CoinPill("Price", pullButton.transform, UiBuilder.WithAlpha(Color.black, 0.45f), "", T.Cream, 30, Anchor.Bottom, new Vector2(0f, -64f), new Vector2(150f, 56f));
 
-            var plate = B.Image("Level Plate", Root, T.Badge, T.Indigo, Anchor.Top, new Vector2(-40f, -28f), new Vector2(440f, 124f), sliced: true);
-            caption = B.Text("Caption", plate.transform, "", T.TitleFont, 28, T.Gold, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -12f), new Vector2(410f, 40f));
-            title = B.Text("Title", plate.transform, "", T.TitleFont, 42, T.Cream, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -54f), new Vector2(410f, 56f));
+            var plate = B.Card("Level Plate", Root, Anchor.Top, new Vector2(-60f, -44f), new Vector2(380f, 124f), glass: true, radius: 0.7f);
+            caption = B.Text("Caption", plate, "", T.DisplayFont, 50, T.Gold, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -8f), new Vector2(370f, 66f));
+            UiBuilder.Lip(caption, UiTheme.Hex(0xA1501A), 4f);
+            title = B.Text("Title", plate, "", T.BodyFont, 32, T.Cream, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -68f), new Vector2(370f, 44f));
 
-            var tipRect = B.Node("Tip", Root, Anchor.Top, new Vector2(0f, -200f), new Vector2(900f, 110f));
+            var tipRect = B.Node("Tip", Root, Anchor.Top, new Vector2(0f, -250f), new Vector2(940f, 120f));
             tip = tipRect.gameObject.AddComponent<CanvasGroup>();
             tip.blocksRaycasts = false;
-            tipText = B.Text("Text", tipRect, "", T.BodyFont, 34, T.Cream, TextAnchor.MiddleCenter, Anchor.Fill, Vector2.zero, Vector2.zero);
+            tipText = B.Text("Text", tipRect, "", T.TitleFont, 40, T.Cream, TextAnchor.MiddleCenter, Anchor.Fill, Vector2.zero, Vector2.zero);
+            UiBuilder.Lip(tipText, UiBuilder.WithAlpha(Color.black, 0.6f), 3f);
             tip.alpha = 0f;
         }
 
         public void Bind(int levelIndex, LevelSpec spec)
         {
-            string clay = ColorUtility.ToHtmlStringRGB(T.Clay);
-            caption.text = spec.Hard ? $"LEVEL {levelIndex + 1}   <color=#{clay}>HARD</color>" : $"LEVEL {levelIndex + 1}";
+            string pink = ColorUtility.ToHtmlStringRGB(T.Pink);
+            caption.text = spec.Hard ? $"LEVEL {levelIndex + 1} <color=#{pink}>HARD</color>" : $"LEVEL {levelIndex + 1}";
             title.text = VesselArt.DisplayName(spec);
         }
 
