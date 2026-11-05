@@ -184,7 +184,7 @@ namespace GoldenMend.Presentation
         /// <summary>A vertical two-colour gradient (top to bottom), for full-screen backgrounds.</summary>
         public static Sprite VerticalGradient(Color top, Color bottom)
         {
-            const int h = 256;
+            const int h = 1024;
             var tex = new Texture2D(1, h, TextureFormat.RGBA32, false) { name = "Gradient", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
             var pixels = new Color[h];
             for (int y = 0; y < h; y++) pixels[y] = Color.Lerp(bottom, top, y / (h - 1f));

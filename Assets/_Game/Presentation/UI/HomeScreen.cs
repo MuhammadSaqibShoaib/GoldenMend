@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace GoldenMend.Presentation.UI
 {
     /// <summary>
-    /// Main menu. Top: coins and settings. Middle: the gold title, the next level and its vessel on a glass card,
+    /// Main menu. Top: coins and settings. Middle: the title, the next vessel's name and the vessel itself, floating on the sky,
     /// kept alive by <see cref="ShowcaseMotion"/>. Bottom (thumb zone): the level button and the museum. No
     /// progress count: players shouldn't see how many vessels are left.
     /// </summary>
@@ -32,7 +32,8 @@ namespace GoldenMend.Presentation.UI
             UiBuilder.Lip(title, T.TitleLip, 8f);
             levelChip = B.Pill("Level", Root, T.Chip, null, Color.clear, "", T.Text, 36, Anchor.Top, new Vector2(0f, -380f), new Vector2(520f, 84f));
 
-            showcase = B.Card("Showcase", Root, Anchor.Top, new Vector2(0f, -512f), new Vector2(920f, 860f), glass: true);
+            // No panel behind the vessel: it floats on the sky, with the backdrop's clouds and bubbles drifting behind.
+            showcase = B.Node("Showcase", Root, Anchor.Top, new Vector2(0f, -512f), new Vector2(920f, 860f));
 
             // The level button replaces a generic Play: its number and tone say what is next and how hard it is.
             levelButton = new LevelButton(B, Root, Anchor.Bottom, new Vector2(0f, 214f), new Vector2(640f, 196f), () => Play?.Invoke());
