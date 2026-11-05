@@ -112,6 +112,12 @@ namespace GoldenMend.EditorTools
             flow.StartLevel(3);
             flow.PreviewWin(stars: 2, coins: 40);
             Capture("8-level-complete");
+            flow.PreviewLevel(6);
+            flow.PreviewWin(stars: 3, coins: 60);
+            Capture("8b-level-complete-next-hard");
+            flow.PreviewLevel(25);
+            flow.PreviewWin(stars: 3, coins: 60);
+            Capture("8c-level-complete-next-very-hard");
             flow.StartLevel(3);
             flow.PreviewOffer();
             Capture("9-hint-offer");

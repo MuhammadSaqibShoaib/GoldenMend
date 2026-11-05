@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29558f999348ce34dadd8cb3e3fc0929, type: 3}
   m_Name: UiTheme
   m_EditorClassIdentifier: GoldenMend.Presentation::GoldenMend.Presentation.UiTheme
-  BodyFont: {fileID: 12800000, guid: 2244204e06d08b44b902e5df0f153039, type: 3}
-  TitleFont: {fileID: 12800000, guid: d54102e6304ccde4581d497897c2e37a, type: 3}
-  DisplayFont: {fileID: 12800000, guid: 41ea5ac234311cf4ea0021c3fbd0b456, type: 3}
+  BodyFont: {fileID: 12800000, guid: 9d64c6e40300b514898690f03fc0af6e, type: 3}
+  TitleFont: {fileID: 12800000, guid: f1d698a9d3fa5e64eac77c0daca572f9, type: 3}
+  DisplayFont: {fileID: 12800000, guid: ddb07d948299f904db8641c61c4a6531, type: 3}
   Panel: {fileID: 21300000, guid: 81bc0ddc39c9ddb4899802dc1023e078, type: 3}
   Button: {fileID: 21300000, guid: 5026f02812fa4bb4db3f84e68de0dac3, type: 3}
   IconButton: {fileID: 21300000, guid: 287a8266c2b7dea49a9ecb4c12d840da, type: 3}
@@ -43,18 +43,27 @@ MonoBehaviour:
   Click: {fileID: 8300000, guid: c1a6862adc9b7064b8124651502a4c12, type: 3}
   Popup: {fileID: 8300000, guid: 92ed278f7047db24b88118d6ffd470f7, type: 3}
   StarSound: {fileID: 8300000, guid: 175329160148dc34ba8f4b3c8331f360, type: 3}
-  Cream: {r: 1, g: 1, b: 1, a: 1}
-  Paper: {r: 0.35686275, g: 0.2, b: 0.72156864, a: 1}
-  PanelEdge: {r: 0.61960787, g: 0.48235294, b: 1, a: 1}
-  Indigo: {r: 0.4509804, g: 0.34117648, b: 0.9607843, a: 1}
-  Gold: {r: 1, g: 0.8352941, b: 0.2901961, a: 1}
-  Ink: {r: 0.22745098, g: 0.101960786, b: 0, a: 1}
-  Clay: {r: 0.9490196, g: 0.36078432, b: 0.36078432, a: 1}
-  Pink: {r: 1, g: 0.37254903, b: 0.63529414, a: 1}
-  Green: {r: 0.30980393, g: 0.8156863, b: 0.41568628, a: 1}
-  Yellow: {r: 1, g: 0.827451, b: 0.3019608, a: 1}
-  Muted: {r: 0.7882353, g: 0.7137255, b: 0.9490196, a: 1}
-  Night: {r: 0.2901961, g: 0.13725491, b: 0.5686275, a: 1}
-  NightDeep: {r: 0.101960786, g: 0.043137256, b: 0.23137255, a: 1}
-  Well: {r: 0.07058824, g: 0.03137255, b: 0.1882353, a: 1}
-  Scrim: {r: 0.043, g: 0.016, b: 0.125, a: 0.72}
+  Text: {r: 0.16862746, g: 0.2901961, b: 0.54509807, a: 1}
+  Title: {r: 0.13725491, g: 0.3137255, b: 0.70980394, a: 1}
+  TitleLip: {r: 1, g: 1, b: 1, a: 1}
+  OnAccent: {r: 1, g: 1, b: 1, a: 1}
+  Paper: {r: 1, g: 1, b: 1, a: 0.9}
+  Glass: {r: 1, g: 1, b: 1, a: 0.5}
+  PanelEdge: {r: 1, g: 1, b: 1, a: 1}
+  Chip: {r: 1, g: 1, b: 1, a: 0.75}
+  Primary: {r: 1, g: 0.6039216, b: 0.12156863, a: 1}
+  Secondary: {r: 1, g: 1, b: 1, a: 0.85}
+  Confirm: {r: 0.20392157, g: 0.78039217, b: 0.34901962, a: 1}
+  Accent: {r: 1, g: 0.37254903, b: 0.56078434, a: 1}
+  Danger: {r: 0.9372549, g: 0.2901961, b: 0.3137255, a: 1}
+  Ribbon: {r: 0.24705882, g: 0.54901963, b: 1, a: 1}
+  Hard: {r: 0.9098039, g: 0.1882353, b: 0.30980393, a: 1}
+  VeryHard: {r: 0.38431373, g: 0.20392157, b: 0.85882354, a: 1}
+  Gold: {r: 1, g: 0.7882353, b: 0.23529412, a: 1}
+  Ink: {r: 0.22745098, g: 0.14117648, b: 0, a: 1}
+  Muted: {r: 0.3529412, g: 0.46666667, b: 0.68235296, a: 1}
+  StarEmpty: {r: 0.7254902, g: 0.8, b: 0.92156863, a: 1}
+  SkyTop: {r: 0.7882353, g: 0.9411765, b: 1, a: 1}
+  SkyBottom: {r: 0.5568628, g: 0.77254903, b: 1, a: 1}
+  Well: {r: 0.8627451, g: 0.90588236, b: 0.972549, a: 1}
+  Scrim: {r: 0.11, g: 0.23, b: 0.47, a: 0.42}

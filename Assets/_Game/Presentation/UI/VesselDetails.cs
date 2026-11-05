@@ -62,8 +62,8 @@ namespace GoldenMend.Presentation.UI
             {
                 float y = -930f - i * RowHeight;
                 B.Text($"Label {i}", card, labels[i], T.BodyFont, 40, T.Muted, TextAnchor.MiddleLeft, Anchor.Top, new Vector2(-230f, y), new Vector2(300f, RowHeight - 12f));
-                values[i] = B.Text($"Value {i}", card, "", T.TitleFont, 40, T.Cream, TextAnchor.MiddleRight, Anchor.Top, new Vector2(100f, y), new Vector2(560f, RowHeight - 12f));
-                if (i < labels.Length - 1) B.Image("Rule", card, null, UiBuilder.WithAlpha(Color.white, 0.08f), Anchor.Top, new Vector2(0f, y - RowHeight + 6f), new Vector2(760f, 3f));
+                values[i] = B.Text($"Value {i}", card, "", T.TitleFont, 40, T.Text, TextAnchor.MiddleRight, Anchor.Top, new Vector2(100f, y), new Vector2(560f, RowHeight - 12f));
+                if (i < labels.Length - 1) B.Image("Rule", card, null, UiBuilder.WithAlpha(T.Muted, 0.18f), Anchor.Top, new Vector2(0f, y - RowHeight + 6f), new Vector2(760f, 3f));
             }
 
             var play = B.Button("Play", card, "Replay", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, -36f), new Vector2(680f, 184f), () => Play?.Invoke(), T.IconPlay);
@@ -88,7 +88,7 @@ namespace GoldenMend.Presentation.UI
             int possible = level.Solution.MinBenchPeak;
             values[0].text = restored ? Run(record.BestPeak, record.BestSeconds) : "-";
             values[1].text = !restored ? "Win once to see"
-                : record.BestPeak == possible ? $"<color=#{Hex(T.Gold)}>Workbench {possible}  · matched!</color>"
+                : record.BestPeak == possible ? $"<color=#{Hex(T.Confirm)}>Workbench {possible}  · matched!</color>"
                 : $"Workbench {possible}";
             values[2].text = record.CleanPeak >= 0 ? Run(record.CleanPeak, record.CleanSeconds) : restored ? "Not yet" : "-";
             values[3].text = record.Clears.ToString();

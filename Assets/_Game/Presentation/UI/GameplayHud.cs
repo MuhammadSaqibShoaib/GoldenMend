@@ -31,34 +31,36 @@ namespace GoldenMend.Presentation.UI
             B.IconButton("Pause", Root, T.IconPause, ButtonStyle.Secondary, Anchor.TopLeft, new Vector2(36f, top), size, () => Pause?.Invoke());
 
             hintButton = B.IconButton("Hint", Root, T.IconHint, ButtonStyle.Secondary, Anchor.TopRight, new Vector2(-36f, top), size, () => Hint?.Invoke());
-            var badge = B.Image("Count", hintButton.transform, T.Circle, T.Gold, Anchor.TopRight, new Vector2(22f, 22f), new Vector2(64f, 64f));
+            var badge = B.Image("Count", hintButton.transform, T.Circle, T.Accent, Anchor.TopRight, new Vector2(22f, 22f), new Vector2(64f, 64f));
             badge.raycastTarget = false;
-            UiBuilder.Lip(badge, UiBuilder.Darken(T.Gold, 0.45f), 4f);
-            hintCount = B.Text("Label", badge.transform, "", T.TitleFont, 38, T.Ink, TextAnchor.MiddleCenter, Anchor.Fill, new Vector2(0f, 2f), Vector2.zero);
+            var ring = B.Image("Ring", badge.transform, T.Circle, Color.white, Anchor.Center, Vector2.zero, new Vector2(74f, 74f));
+            ring.transform.SetAsFirstSibling();
+            hintCount = B.Text("Label", badge.transform, "", T.TitleFont, 38, T.OnAccent, TextAnchor.MiddleCenter, Anchor.Fill, new Vector2(0f, 2f), Vector2.zero);
 
             // The pull button lifts a piece up out of the pile; its price sits under it.
             pullButton = B.IconButton("Pull", Root, T.IconPull, ButtonStyle.Accent, Anchor.TopRight, new Vector2(-36f - size - 32f, top), size, () => Pull?.Invoke());
-            pullPrice = B.CoinPill("Price", pullButton.transform, UiBuilder.WithAlpha(Color.black, 0.45f), "", T.Cream, 30, Anchor.Bottom, new Vector2(0f, -64f), new Vector2(150f, 56f));
+            pullPrice = B.CoinPill("Price", pullButton.transform, T.Chip, "", T.Text, 30, Anchor.Bottom, new Vector2(0f, -64f), new Vector2(150f, 56f));
 
             var plate = B.Card("Level Plate", Root, Anchor.Top, new Vector2(-60f, -44f), new Vector2(380f, 124f), glass: true, radius: 0.7f);
-            caption = B.Text("Caption", plate, "", T.DisplayFont, 50, T.Gold, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -8f), new Vector2(370f, 66f));
-            UiBuilder.Lip(caption, UiTheme.Hex(0xA1501A), 4f);
-            title = B.Text("Title", plate, "", T.BodyFont, 32, T.Cream, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -68f), new Vector2(370f, 44f));
+            caption = B.Text("Caption", plate, "", T.DisplayFont, 50, T.Title, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -8f), new Vector2(370f, 66f));
+            UiBuilder.Lip(caption, T.TitleLip, 3f);
+            title = B.Text("Title", plate, "", T.BodyFont, 32, T.Text, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -68f), new Vector2(370f, 44f));
 
             var tipRect = B.Node("Tip", Root, Anchor.Top, new Vector2(0f, -250f), new Vector2(940f, 120f));
             tip = tipRect.gameObject.AddComponent<CanvasGroup>();
             tip.blocksRaycasts = false;
-            tipText = B.Text("Text", tipRect, "", T.TitleFont, 40, T.Cream, TextAnchor.MiddleCenter, Anchor.Fill, Vector2.zero, Vector2.zero);
-            UiBuilder.Lip(tipText, UiBuilder.WithAlpha(Color.black, 0.6f), 3f);
+            tipText = B.Text("Text", tipRect, "", T.TitleFont, 40, T.Title, TextAnchor.MiddleCenter, Anchor.Fill, Vector2.zero, Vector2.zero);
+            UiBuilder.Lip(tipText, T.TitleLip, 3f);
             tip.alpha = 0f;
         }
 
         public void Bind(int levelIndex, LevelSpec spec)
         {
-            string pink = ColorUtility.ToHtmlStringRGB(T.Pink);
-            // HARD rides on the name line: the big caption has no room for it once levels reach two digits.
+            // The difficulty rides on the name line, in its tone: the big caption has no room once levels reach two digits.
             caption.text = $"LEVEL {levelIndex + 1}";
-            title.text = spec.Hard ? $"<color=#{pink}>HARD</color> · {VesselArt.DisplayName(spec)}" : VesselArt.DisplayName(spec);
+            string tier = UiBuilder.DifficultyName(spec.Difficulty).ToUpperInvariant();
+            string tone = ColorUtility.ToHtmlStringRGB(B.DifficultyColor(spec.Difficulty));
+            title.text = tier.Length > 0 ? $"<color=#{tone}>{tier}</color> · {VesselArt.DisplayName(spec)}" : VesselArt.DisplayName(spec);
         }
 
         /// <summary>Hints in stock; at zero the badge shows "+" because a tap offers more.</summary>

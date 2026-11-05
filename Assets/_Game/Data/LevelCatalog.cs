@@ -5,7 +5,7 @@ namespace GoldenMend.Data
     /// <summary>
     /// The game's level list, in play order. Early vessels have few, large shards; later ones more and smaller.
     /// New ideas arrive one at a time: deeper racks, walls, a distant anchor, then hard levels with a locked bench
-    /// slot about every five levels, each followed by an easier breather. Glazes alternate between traditional
+    /// slot about every five levels (the last two very hard), each followed by an easier breather. Glazes alternate between traditional
     /// Japanese patterns and close-up crops of public-domain paintings. Each spec stores the deal the builder
     /// accepted, so loading a level runs the solver once.
     /// </summary>
@@ -374,7 +374,7 @@ namespace GoldenMend.Data
             new LevelSpec
             {
                 Name = "Offering Bowl", Pattern = "kanoko", Palette = 5, Seed = 163, Deal = 1, LockedBenchSlots = 1,
-                MinBenchPeak = 3, MaxBenchPeak = 4, Hard = true,
+                MinBenchPeak = 3, MaxBenchPeak = 4, Hard = true, VeryHard = true,
                 PileShape = new[] { "oooooo", "o#oo#o", "oooooo", "o#oo#o", "oo.ooo" },
                 Shape = new[]
                 {
@@ -419,7 +419,7 @@ namespace GoldenMend.Data
             new LevelSpec
             {
                 Name = "Golden Urn", Pattern = "seigaiha", Palette = 7, Seed = 179, Deal = 2, LockedBenchSlots = 1,
-                MinBenchPeak = 3, MaxBenchPeak = 4, Hard = true,
+                MinBenchPeak = 3, MaxBenchPeak = 4, Hard = true, VeryHard = true,
                 PileShape = new[] { "ooooooo", "o#ooo#o", "ooooooo", "o#ooo#o", "o..o..o" },
                 Shape = new[]
                 {

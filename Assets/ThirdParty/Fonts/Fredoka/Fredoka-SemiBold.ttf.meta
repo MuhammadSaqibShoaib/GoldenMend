@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 41ea5ac234311cf4ea0021c3fbd0b456
+guid: f1d698a9d3fa5e64eac77c0daca572f9
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Titan One
+  - Fredoka
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

@@ -21,7 +21,7 @@ namespace GoldenMend.Presentation.UI
         const float GlintEvery = 1.5f;
         const float GlintTime = 0.9f;
 
-        static readonly Color WaveColor = new Color(0.62f, 0.48f, 1f, 1f);
+        static readonly Color WaveColor = new Color(1f, 1f, 1f, 1f);
         static readonly Color GlintColor = new Color(1f, 0.84f, 0.29f, 1f);
 
         /// <summary>One vessel cell: its shard image plus the frame drawn under it, which move together.</summary>

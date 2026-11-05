@@ -37,8 +37,8 @@ namespace GoldenMend.Presentation.UI
                 (level.SocketColumn[socket] - (level.Columns - 1) / 2f) * cell,
                 -(level.SocketRow[socket] - (level.Rows - 1) / 2f) * cell);
 
-            var silhouette = UiBuilder.WithAlpha(theme.Well, 0.9f);
-            var silhouetteEdge = UiBuilder.WithAlpha(theme.Cream, 0.08f);
+            var silhouette = UiBuilder.WithAlpha(theme.StarEmpty, 0.95f);
+            var silhouetteEdge = UiBuilder.WithAlpha(Color.white, 0.85f);
 
             if (look == VesselLook.Teaser)
             {

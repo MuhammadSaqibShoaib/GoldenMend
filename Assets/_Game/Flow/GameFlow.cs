@@ -150,16 +150,20 @@ namespace GoldenMend.Flow
             }
             else
             {
-                banner.Show(VesselArt.DisplayName(level.Spec), BannerDetail(index, level.Spec));
+                banner.Show(VesselArt.DisplayName(level.Spec), BannerDetail(index, level.Spec), difficulty: level.Spec.Difficulty);
             }
         }
 
         static string BannerDetail(int index, LevelSpec spec)
         {
-            if (spec.LockedBenchSlots > 0) return "Hard  ·  one bench slot opens after 3 repairs";
+            string tier = spec.VeryHard ? "Very hard" : "Hard";
+            if (spec.LockedBenchSlots > 0) return $"{tier}  ·  one bench slot opens after 3 repairs";
             string lead = $"Level {index + 1}  ·  {VesselArt.Byline(spec)}";
-            return spec.Hard ? $"{lead}  ·  hard" : lead;
+            return spec.Hard ? $"{lead}  ·  {tier.ToLowerInvariant()}" : lead;
         }
+
+        static Difficulty NextDifficulty(int index) =>
+            index + 1 < LevelCatalog.Count ? LevelCatalog.Spec(index + 1).Difficulty : Difficulty.Normal;
 
         void RefreshHelpers()
         {
@@ -268,7 +272,7 @@ namespace GoldenMend.Flow
                 var run = new RunStats(board.BenchPeak, board.PlaySeconds, board.HintsUsed, board.PullsUsed, board.ContinuesUsed, board.Moves);
                 var result = progress.Complete(current, run, best, level.Spec.Hard);
                 win.Bind(VesselArt.DisplayName(level.Spec), null, result.Stars, result.Coins, result.FirstClear, board.BenchPeak, best,
-                    current + 1 < progress.LevelCount, RecordLine(run, result), level);
+                    current + 1 < progress.LevelCount, RecordLine(run, result), level, current + 2, NextDifficulty(current));
                 hud.Hide();
                 win.Show();
                 feedback.Coins();
@@ -352,7 +356,7 @@ namespace GoldenMend.Flow
         {
             var level = Level(current);
             win.Bind(VesselArt.DisplayName(level.Spec), null, stars, coins, true, level.Solution.MinBenchPeak, level.Solution.MinBenchPeak, true,
-                $"New personal best!   0:42   ·   no-help bonus +{ProgressService.CleanBonusCoins}", level);
+                $"New personal best!   0:42   ·   no-help bonus +{ProgressService.CleanBonusCoins}", level, current + 2, NextDifficulty(current));
             banner.Hide();
             hud.Hide(true);
             win.Show();
@@ -387,7 +391,7 @@ namespace GoldenMend.Flow
         public void PreviewBanner()
         {
             var level = Level(current);
-            banner.Show(VesselArt.DisplayName(level.Spec), BannerDetail(current, level.Spec));
+            banner.Show(VesselArt.DisplayName(level.Spec), BannerDetail(current, level.Spec), difficulty: level.Spec.Difficulty);
         }
     }
 }

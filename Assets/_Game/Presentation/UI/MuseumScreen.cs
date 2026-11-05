@@ -45,8 +45,8 @@ namespace GoldenMend.Presentation.UI
         {
             var header = B.Node("Header", Root, Anchor.StretchTop, Vector2.zero, new Vector2(0f, HeaderHeight));
             B.IconButton("Back", header, T.IconPrevious, ButtonStyle.Secondary, Anchor.TopLeft, new Vector2(36f, -44f), 124f, () => Back?.Invoke());
-            var title = B.Text("Title", header, "Museum", T.DisplayFont, 104, T.Gold, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -40f), new Vector2(640f, 130f));
-            UiBuilder.Lip(title, UiTheme.Hex(0xA1501A), 8f);
+            var title = B.Text("Title", header, "Museum", T.DisplayFont, 104, T.Title, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -40f), new Vector2(640f, 130f));
+            UiBuilder.Lip(title, T.TitleLip, 6f);
 
             viewport = B.Node("Viewport", Root, Anchor.Fill, Vector2.zero, Vector2.zero);
             viewport.offsetMax = new Vector2(0f, -HeaderHeight);
@@ -135,10 +135,10 @@ namespace GoldenMend.Presentation.UI
             var niche = B.Inset("Niche", card, Anchor.Top, new Vector2(0f, -20f), new Vector2(CardSize.x - 48f, 228f));
             VesselPreview.Build(B, niche.transform, level, isCompleted ? VesselLook.Restored : VesselLook.Teaser, Anchor.Center, Vector2.zero, new Vector2(360f, 192f));
 
-            B.Text("Name", card, VesselArt.DisplayName(level.Spec), T.TitleFont, 46, T.Cream, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -258f), new Vector2(440f, 60f));
+            B.Text("Name", card, VesselArt.DisplayName(level.Spec), T.TitleFont, 46, T.Text, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -258f), new Vector2(440f, 60f));
 
             if (isCompleted) B.Stars(card, starCount, Anchor.Top, new Vector2(0f, -338f), 56f, raised: false);
-            else B.Button("Restore", card, "Restore", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 24f), new Vector2(380f, 96f), () => PlayLevel?.Invoke(index));
+            else B.Button("Restore", card, $"Level {index + 1}", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 24f), new Vector2(380f, 96f), () => PlayLevel?.Invoke(index));
             return card;
         }
 

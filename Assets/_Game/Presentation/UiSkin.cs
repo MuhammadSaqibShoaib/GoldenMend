@@ -4,8 +4,10 @@ using UnityEngine;
 namespace GoldenMend.Presentation
 {
     /// <summary>
-    /// The Berry Night skin's shapes, generated at runtime in greyscale so one sprite tints to any colour:
-    /// chunky buttons with a darker lip, gradient panels, outlines, sunken insets, pills and soft shadows.
+    /// The skin's shapes, generated at runtime in greyscale so one sprite tints to any colour. Sky Breeze builds its
+    /// frosted-glass buttons from three layers: <see cref="Glass"/> (the tinted body), <see cref="Gloss"/> (a white
+    /// highlight across the top) and <see cref="GlassRim"/> (a white rim, bright at the top, faint at the bottom).
+    /// Also gradient panels, outlines, sunken insets, pills and soft shadows.
     /// All are 9-sliced. UI sprites use 100 pixels per unit (one pixel per canvas unit at the reference size);
     /// the World variants are sized for the board, where a unit is about 92 canvas units.
     /// </summary>
@@ -14,7 +16,18 @@ namespace GoldenMend.Presentation
         /// <summary>Height of the darker lip under a chunky button, in sprite pixels.</summary>
         public const float LipHeight = 14f;
 
-        static Sprite chunky, panel, ring, inset, pill, round, shadow, glow, worldRound, worldInset;
+        static Sprite chunky, panel, ring, inset, pill, round, shadow, glow, worldRound, worldInset, glass, gloss, glassRim;
+
+        /// <summary>Glass body: full tint at the top easing to a deeper shade at the bottom, like light through glass.</summary>
+        public static Sprite Glass => glass != null ? glass : glass = Make("Glass", 128, 128, 40, (x, y, d) => Mathf.Lerp(0.8f, 1f, y / 127f), new Vector4(44f, 44f, 44f, 44f));
+
+        /// <summary>White highlight over the top half of a glass shape, strongest at the top edge.</summary>
+        public static Sprite Gloss => gloss != null ? gloss : gloss = MakeAlpha("Gloss", 128, 128, 40, 6f,
+            (x, y) => 0.62f * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((y - 62f) / 52f)), new Vector4(44f, 44f, 44f, 44f));
+
+        /// <summary>A thin white rim around a glass shape, bright along the top and faint along the bottom.</summary>
+        public static Sprite GlassRim => glassRim != null ? glassRim : glassRim = MakeAlpha("Glass Rim", 128, 128, 40, 0f,
+            (x, y) => Mathf.Lerp(0.35f, 1f, y / 127f), new Vector4(44f, 44f, 44f, 44f), ring: 4f);
 
         /// <summary>A chunky button: lighter at the top, a darker outline and a darker lip along the bottom.</summary>
         public static Sprite Chunky => chunky != null ? chunky : chunky = Make("Chunky", 128, 128, 34, ChunkyShade, new Vector4(40f, 40f + LipHeight, 40f, 40f));
@@ -89,6 +102,29 @@ namespace GoldenMend.Presentation
                     if (s < 0f) continue;
                     byte g = (byte)(Mathf.Clamp01(s) * 255f);
                     pixels[y * w + x] = new Color32(g, g, g, (byte)(alpha * 255f));
+                }
+            }
+            return Create(name, w, h, pixels, border, 100f);
+        }
+
+        /// <summary>
+        /// White pixels whose alpha comes from <paramref name="alpha"/>, inside a rounded rectangle inset by
+        /// <paramref name="inset"/>; with <paramref name="ring"/> only a band that wide along the edge is drawn.
+        /// </summary>
+        static Sprite MakeAlpha(string name, int w, int h, float radius, float inset, Func<float, float, float> alpha, Vector4 border, float ring = 0f)
+        {
+            var pixels = new Color32[w * h];
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    float px = x + 0.5f, py = y + 0.5f;
+                    float d = RoundedRect(px, py, inset, inset, w - inset, h - inset, Mathf.Max(1f, radius - inset));
+                    float cover = Mathf.Clamp01(0.5f - d);
+                    if (ring > 0f) cover *= Mathf.Clamp01(d + ring + 0.5f);
+                    float a = cover * alpha(px, py);
+                    if (a <= 0f) continue;
+                    pixels[y * w + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(a) * 255f));
                 }
             }
             return Create(name, w, h, pixels, border, 100f);

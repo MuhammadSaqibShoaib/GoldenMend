@@ -39,7 +39,7 @@ namespace GoldenMend.EditorTools
             camera.orthographic = true;
             camera.orthographicSize = 10.4f;
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = UiTheme.Hex(0x1A0B3B);
+            camera.backgroundColor = UiTheme.Hex(0x8EC5FF);
             cameraObject.transform.position = new Vector3(0f, 0f, -10f);
 
             var lightObject = new GameObject("Global Light 2D");
@@ -82,9 +82,9 @@ namespace GoldenMend.EditorTools
                 AssetDatabase.CreateAsset(theme, ThemePath);
             }
 
-            theme.BodyFont = Load<Font>(Fonts + "Baloo2/Baloo2-Bold.ttf");
-            theme.TitleFont = Load<Font>(Fonts + "Baloo2/Baloo2-ExtraBold.ttf");
-            theme.DisplayFont = Load<Font>(Fonts + "TitanOne/TitanOne-Regular.ttf");
+            theme.BodyFont = Load<Font>(Fonts + "Fredoka/Fredoka-Medium.ttf");
+            theme.TitleFont = Load<Font>(Fonts + "Fredoka/Fredoka-SemiBold.ttf");
+            theme.DisplayFont = Load<Font>(Fonts + "Fredoka/Fredoka-Bold.ttf");
 
             theme.Panel = Load<Sprite>(Kenney + "Sprites/Grey/button_square_flat.png");
             theme.Button = Load<Sprite>(Kenney + "Sprites/Grey/button_rectangle_depth_flat.png");
@@ -119,22 +119,34 @@ namespace GoldenMend.EditorTools
             theme.Popup = Load<AudioClip>(Audio + "Sfx/popup.ogg");
             theme.StarSound = Load<AudioClip>(Audio + "Sfx/star.ogg");
 
-            // Berry Night palette (see the Figma file "Golden Mend – UI Revamp").
-            theme.Cream = Color.white;
-            theme.Paper = UiTheme.Hex(0x5B33B8);
-            theme.PanelEdge = UiTheme.Hex(0x9E7BFF);
-            theme.Indigo = UiTheme.Hex(0x7357F5);
-            theme.Gold = UiTheme.Hex(0xFFD54A);
-            theme.Ink = UiTheme.Hex(0x3A1A00);
-            theme.Clay = UiTheme.Hex(0xF25C5C);
-            theme.Pink = UiTheme.Hex(0xFF5FA2);
-            theme.Green = UiTheme.Hex(0x4FD06A);
-            theme.Yellow = UiTheme.Hex(0xFFD34D);
-            theme.Muted = UiTheme.Hex(0xC9B6F2);
-            theme.Night = UiTheme.Hex(0x4A2391);
-            theme.NightDeep = UiTheme.Hex(0x1A0B3B);
-            theme.Well = UiTheme.Hex(0x120830);
-            theme.Scrim = new Color(0.043f, 0.016f, 0.125f, 0.72f);
+            // Sky Breeze palette (see the Figma file "Golden Mend – UI Revamp", page Sky Breeze). The defaults in
+            // UiTheme are the source of truth; a fresh instance carries them into the saved asset.
+            var defaults = ScriptableObject.CreateInstance<UiTheme>();
+            theme.Text = defaults.Text;
+            theme.Title = defaults.Title;
+            theme.TitleLip = defaults.TitleLip;
+            theme.OnAccent = defaults.OnAccent;
+            theme.Paper = defaults.Paper;
+            theme.Glass = defaults.Glass;
+            theme.PanelEdge = defaults.PanelEdge;
+            theme.Chip = defaults.Chip;
+            theme.Primary = defaults.Primary;
+            theme.Secondary = defaults.Secondary;
+            theme.Confirm = defaults.Confirm;
+            theme.Accent = defaults.Accent;
+            theme.Danger = defaults.Danger;
+            theme.Ribbon = defaults.Ribbon;
+            theme.Hard = defaults.Hard;
+            theme.VeryHard = defaults.VeryHard;
+            theme.Gold = defaults.Gold;
+            theme.Ink = defaults.Ink;
+            theme.Muted = defaults.Muted;
+            theme.StarEmpty = defaults.StarEmpty;
+            theme.SkyTop = defaults.SkyTop;
+            theme.SkyBottom = defaults.SkyBottom;
+            theme.Well = defaults.Well;
+            theme.Scrim = defaults.Scrim;
+            UnityEngine.Object.DestroyImmediate(defaults);
 
             EditorUtility.SetDirty(theme);
             AssetDatabase.SaveAssets();

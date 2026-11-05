@@ -75,14 +75,15 @@ namespace GoldenMend.Presentation.UI
 
         Switch Row(string label, Sprite icon, float y, Action<bool> changed)
         {
-            var row = B.Image(label, card, UiSkin.Round, UiBuilder.WithAlpha(Color.white, 0.07f), Anchor.Top, new Vector2(0f, y), new Vector2(800f, 164f), sliced: true).rectTransform;
-            var tile = B.Image("Icon Tile", row, UiSkin.Chunky, T.Indigo, Anchor.Left, new Vector2(24f, 0f), new Vector2(116f, 116f), sliced: true);
-            tile.pixelsPerUnitMultiplier = 1.4f;
-            B.Image("Icon", tile.transform, icon, T.Cream, Anchor.Center, new Vector2(0f, 5f), new Vector2(64f, 64f));
-            B.Text("Label", row, label, T.TitleFont, 54, T.Cream, TextAnchor.MiddleLeft, Anchor.Left, new Vector2(164f, 0f), new Vector2(360f, 80f));
+            var row = B.Card(label, card, Anchor.Top, new Vector2(0f, y), new Vector2(800f, 164f), glass: true, radius: 0.7f);
+            var tile = B.Node("Icon Tile", row, Anchor.Left, new Vector2(24f, 0f), new Vector2(116f, 116f));
+            B.GlassSurface(tile, T.Ribbon, 0.8f);
+            var glyph = B.Image("Icon", tile, icon, T.OnAccent, Anchor.Center, Vector2.zero, new Vector2(64f, 64f));
+            UiBuilder.Lip(glyph, UiBuilder.Darken(T.Ribbon, 0.4f), 2f);
+            B.Text("Label", row, label, T.TitleFont, 54, T.Text, TextAnchor.MiddleLeft, Anchor.Left, new Vector2(164f, 0f), new Vector2(360f, 80f));
 
             var toggle = new Switch();
-            toggle.Track = B.Image("Switch", row, UiSkin.Pill, T.Green, Anchor.Right, new Vector2(-32f, 0f), new Vector2(176f, 88f), sliced: true);
+            toggle.Track = B.Image("Switch", row, UiSkin.Pill, T.Confirm, Anchor.Right, new Vector2(-32f, 0f), new Vector2(176f, 88f), sliced: true);
             toggle.Track.pixelsPerUnitMultiplier = 64f / 88f;
             toggle.Track.raycastTarget = true;
             var knob = B.Image("Knob", toggle.Track.transform, T.Circle, Color.white, Anchor.Left, new Vector2(8f, 0f), new Vector2(72f, 72f));
@@ -99,14 +100,15 @@ namespace GoldenMend.Presentation.UI
         void Set(Switch toggle, bool on)
         {
             toggle.On = on;
-            toggle.Track.color = on ? T.Green : UiBuilder.WithAlpha(T.Well, 0.8f);
+            toggle.Track.color = on ? T.Confirm : T.StarEmpty;
             UiBuilder.Place(toggle.Knob, on ? Anchor.Right : Anchor.Left, new Vector2(on ? -8f : 8f, 0f), new Vector2(72f, 72f));
         }
     }
 
     /// <summary>
-    /// Level complete: a full-screen celebration. The gold title, the stars, the restored vessel, the coin reward,
-    /// then the run's numbers and record line, with Next as the main action and Home as a quiet one.
+    /// Level complete: a full-screen celebration. The title, the stars, the restored vessel, the coin reward, then the
+    /// run's numbers and record line, with the next level's button (in its difficulty tone) as the main action and
+    /// Home as a quiet one. After the last level the main action is the museum.
     /// </summary>
     public sealed class WinSheet : UiView
     {
@@ -121,38 +123,39 @@ namespace GoldenMend.Presentation.UI
         readonly Text reward;
         readonly Text stats;
         readonly Text record;
-        readonly Text nextLabel;
+        readonly LevelButton nextLevel;
+        readonly Button museumButton;
         RectTransform preview;
 
         public WinSheet(UiRoot ui) : base(ui, "Level Complete", popup: true)
         {
-            Backdrop.sprite = UiSkin.VerticalGradient(T.Night, T.NightDeep);
+            Backdrop.sprite = UiSkin.VerticalGradient(T.SkyTop, T.SkyBottom);
             Backdrop.color = Color.white;
 
             content = B.Node("Content", Root, Anchor.Fill, Vector2.zero, Vector2.zero);
-            B.Image("Glow", content, UiSkin.Glow, UiBuilder.WithAlpha(T.Gold, 0.4f), Anchor.Top, new Vector2(0f, -40f), new Vector2(1400f, 1400f));
-            var title = B.Text("Title", content, "Restored!", T.DisplayFont, 150, T.Gold, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -100f), new Vector2(1060f, 200f));
-            UiBuilder.Lip(title, UiTheme.Hex(0xA1501A), 12f);
+            B.Image("Glow", content, UiSkin.Glow, UiBuilder.WithAlpha(Color.white, 0.75f), Anchor.Top, new Vector2(0f, -40f), new Vector2(1400f, 1400f));
+            var title = B.Text("Title", content, "Restored!", T.DisplayFont, 150, T.Title, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -100f), new Vector2(1060f, 200f));
+            UiBuilder.Lip(title, T.TitleLip, 8f);
             stars = B.Node("Stars", content, Anchor.Top, new Vector2(0f, -330f), new Vector2(600f, 200f));
             showcase = B.Node("Vessel", content, Anchor.Top, new Vector2(0f, -540f), new Vector2(760f, 500f));
 
-            subtitle = B.Text("Subtitle", content, "", T.TitleFont, 46, T.Cream, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -1072f), new Vector2(980f, 64f));
-            reward = B.CoinPill("Reward", content, UiTheme.Hex(0x6A22C8), "+0", T.Cream, 64, Anchor.Top, new Vector2(0f, -1166f), new Vector2(360f, 128f));
+            subtitle = B.Text("Subtitle", content, "", T.TitleFont, 46, T.Text, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -1072f), new Vector2(980f, 64f));
+            reward = B.CoinPill("Reward", content, T.Chip, "+0", T.Text, 64, Anchor.Top, new Vector2(0f, -1166f), new Vector2(360f, 128f));
 
             var box = B.Card("Stats", content, Anchor.Top, new Vector2(0f, -1336f), new Vector2(860f, 184f), glass: true, radius: 0.7f);
             stats = B.Text("Stats", box, "", T.BodyFont, 36, T.Muted, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -22f), new Vector2(820f, 56f));
-            record = B.Text("Record", box, "", T.TitleFont, 38, T.Gold, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -94f), new Vector2(820f, 64f));
+            record = B.Text("Record", box, "", T.TitleFont, 38, T.Title, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -94f), new Vector2(820f, 64f));
 
-            var next = B.Button("Next", content, "Next", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 150f), new Vector2(700f, 192f), () => Next?.Invoke(), T.IconPlay);
-            nextLabel = next.GetComponentInChildren<Text>();
-            nextLabel.fontSize = 76;
+            nextLevel = new LevelButton(B, content, Anchor.Bottom, new Vector2(0f, 150f), new Vector2(640f, 196f), () => Next?.Invoke());
+            museumButton = B.Button("Museum", content, "Museum", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 150f), new Vector2(640f, 196f), () => Next?.Invoke(), T.IconMuseum);
             B.Button("Home", content, "Home", ButtonStyle.Ghost, Anchor.Bottom, new Vector2(0f, 30f), new Vector2(360f, 100f), () => Home?.Invoke());
         }
 
         /// <param name="recordLine">The personal-record line under the stats, for example "New personal best!"; may be empty.</param>
         /// <param name="level">Shown restored in the middle of the screen; omitted in tests.</param>
+        /// <param name="nextNumber">The next level's number as shown to the player (1-based); used when <paramref name="hasNext"/>.</param>
         public void Bind(string vesselName, string byline, int starCount, int coins, bool firstClear, int benchPeak, int bestPeak, bool hasNext,
-            string recordLine = "", BuiltLevel level = null)
+            string recordLine = "", BuiltLevel level = null, int nextNumber = 0, Difficulty nextDifficulty = Difficulty.Normal)
         {
             for (int i = stars.childCount - 1; i >= 0; i--) Release(stars.GetChild(i).gameObject);
             B.Stars(stars, starCount, Anchor.Center, Vector2.zero, 150f, raised: true);
@@ -166,7 +169,9 @@ namespace GoldenMend.Presentation.UI
             reward.text = $"+{coins}";
             stats.text = $"Busiest workbench {benchPeak}  ·  best possible {bestPeak}";
             record.text = recordLine ?? "";
-            nextLabel.text = hasNext ? "NEXT" : "MUSEUM";
+            nextLevel.Rect.gameObject.SetActive(hasNext);
+            museumButton.gameObject.SetActive(!hasNext);
+            if (hasNext) nextLevel.Bind(nextNumber, nextDifficulty);
         }
 
         protected override bool PlaysOpenSound => false;
@@ -215,18 +220,18 @@ namespace GoldenMend.Presentation.UI
             card = B.Popup(Root, new Vector2(920f, 940f), new Vector2(0f, -20f), null, out var title);
             title.text = "Bench full!";
 
-            body = B.Text("Body", card, "No free slot for that shard.\nAdd two more and keep going?", T.TitleFont, 44, T.Cream,
+            body = B.Text("Body", card, "No free slot for that shard.\nAdd two more and keep going?", T.TitleFont, 44, T.Text,
                 TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -184f), new Vector2(820f, 130f));
 
             continueButton = OfferButton(B, card, "Continue", new Vector2(0f, -352f), () => Continue?.Invoke(), out price);
             slots = B.Text("Slots", card, "Adds 2 workbench slots", T.BodyFont, 34, T.Muted, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -566f), new Vector2(800f, 48f));
-            shortfall = B.Text("Shortfall", card, "", T.TitleFont, 34, UiTheme.Hex(0xFF9A9A), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -614f), new Vector2(800f, 48f));
+            shortfall = B.Text("Shortfall", card, "", T.TitleFont, 34, T.Danger, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -614f), new Vector2(800f, 48f));
 
             retry = (RectTransform)B.Button("Retry", card, "Retry", ButtonStyle.Secondary, Anchor.Top, new Vector2(-190f, -690f), new Vector2(360f, 152f), () => Retry?.Invoke(), T.IconRestart).transform;
             home = (RectTransform)B.Button("Home", card, "Home", ButtonStyle.Secondary, Anchor.Top, new Vector2(190f, -690f), new Vector2(360f, 152f), () => Home?.Invoke(), T.IconHome).transform;
         }
 
-        /// <summary>A green buy button: the action on the left, the coin price in a dark capsule on the right.</summary>
+        /// <summary>A green glass buy button: the action on the left, the coin price in a capsule on the right.</summary>
         internal static Button OfferButton(UiBuilder b, Transform parent, string action, Vector2 position, Action onClick, out Text price)
         {
             var button = b.Button(action, parent, action, ButtonStyle.Confirm, Anchor.Top, position, new Vector2(760f, 200f), onClick);
@@ -235,8 +240,8 @@ namespace GoldenMend.Presentation.UI
             label.fontSize = 64;
             label.rectTransform.offsetMin = new Vector2(56f, label.rectTransform.offsetMin.y);
             label.rectTransform.offsetMax = new Vector2(-260f, label.rectTransform.offsetMax.y);
-            price = b.CoinPill("Price", button.transform, UiBuilder.WithAlpha(Color.black, 0.25f), "0", Color.white, 52,
-                Anchor.Right, new Vector2(-32f, UiSkin.LipHeight / 2f), new Vector2(220f, 104f));
+            price = b.CoinPill("Price", button.transform, UiBuilder.WithAlpha(UiBuilder.Darken(b.Theme.Confirm, 0.5f), 0.28f), "0", Color.white, 52,
+                Anchor.Right, new Vector2(-32f, 0f), new Vector2(220f, 104f));
             return button;
         }
 
@@ -285,15 +290,16 @@ namespace GoldenMend.Presentation.UI
         {
             card = B.Popup(Root, new Vector2(920f, 1050f), new Vector2(0f, -20f), () => Close?.Invoke(), out title);
 
-            var halo = B.Image("Halo", card, T.Circle, UiBuilder.WithAlpha(T.Gold, 0.25f), Anchor.Top, new Vector2(0f, -160f), new Vector2(240f, 240f));
-            var badge = B.Image("Badge", halo.transform, T.Circle, T.Yellow, Anchor.Center, Vector2.zero, new Vector2(196f, 196f));
-            UiBuilder.Lip(badge, UiBuilder.Darken(T.Yellow, 0.4f), 8f);
-            icon = B.Image("Icon", badge.transform, T.IconHint, T.Ink, Anchor.Center, Vector2.zero, new Vector2(116f, 116f));
+            var halo = B.Image("Halo", card, UiSkin.Glow, UiBuilder.WithAlpha(T.Gold, 0.55f), Anchor.Top, new Vector2(0f, -140f), new Vector2(300f, 300f));
+            var badge = B.Node("Badge", halo.transform, Anchor.Center, Vector2.zero, new Vector2(196f, 196f));
+            B.GlassSurface(badge, T.Gold, 1.6f);
+            icon = B.Image("Icon", badge, T.IconHint, T.OnAccent, Anchor.Center, Vector2.zero, new Vector2(112f, 112f));
+            UiBuilder.Lip(icon, UiBuilder.Darken(T.Gold, 0.4f), 3f);
 
-            body = B.Text("Body", card, "", T.TitleFont, 42, T.Cream, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -420f), new Vector2(820f, 130f));
+            body = B.Text("Body", card, "", T.TitleFont, 42, T.Text, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -420f), new Vector2(820f, 130f));
             buyButton = FailPopup.OfferButton(B, card, "Buy", new Vector2(0f, -584f), () => Buy?.Invoke(), out price);
             buyLabel = buyButton.GetComponentInChildren<Text>();
-            shortfall = B.Text("Shortfall", card, "", T.TitleFont, 34, UiTheme.Hex(0xFF9A9A), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -794f), new Vector2(800f, 48f));
+            shortfall = B.Text("Shortfall", card, "", T.TitleFont, 34, T.Danger, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -794f), new Vector2(800f, 48f));
             adButton = B.Button("Watch ad", card, "Watch an ad", ButtonStyle.Secondary, Anchor.Top, new Vector2(0f, -852f), new Vector2(760f, 150f), () => WatchAd?.Invoke(), T.IconPlay);
         }
 
@@ -316,13 +322,15 @@ namespace GoldenMend.Presentation.UI
         protected override void OnShow() => Ui.Pop(card);
     }
 
-    /// <summary>A short announcement over the board when a level starts: a pink ribbon with the level's name.</summary>
+    /// <summary>A short announcement over the board when a level starts: a glass ribbon in the level's difficulty tone.</summary>
     public sealed class LevelBanner
     {
         readonly UiRoot ui;
         readonly CanvasGroup group;
         readonly Text line1;
         readonly Text line2;
+        readonly Image fill;
+        readonly Shadow line1Shade;
         Coroutine running;
 
         public LevelBanner(UiRoot ui)
@@ -330,19 +338,21 @@ namespace GoldenMend.Presentation.UI
             this.ui = ui;
             var b = ui.Build;
             var t = ui.Theme;
-            var ribbon = b.Image("Level Banner", ui.Screens, UiSkin.Chunky, t.Pink, Anchor.Center, new Vector2(0f, 300f), new Vector2(880f, 230f), sliced: true);
-            ribbon.pixelsPerUnitMultiplier = 0.8f;
-            var rect = ribbon.rectTransform;
+            var rect = b.Node("Level Banner", ui.Screens, Anchor.Center, new Vector2(0f, 300f), new Vector2(880f, 230f));
+            fill = b.GlassSurface(rect, t.Primary, 1.4f);
             group = rect.gameObject.AddComponent<CanvasGroup>();
             group.blocksRaycasts = false;
-            line1 = b.Text("Line 1", rect, "", t.DisplayFont, 78, t.Cream, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -22f), new Vector2(840f, 104f));
-            UiBuilder.Lip(line1, UiBuilder.Darken(t.Pink, 0.45f), 5f);
-            line2 = b.Text("Line 2", rect, "", t.TitleFont, 36, UiBuilder.WithAlpha(t.Cream, 0.92f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -128f), new Vector2(840f, 52f));
+            line1 = b.Text("Line 1", rect, "", t.DisplayFont, 78, t.OnAccent, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -22f), new Vector2(840f, 104f));
+            line1Shade = UiBuilder.Lip(line1, UiBuilder.Darken(t.Primary, 0.4f), 4f);
+            line2 = b.Text("Line 2", rect, "", t.TitleFont, 36, UiBuilder.WithAlpha(t.OnAccent, 0.95f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -128f), new Vector2(840f, 52f));
             rect.gameObject.SetActive(false);
         }
 
-        public void Show(string title, string detail, float seconds = 1.8f)
+        public void Show(string title, string detail, float seconds = 1.8f, Difficulty difficulty = Difficulty.Normal)
         {
+            var tone = ui.Build.DifficultyColor(difficulty);
+            fill.color = tone;
+            line1Shade.effectColor = UiBuilder.Darken(tone, 0.4f);
             line1.text = title;
             line2.text = detail;
             group.transform.SetAsLastSibling();

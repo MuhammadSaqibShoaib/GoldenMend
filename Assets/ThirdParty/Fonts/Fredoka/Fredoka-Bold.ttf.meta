@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: d54102e6304ccde4581d497897c2e37a
+guid: ddb07d948299f904db8641c61c4a6531
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Baloo 2
+  - Fredoka
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

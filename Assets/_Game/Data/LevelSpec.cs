@@ -1,5 +1,13 @@
 namespace GoldenMend.Data
 {
+    /// <summary>How hard a level is, as shown to the player: the Level button's colour and tag.</summary>
+    public enum Difficulty
+    {
+        Normal,
+        Hard,
+        VeryHard,
+    }
+
     /// <summary>
     /// A designer-facing level recipe. The vessel is drawn as text rows:
     /// 'X' is a socket, 'A' the pre-placed anchor socket, '.' empty space.
@@ -29,6 +37,11 @@ namespace GoldenMend.Data
         public int MinBenchPeak;
         public int MaxBenchPeak = 5;
         public bool Hard;
+
+        /// <summary>The toughest tier, shown in violet. A very hard level is also <see cref="Hard"/>.</summary>
+        public bool VeryHard;
+
+        public Difficulty Difficulty => VeryHard ? Difficulty.VeryHard : Hard ? Difficulty.Hard : Difficulty.Normal;
 
         /// <summary>
         /// The glaze pattern painted across the vessel: seigaiha, sakura, kikko, uroko, kanoko or shippo.

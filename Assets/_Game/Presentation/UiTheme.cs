@@ -4,7 +4,7 @@ namespace GoldenMend.Presentation
 {
     /// <summary>
     /// Everything the screens are drawn with: fonts, sprites, icons, sounds and the palette.
-    /// The Berry Night look: Titan One and Baloo 2 type, Kenney Game Icons, and the generated shapes in UiSkin.
+    /// The Sky Breeze look: Fredoka type, Kenney Game Icons, and the generated glass shapes in UiSkin.
     /// Built by Golden Mend > Rebuild UI Theme.
     /// </summary>
     [CreateAssetMenu(menuName = "Golden Mend/UI Theme", fileName = "UiTheme")]
@@ -54,33 +54,51 @@ namespace GoldenMend.Presentation
         public AudioClip StarSound;
 
         [Header("Palette")]
-        /// <summary>Light text on the night background.</summary>
-        public Color Cream = Color.white;
-        /// <summary>Popup and card panels.</summary>
-        public Color Paper = Hex(0x5B33B8);
-        /// <summary>Panel edges.</summary>
-        public Color PanelEdge = Hex(0x9E7BFF);
-        /// <summary>Secondary buttons.</summary>
-        public Color Indigo = Hex(0x7357F5);
-        public Color Gold = Hex(0xFFD54A);
-        /// <summary>Dark text on gold and yellow.</summary>
-        public Color Ink = Hex(0x3A1A00);
-        /// <summary>Warnings and the close button.</summary>
-        public Color Clay = Hex(0xF25C5C);
-        /// <summary>The main action on every screen.</summary>
-        public Color Pink = Hex(0xFF5FA2);
+        /// <summary>Body text on light surfaces.</summary>
+        public Color Text = Hex(0x2B4A8B);
+        /// <summary>Big titles ("Golden Mend", "Museum", "Restored!") and the HUD level caption.</summary>
+        public Color Title = Hex(0x2350B5);
+        /// <summary>The hard drop shadow under titles: a white lip that lifts them off the sky.</summary>
+        public Color TitleLip = Color.white;
+        /// <summary>Labels and icons on coloured buttons.</summary>
+        public Color OnAccent = Color.white;
+        /// <summary>Popup and card panels: white, slightly see-through.</summary>
+        public Color Paper = new Color(1f, 1f, 1f, 0.9f);
+        /// <summary>Glass showcases: more see-through than Paper.</summary>
+        public Color Glass = new Color(1f, 1f, 1f, 0.5f);
+        /// <summary>Panel rims.</summary>
+        public Color PanelEdge = Color.white;
+        /// <summary>Coin and price capsules.</summary>
+        public Color Chip = new Color(1f, 1f, 1f, 0.75f);
+        /// <summary>The main action: sunny orange. Also the Level button for a normal level.</summary>
+        public Color Primary = Hex(0xFF9A1F);
+        /// <summary>Secondary buttons: white glass with blue text.</summary>
+        public Color Secondary = new Color(1f, 1f, 1f, 0.85f);
         /// <summary>Go-ahead actions: resume, continue, buy.</summary>
-        public Color Green = Hex(0x4FD06A);
-        /// <summary>The pull booster and other gold-yellow buttons.</summary>
-        public Color Yellow = Hex(0xFFD34D);
-        /// <summary>Secondary text on dark panels.</summary>
-        public Color Muted = Hex(0xC9B6F2);
+        public Color Confirm = Hex(0x34C759);
+        /// <summary>The pull booster and the hint badge.</summary>
+        public Color Accent = Hex(0xFF5F8F);
+        /// <summary>Close buttons and warnings.</summary>
+        public Color Danger = Hex(0xEF4A50);
+        /// <summary>Popup title ribbons.</summary>
+        public Color Ribbon = Hex(0x3F8CFF);
+        /// <summary>Level button and tags for hard levels: ruby.</summary>
+        public Color Hard = Hex(0xE8304F);
+        /// <summary>Level button and tags for very hard levels: deep violet.</summary>
+        public Color VeryHard = Hex(0x6234DB);
+        public Color Gold = Hex(0xFFC93C);
+        /// <summary>Dark text on gold and the accent colours.</summary>
+        public Color Ink = Hex(0x3A2400);
+        /// <summary>Secondary text.</summary>
+        public Color Muted = Hex(0x5A77AE);
+        /// <summary>Unearned stars.</summary>
+        public Color StarEmpty = Hex(0xB9CCEB);
         /// <summary>Background gradient, top and bottom.</summary>
-        public Color Night = Hex(0x4A2391);
-        public Color NightDeep = Hex(0x1A0B3B);
-        /// <summary>Sunken wells inside panels.</summary>
-        public Color Well = Hex(0x120830);
-        public Color Scrim = new Color(0.043f, 0.016f, 0.125f, 0.72f);
+        public Color SkyTop = Hex(0xC9F0FF);
+        public Color SkyBottom = Hex(0x8EC5FF);
+        /// <summary>Sunken wells inside panels, empty vessel cells and silhouettes.</summary>
+        public Color Well = Hex(0xDCE7F8);
+        public Color Scrim = new Color(0.11f, 0.23f, 0.47f, 0.42f);
 
         public static Color Hex(int rgb) => new Color(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
     }

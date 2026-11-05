@@ -26,16 +26,16 @@ namespace GoldenMend.Presentation
 
             backdrop.sky = new GameObject("Sky").AddComponent<SpriteRenderer>();
             backdrop.sky.transform.SetParent(backdrop.transform, false);
-            backdrop.sky.sprite = UiSkin.VerticalGradient(theme.Night, theme.NightDeep);
+            backdrop.sky.sprite = UiSkin.VerticalGradient(theme.SkyTop, theme.SkyBottom);
             backdrop.sky.sortingOrder = Order;
 
             backdrop.lights = new GameObject("Lights").transform;
             backdrop.lights.SetParent(backdrop.transform, false);
-            var light = new Color(0.73f, 0.55f, 1f, 0.08f);
-            Circle(backdrop.lights, new Vector2(-5.6f, 7.8f), 8.5f, light);
-            Circle(backdrop.lights, new Vector2(7.2f, 9.6f), 7.6f, light);
-            Circle(backdrop.lights, new Vector2(6.4f, -1.6f), 9.8f, light);
-            Circle(backdrop.lights, new Vector2(-6.6f, -7.6f), 9.2f, light);
+            // Soft clouds drifting across the sky.
+            Circle(backdrop.lights, new Vector2(-5.6f, 7.4f), 8.5f, new Color(1f, 1f, 1f, 0.45f));
+            Circle(backdrop.lights, new Vector2(6.6f, 3.6f), 7.6f, new Color(1f, 1f, 1f, 0.35f));
+            Circle(backdrop.lights, new Vector2(-6.2f, -3.4f), 9.2f, new Color(1f, 1f, 1f, 0.3f));
+            Circle(backdrop.lights, new Vector2(6.0f, -8.2f), 9.8f, new Color(1f, 1f, 1f, 0.35f));
 
             backdrop.Fit();
             return backdrop;
@@ -63,7 +63,7 @@ namespace GoldenMend.Presentation
             var sr = new GameObject("Light").AddComponent<SpriteRenderer>();
             sr.transform.SetParent(parent, false);
             sr.transform.localPosition = at;
-            sr.transform.localScale = new Vector3(size, size, 1f);
+            sr.transform.localScale = new Vector3(size * 1.7f, size, 1f);
             sr.sprite = SpriteFactory.Circle;
             sr.color = color;
             sr.sortingOrder = Order + 1;
