@@ -1,7 +1,7 @@
 {
     "name": "GoldenMend.Flow",
     "rootNamespace": "GoldenMend.Flow",
-    "references": ["GoldenMend.Core", "GoldenMend.Data", "GoldenMend.Meta", "GoldenMend.Presentation"],
+    "references": ["GoldenMend.Core", "GoldenMend.Data", "GoldenMend.Meta", "GoldenMend.Presentation", "Unity.InputSystem"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

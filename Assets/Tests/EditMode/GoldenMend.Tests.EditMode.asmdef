@@ -1,7 +1,7 @@
 {
     "name": "GoldenMend.Tests.EditMode",
     "rootNamespace": "GoldenMend.Tests",
-    "references": ["UnityEngine.TestRunner", "UnityEditor.TestRunner", "GoldenMend.Core", "GoldenMend.Data", "GoldenMend.Meta"],
+    "references": ["UnityEngine.TestRunner", "UnityEditor.TestRunner", "GoldenMend.Core", "GoldenMend.Data", "GoldenMend.Meta", "GoldenMend.Flow"],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

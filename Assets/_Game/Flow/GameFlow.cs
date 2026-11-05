@@ -5,6 +5,7 @@ using GoldenMend.Meta;
 using GoldenMend.Presentation;
 using GoldenMend.Presentation.UI;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace GoldenMend.Flow
 {
@@ -217,6 +218,40 @@ namespace GoldenMend.Flow
                 RefreshHelpers();
             });
             OpenOffer();
+        }
+
+        // Android's back button arrives as Escape.
+        void Update()
+        {
+            var keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) Back();
+        }
+
+        /// <summary>The back button: closes the topmost popup, or steps out of the current screen. See <see cref="BackNavigation"/>.</summary>
+        public void Back()
+        {
+            switch (BackNavigation.For(State, details.Visible, settingsPopup.Visible, offer.Visible))
+            {
+                case BackAction.CloseDetails: details.Hide(); break;
+                case BackAction.CloseSettings: CloseSettings(); break;
+                case BackAction.CloseOffer: CloseOffer(); break;
+                case BackAction.Pause: Pause(); break;
+                case BackAction.Resume: Resume(); break;
+                case BackAction.GoHome: ShowHome(); break;
+                case BackAction.LeaveApp: LeaveApp(); break;
+            }
+        }
+
+        /// <summary>Sends the app to the background, the way Android's own home screens handle back.</summary>
+        static void LeaveApp()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            using (var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            using (var activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
+            {
+                activity.Call<bool>("moveTaskToBack", true);
+            }
+#endif
         }
 
         void OpenOffer()

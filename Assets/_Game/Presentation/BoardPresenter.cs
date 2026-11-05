@@ -19,7 +19,10 @@ namespace GoldenMend.Presentation
     {
         static readonly Color Gold = new Color(1f, 0.80f, 0.32f, 1f);
         static readonly Color PaleGold = new Color(1f, 0.95f, 0.75f, 1f);
-        static readonly Color GhostTint = new Color(1f, 1f, 1f, 0.42f);
+        // Empty sockets show their glaze in full colour under a white wash: a clean pastel of the real glaze, so even dark
+        // glazes read light on the sky theme instead of turning muddy grey.
+        static readonly Color GhostTint = Color.white;
+        static readonly Color GhostWash = new Color(1f, 1f, 1f, 0.66f);
         static readonly Color OpenFrameColor = new Color(1f, 0.84f, 0.29f, 1f);
         static readonly Color PileTileColor = new Color(0.17f, 0.32f, 0.62f, 0.08f);
         static readonly Color LockBadgeColor = new Color(0.11f, 0.23f, 0.47f, 0.78f);
@@ -77,6 +80,7 @@ namespace GoldenMend.Presentation
         Transform vesselRoot;
         ShardView[] shardViews;
         SpriteRenderer[] socketGhosts;
+        SpriteRenderer[] socketWashes;
         SpriteRenderer[] slotFrames;
         SpriteRenderer[] openFrames;
         GameObject[] lockIcons;
@@ -246,14 +250,17 @@ namespace GoldenMend.Presentation
             var def = Level.Def;
             float shardSize = layout.ShardInVesselSize;
             socketGhosts = new SpriteRenderer[def.SocketCount];
+            socketWashes = new SpriteRenderer[def.SocketCount];
             for (int s = 0; s < def.SocketCount; s++)
             {
                 socketGhosts[s] = MakeSprite($"Socket {s}", vesselRoot, socketSprites[s], layout.Socket(s),
                     new Vector2(shardSize, shardSize), GhostTint, 0);
+                socketWashes[s] = MakeSprite($"Socket {s} wash", vesselRoot, SpriteFactory.Square, layout.Socket(s),
+                    new Vector2(shardSize, shardSize), GhostWash, 1);
             }
 
             int anchor = def.AnchorSocket;
-            socketGhosts[anchor].enabled = false;
+            HideGhost(anchor);
             MakeSprite("Anchor", vesselRoot, socketSprites[anchor], layout.Socket(anchor), new Vector2(layout.CellSize, layout.CellSize), Color.white, 5);
 
             shownPlaced = new bool[def.SocketCount];
@@ -619,7 +626,7 @@ namespace GoldenMend.Presentation
             yield return view.FlyTo(layout.Socket(socket), layout.CellSize, duration, 5);
 
             view.transform.SetParent(vesselRoot, true);
-            socketGhosts[socket].enabled = false;
+            HideGhost(socket);
             MarkPlaced(socket, animate: true);
             shownPlacements++;
             UpdateSlotPips();
@@ -700,11 +707,18 @@ namespace GoldenMend.Presentation
             var spot = MakeSprite("Hint spot", vesselRoot, SpriteFactory.Square, layout.Socket(socket), new Vector2(layout.CellSize, layout.CellSize), Gold, -1);
             hintSocketGlow = spot.gameObject;
 
-            hintRoutine = StartCoroutine(HintPulse(hintView, glow, spot, socketGhosts[socket], layout.PileShardSize));
+            hintRoutine = StartCoroutine(HintPulse(hintView, glow, spot, socketWashes[socket], layout.PileShardSize));
             return true;
         }
 
-        IEnumerator HintPulse(ShardView view, SpriteRenderer glow, SpriteRenderer spot, SpriteRenderer ghost, float baseSize)
+        void HideGhost(int socket)
+        {
+            socketGhosts[socket].enabled = false;
+            socketWashes[socket].enabled = false;
+        }
+
+        /// <summary>The hinted shard throbs in the rack while its socket's wash pulses gold, pointing where it goes.</summary>
+        IEnumerator HintPulse(ShardView view, SpriteRenderer glow, SpriteRenderer spot, SpriteRenderer wash, float baseSize)
         {
             const float period = 0.9f;
             for (float t = 0f; ; t += Time.deltaTime)
@@ -713,7 +727,7 @@ namespace GoldenMend.Presentation
                 view.SetSize(baseSize * (1f + 0.07f * wave));
                 glow.color = new Color(Gold.r, Gold.g, Gold.b, 0.45f + 0.5f * wave);
                 spot.color = new Color(Gold.r, Gold.g, Gold.b, 0.5f + 0.5f * wave);
-                ghost.color = Color.Lerp(GhostTint, Color.white, 0.35f + 0.4f * wave);
+                wash.color = Color.Lerp(GhostWash, new Color(Gold.r, Gold.g, Gold.b, 0.55f), 0.35f + 0.65f * wave);
                 yield return null;
             }
         }
@@ -730,10 +744,10 @@ namespace GoldenMend.Presentation
                 if (Engine != null && Engine.State.InPile[hintView.ShardId]) hintView.SetSize(layout.PileShardSize);
                 hintView = null;
             }
-            if (hintShard >= 0 && socketGhosts != null)
+            if (hintShard >= 0 && socketWashes != null)
             {
-                var ghost = socketGhosts[Level.Def.Shards[hintShard].Socket];
-                if (ghost != null) ghost.color = GhostTint;
+                var wash = socketWashes[Level.Def.Shards[hintShard].Socket];
+                if (wash != null) wash.color = GhostWash;
             }
             hintShard = -1;
             if (hintGlow != null)
