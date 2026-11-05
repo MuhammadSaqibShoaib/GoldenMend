@@ -5,8 +5,9 @@ namespace GoldenMend.Data
     /// <summary>
     /// The game's level list, in play order. Early vessels have few, large shards; later ones more and smaller.
     /// New ideas arrive one at a time: deeper racks, walls, a distant anchor, then hard levels with a locked bench
-    /// slot about every five levels (the last two very hard), each followed by an easier breather. Glazes alternate between traditional
-    /// Japanese patterns and close-up crops of public-domain paintings. Each spec stores the deal the builder
+    /// slot about every five levels (the last two very hard), each followed by an easier breather. Most glazes are close-up
+    /// crops of public-domain paintings; the busier traditional Japanese patterns are harder to read, so they appear
+    /// only on the seven Hard and Very Hard levels (about a quarter of the game). Each spec stores the deal the builder
     /// accepted, so loading a level runs the solver once.
     /// </summary>
     public static class LevelCatalog
@@ -15,7 +16,8 @@ namespace GoldenMend.Data
         {
             new LevelSpec
             {
-                Name = "Tea Cup", Pattern = "seigaiha", Palette = 1, Seed = 11, Deal = 0, MinBenchPeak = 0, MaxBenchPeak = 0,
+                Name = "Tea Cup", Artwork = "morning-mist", ArtZoom = 2.2f, ArtFocusX = 0.35f, ArtFocusY = 0.5f,
+                Seed = 11, Deal = 0, MinBenchPeak = 0, MaxBenchPeak = 0,
                 PileShape = new[] { "ooooo" },
                 Shape = new[]
                 {
@@ -25,7 +27,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Rice Bowl", Pattern = "sakura", Palette = 6, Seed = 23, Deal = 0, MinBenchPeak = 0, MaxBenchPeak = 1,
+                Name = "Rice Bowl", Artwork = "bedroom", ArtZoom = 2.0f, ArtFocusX = 0.55f, ArtFocusY = 0.45f,
+                Seed = 23, Deal = 0, MinBenchPeak = 0, MaxBenchPeak = 1,
                 PileShape = new[] { "oooo", "ooo." },
                 Shape = new[]
                 {
@@ -47,7 +50,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Tea Bowl", Pattern = "kikko", Palette = 4, Seed = 41, Deal = 0, MinBenchPeak = 1, MaxBenchPeak = 2,
+                Name = "Tea Bowl", Artwork = "self-portrait", ArtZoom = 2.0f, ArtFocusX = 0.5f, ArtFocusY = 0.6f,
+                Seed = 41, Deal = 0, MinBenchPeak = 1, MaxBenchPeak = 2,
                 PileShape = new[] { "ooooo", "o#o#o", "o.o.." },
                 Shape = new[]
                 {
@@ -72,7 +76,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Tea Caddy", Pattern = "uroko", Palette = 2, Seed = 53, Deal = 1, MinBenchPeak = 1, MaxBenchPeak = 3,
+                Name = "Tea Caddy", Artwork = "great-wave", ArtZoom = 2.0f, ArtFocusX = 0.8f, ArtFocusY = 0.35f,
+                Seed = 53, Deal = 1, MinBenchPeak = 1, MaxBenchPeak = 3,
                 PileShape = new[] { "ooooo", "ooooo", "#ooo#" },
                 Shape = new[]
                 {
@@ -111,7 +116,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Incense Burner", Pattern = "shippo", Palette = 7, Seed = 71, Deal = 1,
+                Name = "Incense Burner", Artwork = "bedroom", ArtZoom = 1.8f, ArtFocusX = 0.3f, ArtFocusY = 0.3f,
+                Seed = 71, Deal = 1,
                 MinBenchPeak = 2, MaxBenchPeak = 3,
                 PileShape = new[] { "oooooo", "o#oo#o", "oooooo", "..oo.." },
                 Shape = new[]
@@ -139,7 +145,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Water Jar", Pattern = "seigaiha", Palette = 0, Seed = 79, Deal = 3,
+                Name = "Water Jar", Artwork = "self-portrait", ArtZoom = 2.2f, ArtFocusX = 0.35f, ArtFocusY = 0.45f,
+                Seed = 79, Deal = 3,
                 MinBenchPeak = 2, MaxBenchPeak = 3,
                 PileShape = new[] { "oooooo", "oo##oo", "oooooo", "..ooo." },
                 Shape = new[]
@@ -182,7 +189,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Teapot", Pattern = "sakura", Palette = 6, Seed = 97, Deal = 0,
+                Name = "Teapot", Artwork = "water-lilies", ArtZoom = 2.0f, ArtFocusX = 0.75f, ArtFocusY = 0.7f,
+                Seed = 97, Deal = 0,
                 MinBenchPeak = 1, MaxBenchPeak = 3,
                 PileShape = new[] { "ooooooo", "o#ooo#o", "ooooooo", "...o..." },
                 Shape = new[]
@@ -210,7 +218,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Moon Jar", Pattern = "uroko", Palette = 3, Seed = 103, Deal = 3,
+                Name = "Moon Jar", Artwork = "bedroom", ArtZoom = 2.0f, ArtFocusX = 0.7f, ArtFocusY = 0.5f,
+                Seed = 103, Deal = 3,
                 MinBenchPeak = 2, MaxBenchPeak = 3,
                 PileShape = new[] { "ooooo", "ooooo", "o#o#o", "ooooo", "o.o.o" },
                 Shape = new[]
@@ -254,7 +263,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Gourd Bottle", Pattern = "shippo", Palette = 5, Seed = 113, Deal = 5,
+                Name = "Gourd Bottle", Artwork = "morning-mist", ArtZoom = 1.8f, ArtFocusX = 0.65f, ArtFocusY = 0.6f,
+                Seed = 113, Deal = 5,
                 MinBenchPeak = 2, MaxBenchPeak = 3,
                 PileShape = new[] { "ooooooo", "o#o#o#o", "ooooooo", "oo...oo" },
                 Shape = new[]
@@ -284,7 +294,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Lotus Bowl", Pattern = "sakura", Palette = 0, Seed = 131, Deal = 0,
+                Name = "Lotus Bowl", Artwork = "irises", ArtZoom = 2.4f, ArtFocusX = 0.55f, ArtFocusY = 0.75f,
+                Seed = 131, Deal = 0,
                 MinBenchPeak = 2, MaxBenchPeak = 3,
                 PileShape = new[] { "ooooooo", "o#ooo#o", "ooooooo", ".oooo.." },
                 Shape = new[]
@@ -298,7 +309,7 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Dragon Jar", Artwork = "great-wave", ArtZoom = 2.8f, ArtFocusX = 0.7f, ArtFocusY = 0.7f,
+                Name = "Dragon Jar", Pattern = "shippo", Palette = 1,
                 Seed = 137, Deal = 7, LockedBenchSlots = 1,
                 MinBenchPeak = 3, MaxBenchPeak = 4, Hard = true,
                 PileShape = new[] { "oooooo", "o#oo#o", "oooooo", "o#oo#o", "oo..o." },
@@ -313,7 +324,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Tea Kettle", Pattern = "seigaiha", Palette = 1, Seed = 139, Deal = 0,
+                Name = "Tea Kettle", Artwork = "self-portrait", ArtZoom = 1.8f, ArtFocusX = 0.4f, ArtFocusY = 0.35f,
+                Seed = 139, Deal = 0,
                 MinBenchPeak = 2, MaxBenchPeak = 3,
                 PileShape = new[] { "ooooooo", "ooooooo", "o##o##o", "ooooooo" },
                 Shape = new[]
@@ -329,7 +341,7 @@ namespace GoldenMend.Data
             new LevelSpec
             {
                 Name = "Fish Plate", Pattern = "uroko", Palette = 0, Seed = 149, Deal = 4,
-                MinBenchPeak = 2, MaxBenchPeak = 4,
+                MinBenchPeak = 2, MaxBenchPeak = 4, Hard = true,
                 PileShape = new[] { "oooooo", "oooooo", "#oooo#", "oooooo", "..oo.." },
                 Shape = new[]
                 {
@@ -358,7 +370,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Tall Vase", Pattern = "kikko", Palette = 7, Seed = 157, Deal = 0,
+                Name = "Tall Vase", Artwork = "great-wave", ArtZoom = 2.2f, ArtFocusX = 0.45f, ArtFocusY = 0.75f,
+                Seed = 157, Deal = 0,
                 MinBenchPeak = 3, MaxBenchPeak = 4,
                 PileShape = new[] { "ooooooo", "ooooooo", "oo###oo", "ooooooo" },
                 Shape = new[]
@@ -403,7 +416,8 @@ namespace GoldenMend.Data
             },
             new LevelSpec
             {
-                Name = "Imperial Jar", Pattern = "shippo", Palette = 1, Seed = 173, Deal = 2,
+                Name = "Imperial Jar", Artwork = "morning-mist", ArtZoom = 2.6f, ArtFocusX = 0.5f, ArtFocusY = 0.3f,
+                Seed = 173, Deal = 2,
                 MinBenchPeak = 3, MaxBenchPeak = 4,
                 PileShape = new[] { "ooooooo", "ooooooo", "o#o#o#o", "ooooooo", "..o...." },
                 Shape = new[]
