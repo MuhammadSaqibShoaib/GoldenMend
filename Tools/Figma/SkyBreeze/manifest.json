@@ -1,0 +1,9 @@
+{
+  "name": "Golden Mend - Sky Breeze screens",
+  "id": "golden-mend-sky-breeze",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": { "allowedDomains": ["none"] }
+}
