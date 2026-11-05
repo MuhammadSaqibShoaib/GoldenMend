@@ -19,10 +19,11 @@ namespace GoldenMend.Presentation
     {
         static readonly Color Gold = new Color(1f, 0.80f, 0.32f, 1f);
         static readonly Color PaleGold = new Color(1f, 0.95f, 0.75f, 1f);
-        // Empty sockets show their glaze in full colour under a white wash: a clean pastel of the real glaze, so even dark
-        // glazes read light on the sky theme instead of turning muddy grey.
+        // Empty sockets show their glaze under a light 20% white wash. White mixed into soft, mid-tone glazes reads much
+        // paler than its share, so this is what looks like "60% visible" on screen: the picture is clearly readable in
+        // every level and still a step lighter than placed shards, so players can see what goes where.
         static readonly Color GhostTint = Color.white;
-        static readonly Color GhostWash = new Color(1f, 1f, 1f, 0.66f);
+        static readonly Color GhostWash = new Color(1f, 1f, 1f, 0.2f);
         static readonly Color OpenFrameColor = new Color(1f, 0.84f, 0.29f, 1f);
         static readonly Color PileTileColor = new Color(0.17f, 0.32f, 0.62f, 0.08f);
         static readonly Color LockBadgeColor = new Color(0.11f, 0.23f, 0.47f, 0.78f);
@@ -30,8 +31,8 @@ namespace GoldenMend.Presentation
         static readonly Color PipEmpty = new Color(0.17f, 0.32f, 0.62f, 0.22f);
         static readonly Color SlotColor = new Color(0.86f, 0.91f, 0.97f, 1f);
         static readonly Color LockedSlotColor = new Color(0.68f, 0.77f, 0.9f, 1f);
-        static readonly Color TrayColor = new Color(1f, 1f, 1f, 0.72f);
-        static readonly Color GlassColor = new Color(1f, 1f, 1f, 0.5f);
+        static readonly Color TrayColor = new Color(1f, 1f, 1f, 0.9f);
+        static readonly Color GlassColor = new Color(1f, 1f, 1f, 0.92f);
         static readonly Color GlassEdge = new Color(1f, 1f, 1f, 0.9f);
         static readonly Color FailTint = new Color(1f, 0.55f, 0.5f, 1f);
 
@@ -237,7 +238,7 @@ namespace GoldenMend.Presentation
         void MakeGlass(string name, Vector3 centre, Vector2 size)
         {
             MakePanel(name + " edge", boardRoot, UiSkin.WorldRound, centre, size + new Vector2(0.1f, 0.1f), GlassEdge, -42);
-            MakePanel(name, boardRoot, UiSkin.WorldRound, centre, size, new Color(1f, 1f, 1f, 0.45f), -41);
+            MakePanel(name, boardRoot, UiSkin.WorldRound, centre, size, new Color(1f, 1f, 1f, 0.9f), -41);
             MakePanel(name + " glaze", boardRoot, UiSkin.WorldRound, centre, size, GlassColor, -40);
         }
 
