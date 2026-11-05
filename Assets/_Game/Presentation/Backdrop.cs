@@ -4,8 +4,8 @@ namespace GoldenMend.Presentation
 {
     /// <summary>
     /// The sky behind everything, drawn in the world behind the board so every screen (board or UI) sits on it: a
-    /// smooth top-to-bottom gradient, big soft cloud blobs that drift and breathe, and small glassy bubbles that rise,
-    /// sway and fade. It follows the camera, which the board widens on tall phones, so it always fills the screen.
+    /// smooth top-to-bottom gradient, big soft cloud blobs that drift and breathe, and a few large glassy bubbles that
+    /// rise slowly, sway and fade. Only three, so the sky stays calm rather than busy. It follows the camera, which the board widens on tall phones, so it always fills the screen.
     /// Everything is laid out in screen fractions and moves on unscaled time; in edit mode (screenshots) it holds a
     /// still frame.
     /// </summary>
@@ -13,7 +13,7 @@ namespace GoldenMend.Presentation
     {
         const int Order = -500;
         const float DesignHeight = 20.8f;
-        const int BubbleCount = 14;
+        const int BubbleCount = 3;
 
         static Sprite blobSprite;
         static Sprite bubbleSprite;
@@ -79,7 +79,10 @@ namespace GoldenMend.Presentation
             var rng = new System.Random(7);
             for (int i = 0; i < BubbleCount; i++)
             {
-                backdrop.bubbles[i] = NewBubble(rng, MakeRenderer(backdrop.transform, "Bubble", BubbleSprite, Order + 2), (float)rng.NextDouble() * 1.2f - 0.6f);
+                // Spread evenly up the screen at the start so they never arrive in a clump.
+                var bubble = NewBubble(rng, MakeRenderer(backdrop.transform, "Bubble", BubbleSprite, Order + 2), -0.45f + i * 0.42f);
+                bubble.X = (i % 2 == 0 ? -1f : 1f) * (0.18f + 0.1f * i);
+                backdrop.bubbles[i] = bubble;
             }
 
             backdrop.Layout(0f);
@@ -92,12 +95,12 @@ namespace GoldenMend.Presentation
             return new Bubble
             {
                 Renderer = renderer,
-                X = r() * 0.9f - 0.45f,
+                X = r() * 0.8f - 0.4f,
                 Y = y,
-                Rise = 0.018f + r() * 0.03f,
-                Sway = 0.01f + r() * 0.025f,
-                SwaySpeed = 0.4f + r() * 0.7f,
-                Size = 0.022f + r() * r() * 0.06f,
+                Rise = 0.012f + r() * 0.012f,
+                Sway = 0.015f + r() * 0.02f,
+                SwaySpeed = 0.25f + r() * 0.35f,
+                Size = 0.08f + r() * 0.1f,
                 Phase = r() * 6.28f,
             };
         }
@@ -110,7 +113,7 @@ namespace GoldenMend.Presentation
             for (int i = 0; i < bubbles.Length; i++)
             {
                 bubbles[i].Y += bubbles[i].Rise * dt;
-                if (bubbles[i].Y > 0.62f) bubbles[i] = NewBubble(respawn, bubbles[i].Renderer, -0.62f);
+                if (bubbles[i].Y > 0.7f) bubbles[i] = NewBubble(respawn, bubbles[i].Renderer, -0.7f);
             }
             Layout(Application.isPlaying ? Time.unscaledTime : 0f);
         }
@@ -144,8 +147,8 @@ namespace GoldenMend.Presentation
                 float size = b.Size * height * (1f + 0.05f * Mathf.Sin(time * 2f + b.Phase));
                 b.Renderer.transform.localScale = Vector3.one * size / BubbleSprite.bounds.size.x;
                 // Fade in from the bottom edge and out towards the top.
-                float fade = Mathf.Clamp01((b.Y + 0.62f) / 0.18f) * Mathf.Clamp01((0.62f - b.Y) / 0.3f);
-                b.Renderer.color = new Color(1f, 1f, 1f, 0.85f * fade);
+                float fade = Mathf.Clamp01((b.Y + 0.7f) / 0.25f) * Mathf.Clamp01((0.7f - b.Y) / 0.35f);
+                b.Renderer.color = new Color(1f, 1f, 1f, 0.75f * fade);
             }
         }
 
