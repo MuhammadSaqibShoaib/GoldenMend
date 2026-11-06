@@ -96,6 +96,16 @@ namespace GoldenMend.Meta
             sink.Resource(false, Coins, coinCost, ItemContinue, "continue");
         }
 
+        public void ContinuedWithAd(int index)
+        {
+            sink.Design("ad:rewarded:continue", 0f);
+            sink.Design($"booster:continue:{LevelId(index)}", 0f);
+        }
+
+        public void InterstitialShown(int index) => sink.Design($"ad:interstitial:{LevelId(index)}", 0f);
+
+        public void ConsentChosen(bool personalized) => sink.Design(personalized ? "privacy:ads:personalized" : "privacy:ads:general", 0f);
+
         public void HintBought(int coinCost)
         {
             sink.Resource(false, Coins, coinCost, ItemBooster, "hint");

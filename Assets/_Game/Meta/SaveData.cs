@@ -23,6 +23,9 @@ namespace GoldenMend.Meta
         public bool Music = true;
         public bool Haptics = true;
 
+        /// <summary>The player's ad-personalization choice: see <see cref="AdConsent"/>. Unknown until asked or set.</summary>
+        public int AdConsent;
+
         public SaveData Clone()
         {
             var copy = (SaveData)MemberwiseClone();

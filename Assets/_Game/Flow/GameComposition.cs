@@ -10,7 +10,7 @@ namespace GoldenMend.Flow
     public static class GameComposition
     {
         public static GameFlow Compose(UiTheme theme, SoundBank sounds, ArtCatalog art, Camera camera, ISaveStore store, Transform parent,
-            IAnalyticsSink analytics = null)
+            IAnalyticsSink analytics = null, bool withAds = false)
         {
             VesselArt.Catalog = art;
             var data = store.Load();
@@ -30,7 +30,8 @@ namespace GoldenMend.Flow
 
             var flow = new GameObject("Game Flow").AddComponent<GameFlow>();
             flow.transform.SetParent(parent, false);
-            flow.Init(board, ui, feedback, progress, economy, settings, new NoRewardedAds(), analytics);
+            var ads = withAds ? LevelPlayAds.Create(parent) : null;
+            flow.Init(board, ui, feedback, progress, economy, settings, new NoRewardedAds(), analytics, ads, new AdConsent(data, store));
             return flow;
         }
     }

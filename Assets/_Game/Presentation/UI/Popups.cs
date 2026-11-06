@@ -37,11 +37,13 @@ namespace GoldenMend.Presentation.UI
         public Action<bool> SoundChanged;
         public Action<bool> HapticsChanged;
         public Action<bool> MusicChanged;
+        public Action<bool> PersonalizedAdsChanged;
 
         readonly RectTransform card;
         readonly Switch sound;
         readonly Switch haptics;
         readonly Switch music;
+        readonly Switch personalizedAds;
 
         sealed class Switch
         {
@@ -52,23 +54,25 @@ namespace GoldenMend.Presentation.UI
 
         public SettingsPopup(UiRoot ui) : base(ui, "Settings", popup: true)
         {
-            card = B.Popup(Root, new Vector2(920f, 1080f), Vector2.zero, () => Done?.Invoke(), out var title);
+            card = B.Popup(Root, new Vector2(920f, 1250f), Vector2.zero, () => Done?.Invoke(), out var title);
             title.text = "Settings";
 
             sound = Row("Sound", T.IconSoundOn, -196f, on => SoundChanged?.Invoke(on));
             music = Row("Music", T.IconMusic, -388f, on => MusicChanged?.Invoke(on));
             haptics = Row("Haptics", T.IconHaptics, -580f, on => HapticsChanged?.Invoke(on));
+            personalizedAds = Row("Personal ads", T.IconPlay, -772f, on => PersonalizedAdsChanged?.Invoke(on));
 
-            B.Text("Version", card, $"Golden Mend  {Application.version}", T.BodyFont, 26, UiBuilder.WithAlpha(T.Muted, 0.6f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -745f), new Vector2(700f, 40f));
+            B.Text("Version", card, $"Golden Mend  {Application.version}", T.BodyFont, 26, UiBuilder.WithAlpha(T.Muted, 0.6f), TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -930f), new Vector2(700f, 40f));
 
             B.Button("Done", card, "Done", ButtonStyle.Primary, Anchor.Bottom, new Vector2(0f, 64f), new Vector2(560f, 160f), () => Done?.Invoke());
         }
 
-        public void Bind(bool soundOn, bool musicOn, bool hapticsOn)
+        public void Bind(bool soundOn, bool musicOn, bool hapticsOn, bool personalizedAdsOn = true)
         {
             Set(sound, soundOn);
             Set(music, musicOn);
             Set(haptics, hapticsOn);
+            Set(personalizedAds, personalizedAdsOn);
         }
 
         protected override void OnShow() => Ui.Pop(card);
@@ -203,11 +207,13 @@ namespace GoldenMend.Presentation.UI
     public sealed class FailPopup : UiView
     {
         public Action Continue;
+        public Action ContinueWithAd;
         public Action Retry;
         public Action Home;
 
         readonly RectTransform card;
         readonly Button continueButton;
+        readonly Button adButton;
         readonly Text price;
         readonly Text shortfall;
         readonly Text body;
@@ -224,6 +230,7 @@ namespace GoldenMend.Presentation.UI
                 TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -184f), new Vector2(820f, 130f));
 
             continueButton = OfferButton(B, card, "Continue", new Vector2(0f, -352f), () => Continue?.Invoke(), out price);
+            adButton = B.Button("Watch ad", card, "Watch an ad", ButtonStyle.Secondary, Anchor.Top, new Vector2(0f, -572f), new Vector2(760f, 150f), () => ContinueWithAd?.Invoke(), T.IconPlay);
             slots = B.Text("Slots", card, "Adds 2 workbench slots", T.BodyFont, 34, T.Muted, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -566f), new Vector2(800f, 48f));
             shortfall = B.Text("Shortfall", card, "", T.TitleFont, 34, T.Danger, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -614f), new Vector2(800f, 48f));
 
@@ -245,22 +252,56 @@ namespace GoldenMend.Presentation.UI
             return button;
         }
 
-        public void Bind(int cost, int coins, bool canContinue = true)
+        public void Bind(int cost, int coins, bool canContinue = true, bool adReady = false)
         {
+            bool showAd = canContinue && adReady;
             continueButton.gameObject.SetActive(canContinue);
+            adButton.gameObject.SetActive(showAd);
             slots.gameObject.SetActive(canContinue);
             body.text = canContinue
                 ? "No free slot for that shard.\nAdd two more and keep going?"
                 : "No free slot for that shard.\nYou already used this try's continue.";
-            float buttonsY = canContinue ? -690f : -400f;
+            // The ad option slots in under the coin button and pushes the rest down.
+            float shift = showAd ? 170f : 0f;
+            ((RectTransform)slots.transform).anchoredPosition = new Vector2(0f, -566f - shift);
+            ((RectTransform)shortfall.transform).anchoredPosition = new Vector2(0f, -614f - shift);
+            float buttonsY = canContinue ? -690f - shift : -400f;
             retry.anchoredPosition = new Vector2(-190f, buttonsY);
             home.anchoredPosition = new Vector2(190f, buttonsY);
-            card.sizeDelta = new Vector2(card.sizeDelta.x, canContinue ? 940f : 650f);
+            card.sizeDelta = new Vector2(card.sizeDelta.x, canContinue ? 940f + shift : 650f);
 
             price.text = cost.ToString();
             bool canAfford = coins >= cost;
             SetInteractable(continueButton, canAfford);
             shortfall.text = canContinue && !canAfford ? $"Not enough coins (you have {coins})" : "";
+        }
+
+        protected override void OnShow() => Ui.Pop(card);
+    }
+
+    /// <summary>
+    /// Asked once, before any ad, where the law requires a choice first (see AdConsent). Two clear, equal choices and
+    /// no close button; either answer can be changed later in Settings.
+    /// </summary>
+    public sealed class ConsentPopup : UiView
+    {
+        public Action<bool> Chosen;
+
+        readonly RectTransform card;
+
+        public ConsentPopup(UiRoot ui) : base(ui, "Ad Consent", popup: true)
+        {
+            card = B.Popup(Root, new Vector2(920f, 1020f), Vector2.zero, null, out var title);
+            title.text = "Ads in Golden Mend";
+
+            B.Text("Body", card,
+                "Golden Mend is free and shows a few ads.\nMay our ad partners use data from this\ndevice to show ads that suit you better?",
+                T.TitleFont, 40, T.Text, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -250f), new Vector2(840f, 220f));
+            B.Text("Note", card, "Either way you get the same game.\nYou can change this any time in Settings.",
+                T.BodyFont, 30, T.Muted, TextAnchor.MiddleCenter, Anchor.Top, new Vector2(0f, -420f), new Vector2(800f, 90f));
+
+            B.Button("Allow", card, "Personalized ads", ButtonStyle.Confirm, Anchor.Top, new Vector2(0f, -560f), new Vector2(760f, 168f), () => Chosen?.Invoke(true));
+            B.Button("Decline", card, "General ads only", ButtonStyle.Secondary, Anchor.Top, new Vector2(0f, -760f), new Vector2(760f, 168f), () => Chosen?.Invoke(false));
         }
 
         protected override void OnShow() => Ui.Pop(card);

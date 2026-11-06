@@ -14,6 +14,19 @@ namespace GoldenMend.Meta
         void Show(Action<bool> done);
     }
 
+    /// <summary>A full-screen ad between levels. <paramref name="done"/> always runs, shown or not.</summary>
+    public interface IInterstitialAds
+    {
+        bool IsReady { get; }
+        void Show(Action done);
+    }
+
+    public sealed class NoInterstitialAds : IInterstitialAds
+    {
+        public bool IsReady => false;
+        public void Show(Action done) => done?.Invoke();
+    }
+
     /// <summary>Used until an ad network is integrated: never ready, so the ad buttons stay hidden.</summary>
     public sealed class NoRewardedAds : IRewardedAds
     {

@@ -34,6 +34,12 @@ namespace GoldenMend.Flow
         EconomyService economy;
         SettingsService settings;
         IRewardedAds ads;
+        IInterstitialAds interstitials;
+        LevelPlayAds levelPlay;
+        AdConsent consent;
+        InterstitialPacing pacing;
+        string country = "";
+        ConsentPopup consentPopup;
         LevelAnalytics analytics;
 
         HomeScreen home;
@@ -60,9 +66,18 @@ namespace GoldenMend.Flow
         public EconomyService Economy => economy;
 
         public void Init(BoardPresenter board, UiRoot ui, FeedbackService feedback, ProgressService progress, EconomyService economy, SettingsService settings,
-            IRewardedAds ads = null, IAnalyticsSink analytics = null)
+            IRewardedAds ads = null, IAnalyticsSink analytics = null, LevelPlayAds levelPlay = null, AdConsent consent = null)
         {
-            this.ads = ads ?? new NoRewardedAds();
+            this.levelPlay = levelPlay;
+            this.ads = levelPlay != null ? levelPlay : ads ?? new NoRewardedAds();
+            interstitials = levelPlay != null ? (IInterstitialAds)levelPlay : new NoInterstitialAds();
+            this.consent = consent;
+            pacing = new InterstitialPacing(Time.realtimeSinceStartup);
+            if (levelPlay != null)
+            {
+                levelPlay.RewardedShown += () => pacing.RewardedShown(Time.realtimeSinceStartup);
+                levelPlay.InterstitialShown += () => this.analytics.InterstitialShown(current);
+            }
             this.analytics = new LevelAnalytics(analytics);
             this.board = board;
             this.ui = ui;
@@ -84,9 +99,11 @@ namespace GoldenMend.Flow
                 SoundChanged = on => settings.Sound = on,
                 HapticsChanged = on => settings.Haptics = on,
                 MusicChanged = on => settings.Music = on,
+                PersonalizedAdsChanged = SetPersonalizedAds,
             };
             win = new WinSheet(ui) { Next = NextAfterWin, Home = ShowHome };
-            fail = new FailPopup(ui) { Continue = ContinueRun, Retry = () => StartLevel(current), Home = ShowHome };
+            fail = new FailPopup(ui) { Continue = ContinueRun, ContinueWithAd = ContinueWithAd, Retry = () => StartLevel(current), Home = ShowHome };
+            consentPopup = new ConsentPopup(ui) { Chosen = OnConsentChosen };
             banner = new LevelBanner(ui);
 
             board.StatusShown += OnStatusShown;
@@ -237,6 +254,7 @@ namespace GoldenMend.Flow
         /// <summary>The back button: closes the topmost popup, or steps out of the current screen. See <see cref="BackNavigation"/>.</summary>
         public void Back()
         {
+            if (consentPopup.Visible) return; // the choice has to be made; nothing behind it to go back to
             switch (BackNavigation.For(State, details.Visible, settingsPopup.Visible, offer.Visible))
             {
                 case BackAction.CloseDetails: details.Hide(); break;
@@ -293,7 +311,7 @@ namespace GoldenMend.Flow
         {
             settingsFromPause = fromPause;
             if (fromPause) pause.Hide();
-            settingsPopup.Bind(settings.Sound, settings.Music, settings.Haptics);
+            settingsPopup.Bind(settings.Sound, settings.Music, settings.Haptics, consent == null || consent.Personalized(country));
             settingsPopup.Show();
         }
 
@@ -324,7 +342,7 @@ namespace GoldenMend.Flow
             else if (status == GameStatus.Failed)
             {
                 analytics.BoardFull(current);
-                fail.Bind(EconomyService.ContinueCost, economy.Coins, board.ContinuesUsed < MaxContinues);
+                fail.Bind(EconomyService.ContinueCost, economy.Coins, board.ContinuesUsed < MaxContinues, ads.IsReady);
                 fail.Show();
                 State = FlowState.WorkbenchFull;
             }
@@ -354,8 +372,68 @@ namespace GoldenMend.Flow
 
         void NextAfterWin()
         {
+            // A between-levels ad, when the pacing allows one, plays before the next level loads.
+            float now = Time.realtimeSinceStartup;
+            if (current + 1 < progress.LevelCount && interstitials.IsReady && pacing.ShouldShow(current, now))
+            {
+                pacing.InterstitialShown(now);
+                interstitials.Show(GoToNextLevel);
+                return;
+            }
+            GoToNextLevel();
+        }
+
+        void GoToNextLevel()
+        {
             if (current + 1 < progress.LevelCount) StartLevel(current + 1);
             else ShowMuseum();
+        }
+
+        // ---- Ads and consent ---------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Starts the ad SDK once the player's privacy choice is known: asks first where the law requires it,
+        /// otherwise starts straight away. Call once, after the home screen is up.
+        /// </summary>
+        public void StartAds()
+        {
+            if (levelPlay == null || consent == null || !AdIds.Configured) return;
+            country = DeviceRegion.Country();
+            if (consent.NeedsPrompt(country))
+            {
+                consentPopup.Show();
+                return;
+            }
+            levelPlay.Initialize(consent.Personalized(country));
+        }
+
+        void OnConsentChosen(bool personalized)
+        {
+            consentPopup.Hide();
+            consent.Set(personalized);
+            analytics.ConsentChosen(personalized);
+            levelPlay.Initialize(personalized);
+        }
+
+        void SetPersonalizedAds(bool personalized)
+        {
+            if (consent == null) return;
+            consent.Set(personalized);
+            analytics.ConsentChosen(personalized);
+            levelPlay?.UpdateConsent(personalized);
+        }
+
+        void ContinueWithAd()
+        {
+            if (board.ContinuesUsed >= MaxContinues || !ads.IsReady) return;
+            ads.Show(watched =>
+            {
+                if (!watched || State != FlowState.WorkbenchFull) return;
+                analytics.ContinuedWithAd(current);
+                fail.Hide();
+                board.ContinueRun();
+                State = FlowState.Playing;
+            });
         }
 
         void ApplySettings()
