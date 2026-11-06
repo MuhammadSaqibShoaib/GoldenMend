@@ -8,9 +8,15 @@ namespace GoldenMend.Flow
     /// <summary>The LevelPlay dashboard IDs. Not secrets: they ship inside every build.</summary>
     public static class AdIds
     {
-        public const string AndroidAppKey = "";
-        public const string AndroidRewarded = "";
-        public const string AndroidInterstitial = "";
+        public const string AndroidAppKey = "295532fe5";
+        public const string AndroidRewarded = "pnxu6dpmkcyr7va2";
+        public const string AndroidInterstitial = "3jfzx2hxh9dg16g8";
+
+        /// <summary>
+        /// Opens LevelPlay's Test Suite after the SDK starts, to check each network on a device.
+        /// TEMPORARY: must be false for any build that goes to players.
+        /// </summary>
+        public const bool TestSuite = false;
 
         public static bool Configured =>
             !string.IsNullOrEmpty(AndroidAppKey) && !string.IsNullOrEmpty(AndroidRewarded) && !string.IsNullOrEmpty(AndroidInterstitial);
@@ -65,6 +71,9 @@ namespace GoldenMend.Flow
 
             LevelPlay.OnInitSuccess += OnInitSuccess;
             LevelPlay.OnInitFailed += OnInitFailed;
+#pragma warning disable CS0162
+            if (AdIds.TestSuite) LevelPlay.SetMetaData("is_test_suite", "enable");
+#pragma warning restore CS0162
             LevelPlay.Init(AdIds.AndroidAppKey);
         }
 
@@ -95,6 +104,10 @@ namespace GoldenMend.Flow
             // Eager preload: the offers only show the ad button when an ad is ready, so keep one loaded.
             rewarded.LoadAd();
             interstitial.LoadAd();
+
+#pragma warning disable CS0162
+            if (AdIds.TestSuite) LevelPlay.LaunchTestSuite();
+#pragma warning restore CS0162
         }
 
         void OnInitFailed(LevelPlayInitError error) => Debug.LogWarning($"LevelPlay initialization failed: {error.ErrorMessage}");
