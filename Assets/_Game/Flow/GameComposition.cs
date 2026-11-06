@@ -9,7 +9,8 @@ namespace GoldenMend.Flow
     /// <summary>Wires the whole game together. Used by the bootstrap scene and by the screenshot tool.</summary>
     public static class GameComposition
     {
-        public static GameFlow Compose(UiTheme theme, SoundBank sounds, ArtCatalog art, Camera camera, ISaveStore store, Transform parent)
+        public static GameFlow Compose(UiTheme theme, SoundBank sounds, ArtCatalog art, Camera camera, ISaveStore store, Transform parent,
+            IAnalyticsSink analytics = null)
         {
             VesselArt.Catalog = art;
             var data = store.Load();
@@ -29,7 +30,7 @@ namespace GoldenMend.Flow
 
             var flow = new GameObject("Game Flow").AddComponent<GameFlow>();
             flow.transform.SetParent(parent, false);
-            flow.Init(board, ui, feedback, progress, economy, settings, new NoRewardedAds());
+            flow.Init(board, ui, feedback, progress, economy, settings, new NoRewardedAds(), analytics);
             return flow;
         }
     }

@@ -6,7 +6,7 @@ namespace GoldenMend.Bootstrap
 {
     /// <summary>
     /// Entry point of the game scene: composes the services, board and screens, then opens the main menu.
-    /// Ads, analytics and remote config will be created here too once they exist.
+    /// Analytics (GameAnalytics) starts here; ads and remote config will be created here too once they exist.
     /// </summary>
     public sealed class GameBootstrap : MonoBehaviour
     {
@@ -28,7 +28,8 @@ namespace GoldenMend.Bootstrap
                 return;
             }
 
-            var flow = GameComposition.Compose(theme, sounds, art, Camera.main, new JsonFileSaveStore(), transform);
+            var flow = GameComposition.Compose(theme, sounds, art, Camera.main, new JsonFileSaveStore(), transform,
+                GameAnalyticsSink.Start());
             flow.ShowHome();
         }
     }

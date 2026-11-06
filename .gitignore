@@ -76,3 +76,7 @@ desktop.ini
 
 # Unity Android native build cache
 /.utmp/
+
+# GameAnalytics settings hold the game secret key; created by Golden Mend > Prepare Analytics Settings
+/[Aa]ssets/[Rr]esources/GameAnalytics/Settings.asset
+/[Aa]ssets/[Rr]esources/GameAnalytics/Settings.asset.meta

@@ -34,6 +34,7 @@ namespace GoldenMend.Flow
         EconomyService economy;
         SettingsService settings;
         IRewardedAds ads;
+        LevelAnalytics analytics;
 
         HomeScreen home;
         MuseumScreen museum;
@@ -59,9 +60,10 @@ namespace GoldenMend.Flow
         public EconomyService Economy => economy;
 
         public void Init(BoardPresenter board, UiRoot ui, FeedbackService feedback, ProgressService progress, EconomyService economy, SettingsService settings,
-            IRewardedAds ads = null)
+            IRewardedAds ads = null, IAnalyticsSink analytics = null)
         {
             this.ads = ads ?? new NoRewardedAds();
+            this.analytics = new LevelAnalytics(analytics);
             this.board = board;
             this.ui = ui;
             this.feedback = feedback;
@@ -104,6 +106,7 @@ namespace GoldenMend.Flow
 
         public void ShowHome()
         {
+            analytics.LevelLeft();
             Time.timeScale = 1f;
             board.Unload();
             HideAll();
@@ -139,6 +142,7 @@ namespace GoldenMend.Flow
             HideAll();
 
             var level = Level(index);
+            analytics.LevelStarted(index, level.Spec.Difficulty.ToString());
             board.Load(level);
             hud.Bind(index, level.Spec);
             RefreshHelpers();
@@ -178,7 +182,7 @@ namespace GoldenMend.Flow
             if (State != FlowState.Playing || board.HintActive) return;
             if (economy.Hints > 0)
             {
-                if (board.ShowHint()) economy.TryUseHint();
+                if (board.ShowHint() && economy.TryUseHint()) analytics.HintUsed(current);
                 return;
             }
 
@@ -186,15 +190,17 @@ namespace GoldenMend.Flow
             offer.Buy = () =>
             {
                 if (!economy.TryBuyHint()) return;
+                analytics.HintBought(EconomyService.HintCost);
                 CloseOffer();
-                if (board.ShowHint()) economy.TryUseHint();
+                if (board.ShowHint() && economy.TryUseHint()) analytics.HintUsed(current);
             };
             offer.WatchAd = () => ads.Show(watched =>
             {
                 CloseOffer();
                 if (!watched) return;
                 economy.GrantHints(1);
-                if (board.ShowHint()) economy.TryUseHint();
+                analytics.HintFromAd();
+                if (board.ShowHint() && economy.TryUseHint()) analytics.HintUsed(current);
             });
             OpenOffer();
         }
@@ -209,12 +215,13 @@ namespace GoldenMend.Flow
                 if (!economy.TrySpend(EconomyService.PullCost)) return;
                 CloseOffer();
                 if (!board.Pull()) economy.Grant(EconomyService.PullCost);
+                else analytics.PullBought(current, EconomyService.PullCost);
                 RefreshHelpers();
             };
             offer.WatchAd = () => ads.Show(watched =>
             {
                 CloseOffer();
-                if (watched) board.Pull();
+                if (watched && board.Pull()) analytics.PullFromAd(current);
                 RefreshHelpers();
             });
             OpenOffer();
@@ -306,6 +313,7 @@ namespace GoldenMend.Flow
                 int best = level.Solution.MinBenchPeak;
                 var run = new RunStats(board.BenchPeak, board.PlaySeconds, board.HintsUsed, board.PullsUsed, board.ContinuesUsed, board.Moves);
                 var result = progress.Complete(current, run, best, level.Spec.Hard);
+                analytics.LevelWon(current, result.Stars, run.Seconds, result.Coins, board.HintsUsed, board.PullsUsed, board.ContinuesUsed);
                 win.Bind(VesselArt.DisplayName(level.Spec), null, result.Stars, result.Coins, result.FirstClear, board.BenchPeak, best,
                     current + 1 < progress.LevelCount, RecordLine(run, result), level, current + 2, NextDifficulty(current));
                 hud.Hide();
@@ -315,6 +323,7 @@ namespace GoldenMend.Flow
             }
             else if (status == GameStatus.Failed)
             {
+                analytics.BoardFull(current);
                 fail.Bind(EconomyService.ContinueCost, economy.Coins, board.ContinuesUsed < MaxContinues);
                 fail.Show();
                 State = FlowState.WorkbenchFull;
@@ -337,6 +346,7 @@ namespace GoldenMend.Flow
         void ContinueRun()
         {
             if (board.ContinuesUsed >= MaxContinues || !economy.TrySpend(EconomyService.ContinueCost)) return;
+            analytics.Continued(current, EconomyService.ContinueCost);
             fail.Hide();
             board.ContinueRun();
             State = FlowState.Playing;

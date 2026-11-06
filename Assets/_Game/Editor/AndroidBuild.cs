@@ -85,6 +85,7 @@ namespace GoldenMend.EditorTools
         {
             GameSceneBuilder.Build(withPaintings: true);
             ApplyPlayerSettings();
+            AnalyticsSetup.Prepare();
             Build(OutputPath);
         }
 
