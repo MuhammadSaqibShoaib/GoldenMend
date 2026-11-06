@@ -37,6 +37,15 @@ namespace GoldenMend.EditorTools
             AssetDatabase.SaveAssets();
 
             int android = settings.Platforms.IndexOf(RuntimePlatform.Android);
+
+            // Command-line builds can pass the keys in (GA_GAME_KEY / GA_SECRET_KEY) instead of the settings window.
+            string gameKey = System.Environment.GetEnvironmentVariable("GA_GAME_KEY");
+            string secretKey = System.Environment.GetEnvironmentVariable("GA_SECRET_KEY");
+            if (!string.IsNullOrEmpty(gameKey)) settings.UpdateGameKey(android, gameKey.Trim());
+            if (!string.IsNullOrEmpty(secretKey)) settings.UpdateSecretKey(android, secretKey.Trim());
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+
             if (string.IsNullOrEmpty(settings.GetGameKey(android)) || string.IsNullOrEmpty(settings.GetSecretKey(android)))
                 Debug.LogWarning("Golden Mend: GameAnalytics has no Android keys yet, so builds will not send events. " +
                                  "Add them in Window > GameAnalytics > Select Settings.");
